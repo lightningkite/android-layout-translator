@@ -1,5 +1,6 @@
 package com.lightningkite.convertlayout.android
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.lightningkite.convertlayout.util.camelCase
 import com.lightningkite.convertlayout.xml.attributeMap
 import com.lightningkite.convertlayout.xml.children
@@ -17,6 +18,7 @@ data class AndroidLayoutFile(
     val sublayouts: Map<String, AndroidSubLayout>,
     val emitCurse: Map<String, AndroidAction>
 ) {
+    @get:JsonIgnore val className: String get() = name + "Xml"
     companion object {
         fun combine(iter: Sequence<AndroidLayoutFile>): AndroidLayoutFile =
             AndroidLayoutFile(
@@ -116,19 +118,16 @@ data class AndroidLayoutFile(
 
     fun toString(packageName: String, applicationPackage: String): String = """
     |//
-    |// ${name}Xml.kt
+    |// $className.kt
     |// Created by Khrysalis XML Android
     |//
     |package $packageName
     |
     |import android.widget.*
     |import android.view.*
-    |import com.lightningkite.butterfly.views.widget.*
-    |import com.lightningkite.butterfly.views.*
-    |import com.lightningkite.butterfly.android.*
     |import $applicationPackage.R
     |
-    |class ${name}Xml {
+    |class $className {
     |
     |    ${bindings.values.joinToString("\n|    ") { it.declaration }}
     |    ${sublayouts.values.joinToString("\n|    ") { it.declaration }}

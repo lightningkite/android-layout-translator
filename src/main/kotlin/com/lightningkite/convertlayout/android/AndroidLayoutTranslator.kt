@@ -2,39 +2,56 @@ package com.lightningkite.convertlayout.android
 
 import com.lightningkite.convertlayout.xml.*
 import com.lightningkite.convertlayout.rules.*
+import com.lightningkite.convertlayout.util.addLazy
 import org.w3c.dom.Element
 
 abstract class AndroidLayoutTranslator(val replacements: Replacements, val resources: AndroidResources) {
-    open fun convertElement(owner: Element, element: Element): Element {
-        val allAttributes =
-            element.attributeMap + (element["style"]?.let { resources.read(it) as? AndroidStyle }?.map ?: mapOf())
-        val firstRule = replacements.getElement(element.tagName, allAttributes)
-            ?: throw IllegalArgumentException("No rule ${element.tagName} found")
+    val Element.allAttributes: Map<String, String> get() = attributeMap addLazy (this["style"]?.let { resources.read(it) as? AndroidStyle }?.map ?: mapOf())
+
+    open fun convertElement(owner: Element, sourceElement: Element): Element {
+        val allAttributes = sourceElement.allAttributes
+        val firstRule = replacements.getElement(sourceElement.tagName, allAttributes)
+            ?: throw IllegalArgumentException("No rule ${sourceElement.tagName} found")
         val rules = generateSequence(firstRule) {
             it.parent?.let { replacements.getElement(it, allAttributes) }
         }.toList()
-        val newElement = owner.appendFragment(rules.asSequence().mapNotNull { it.template }.first().write {element.getPath(it)})
+        return convertElement(owner, rules, sourceElement, allAttributes)
+    }
+
+    open fun convertElement(
+        destOwner: Element,
+        rules: List<ElementReplacement>,
+        sourceElement: Element,
+        allAttributes: Map<String, String>
+    ): Element {
+        val newElement = destOwner.appendFragment(rules.asSequence().mapNotNull { it.template }.first().write { sourceElement.getPath(it) })
 
         // Handle children
-        rules.mapNotNull { it.insertChildrenAt }.firstOrNull()?.let { path ->
-            val target =
-                newElement.xpathElement(path) ?: throw IllegalArgumentException("No element found for path '$path'")
-            val rule = rules.mapNotNull { it.childRule }.firstOrNull()
-            handleChildren(rules, rule, element, newElement, target)
-        }
+        handleChildren(rules, newElement, sourceElement)
 
         // Handle attributes
-        for ((key, raw) in allAttributes) {
-            handleAttribute(element, newElement, key, raw)
-        }
+        handleAttributes(allAttributes, sourceElement, newElement)
         return newElement
+    }
+
+    open fun handleChildren(
+        rules: List<ElementReplacement>,
+        destElement: Element,
+        sourceElement: Element
+    ) {
+        rules.mapNotNull { it.insertChildrenAt }.firstOrNull()?.let { path ->
+            val target =
+                destElement.xpathElement(path) ?: throw IllegalArgumentException("No element found for path '$path'")
+            val rule = rules.mapNotNull { it.childRule }.firstOrNull()
+            handleChildren(rules, rule, sourceElement, destElement, target)
+        }
     }
 
     open fun handleChildren(
         rules: List<ElementReplacement>,
         childAddRule: String?,
         sourceElement: Element,
-        resultElement: Element,
+        destElement: Element,
         target: Element
     ) {
         for (child in sourceElement.children.mapNotNull { it as? Element }) {
@@ -42,16 +59,26 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         }
     }
 
+    open fun handleAttributes(
+        allAttributes: Map<String, String>,
+        sourceElement: Element,
+        destElement: Element
+    ) {
+        for ((key, raw) in allAttributes) {
+            handleAttribute(sourceElement, destElement, key, raw)
+        }
+    }
+
     open fun handleAttribute(
-        element: Element,
-        newElement: Element,
+        sourceElement: Element,
+        destElement: Element,
         key: String,
         raw: String
     ) {
         val value = resources.read(raw)
-        val attributeRule = replacements.getAttribute(element.tagName, key, value.type) ?: return
+        val attributeRule = replacements.getAttribute(sourceElement.tagName, key, value.type) ?: return
         for ((path, sub) in attributeRule.rules) {
-            val target = newElement.xpathElement(path)!!
+            val target = destElement.xpathElement(path)!!
             if (sub.css.isNotEmpty()) {
                 val broken = target.getAttribute("style").split(';')
                     .associate { it.substringBefore(':').trim() to it.substringAfter(':').trim() }

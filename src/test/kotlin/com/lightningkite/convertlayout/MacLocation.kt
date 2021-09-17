@@ -5,14 +5,14 @@ import java.io.File
 data class MacLocation(val file: File, val destination: String) {
     fun push() {
         ProcessBuilder()
-            .command("scp", "-r", file.absolutePath, "mac:$destination")
+            .command("rsync", "-avz", "--delete-after", file.absolutePath + "/", "mac:$destination/")
             .inheritIO()
             .start()
             .waitFor()
     }
     fun pull() {
         ProcessBuilder()
-            .command("scp", "-r", "mac:$destination", file.absolutePath)
+            .command("rsync", "-avz", "--delete-after", "mac:$destination/", file.absolutePath + "/")
             .inheritIO()
             .start()
             .waitFor()

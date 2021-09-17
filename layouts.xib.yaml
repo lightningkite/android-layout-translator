@@ -113,7 +113,7 @@
 #LinearLayout
 - id: LinearLayout
   type: element
-  doesNotHaveAttributes:
+  autowrapFor:
     - 'android:background'
   insertChildrenAt: subviews
   childRule: linear
@@ -125,28 +125,6 @@
       </constraints>
       <edgeInsets key="layoutMargins" top="paddingTop" left="paddingLeft" bottom="paddingBottom" right="paddingRight"/>
     </stackView>
-
-- id: LinearLayout
-  type: element
-  insertChildrenAt: subviews/stackView/subviews
-  childRule: linear
-  template: |
-    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="container">
-      <subviews>
-        <stackView opaque="NO" contentMode="scaleToFill" alignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="view">
-          <subviews>
-          </subviews>
-          <constraints>
-          </constraints>
-        </stackView>
-      </subviews>
-      <constraints>
-        <constraint firstAttribute="bottom" secondItem="view" secondAttribute="bottom" constant="~android:paddingBottom~" id="containerBottom"/>
-        <constraint firstItem="view" firstAttribute="top" secondItem="container" secondAttribute="top" constant="~android:paddingTop~" id="containerTop"/>
-        <constraint firstItem="view" firstAttribute="leading" secondItem="container" secondAttribute="leading" constant="~android:paddingStart~" id="containerLeading"/>
-        <constraint firstAttribute="trailing" secondItem="view" secondAttribute="trailing" constant="~android:paddingEnd~" id="containerTrailing"/>
-      </constraints>
-    </view>
 
 #FrameLayout
 - id: FrameLayout

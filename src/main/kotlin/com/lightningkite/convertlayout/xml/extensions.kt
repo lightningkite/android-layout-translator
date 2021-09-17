@@ -215,3 +215,17 @@ inline fun buildXmlDocument(name: String, action: Element.()->Unit): Document {
 operator fun Element.plusAssign(other: Node) {
     this.appendChild(other)
 }
+
+fun Document.clone(): Document {
+    val copy = defaultBuilder.newDocument()
+    copy.appendChild(copy.importNode(documentElement, true))
+    return copy
+}
+
+fun Element.getOrAppendChild(name: String): Element {
+    return this.childElements.find { it.tagName == name } ?: this.appendElement(name)
+}
+
+fun Element.getOrAppendChildWithKey(name: String, key: String): Element {
+    return this.childElements.find { it.tagName == name && it["key"] == key } ?: this.appendElement(name) { this["key"] = key }
+}

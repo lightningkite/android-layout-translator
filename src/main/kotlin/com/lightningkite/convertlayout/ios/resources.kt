@@ -75,11 +75,11 @@ fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawable
                         appendLine("endColor: ${gradient.endColor.value.swift}, ")
                         appendLine("gradientAngle: ${gradient.angle}, ")
                         appendLine("strokeColor: ${xml.stroke?.value?.swift ?: ".clear"}, ")
-                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift}, ")
-                        appendLine("topLeftRadius: ${xml.topLeftCorner?.value?.swift}, ")
-                        appendLine("topRightRadius: ${xml.topRightCorner?.value?.swift}, ")
-                        appendLine("bottomLeftRadius: ${xml.bottomLeftCorner?.value?.swift}, ")
-                        appendLine("bottomRightRadius: ${xml.bottomRightCorner?.value?.swift}")
+                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift ?: "0"}, ")
+                        appendLine("topLeftRadius: ${xml.topLeftCorner?.value?.swift ?: "0"}, ")
+                        appendLine("topRightRadius: ${xml.topRightCorner?.value?.swift ?: "0"}, ")
+                        appendLine("bottomLeftRadius: ${xml.bottomLeftCorner?.value?.swift ?: "0"}, ")
+                        appendLine("bottomRightRadius: ${xml.bottomRightCorner?.value?.swift ?: "0"}")
                         appendLine(")")
                     }
                     AndroidShape.Value.ShapeType.Oval -> {
@@ -89,7 +89,7 @@ fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawable
                         appendLine("endColor: ${gradient.endColor.value.swift}, ")
                         appendLine("gradientAngle: ${gradient.angle}, ")
                         appendLine("strokeColor: ${xml.stroke?.value?.swift ?: ".clear"}, ")
-                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift}")
+                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift ?: "0"}")
                         appendLine(")")
                     }
                 }
@@ -99,18 +99,18 @@ fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawable
                         appendLine("LayerMaker.rect(")
                         appendLine("fillColor: ${xml.fill?.value?.swift ?: ".clear"}, ")
                         appendLine("strokeColor: ${xml.stroke?.value?.swift ?: ".clear"}, ")
-                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift}, ")
-                        appendLine("topLeftRadius: ${xml.topLeftCorner?.value?.swift}, ")
-                        appendLine("topRightRadius: ${xml.topRightCorner?.value?.swift}, ")
-                        appendLine("bottomLeftRadius: ${xml.bottomLeftCorner?.value?.swift}, ")
-                        appendLine("bottomRightRadius: ${xml.bottomRightCorner?.value?.swift}")
+                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift ?: "0"}, ")
+                        appendLine("topLeftRadius: ${xml.topLeftCorner?.value?.swift ?: "0"}, ")
+                        appendLine("topRightRadius: ${xml.topRightCorner?.value?.swift ?: "0"}, ")
+                        appendLine("bottomLeftRadius: ${xml.bottomLeftCorner?.value?.swift ?: "0"}, ")
+                        appendLine("bottomRightRadius: ${xml.bottomRightCorner?.value?.swift ?: "0"}")
                         appendLine(")")
                     }
                     AndroidShape.Value.ShapeType.Oval -> {
                         appendLine("LayerMaker.oval(")
                         appendLine("fillColor: ${xml.fill?.value?.swift ?: ".clear"}, ")
                         appendLine("strokeColor: ${xml.stroke?.value?.swift ?: ".clear"}, ")
-                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift}")
+                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift ?: "0"}")
                         appendLine(")")
                     }
                 }
@@ -137,7 +137,6 @@ fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawable
 
             append("focused: ")
             xml.states.focused?.let { writeAndroidXml(resources, it) } ?: append("nil")
-            appendLine(",")
             appendLine("))")
         }
         is AndroidLayer.Value -> {
@@ -247,7 +246,7 @@ fun IosProject.importStringsDimensionsColors(resources: AndroidResources) {
         appendLine("")
         appendLine("import Foundation")
         appendLine("import UIKit")
-        appendLine("import LKButterfly")
+        appendLine("import XmlToXibRuntime")
         appendLine("")
         appendLine("")
         appendLine("public enum R {")
@@ -259,7 +258,7 @@ fun IosProject.importStringsDimensionsColors(resources: AndroidResources) {
                     appendLine("public static func ${entry.key.safeSwiftIdentifier()}() -> CALayer { return CAImageLayer(UIImage(named: \"${entry.key}.png\")) }")
             }
         }
-        appendLine("public static let allEntries: Dictionary<String, Drawable> = [")
+        appendLine("public static let allEntries: Dictionary<String, ()->CALayer> = [")
         var firstDrawable = true
         resources.drawables.keys.forEachBetween(
             forItem = { entry ->
@@ -295,10 +294,10 @@ fun IosProject.importStringsDimensionsColors(resources: AndroidResources) {
 
         for (entry in resources.colors.entries) {
             when (val value = entry.value) {
-                is AndroidColorResource -> appendLine("public static let ${entry.key}: UIColor = UIColor(named: \"color_${entry.key}\")")
+                is AndroidColorResource -> appendLine("public static let ${entry.key}: UIColor = UIColor(named: \"color_${entry.key}\")!")
                 is AndroidColorStateResource -> {
-                    appendLine("public static let ${entry.key}: UIColor = UIColor(named: \"color_${entry.key}\")")
-                    appendLine("public static let ${entry.key}State: StateSelector<UIColor> = StateSelector(normal: ${value.colors.normal.value.swift}, selected: ${value.colors.selected?.value?.swift ?: "nil"}, disabled: ${value.colors.disabled?.value?.swift ?: "nil"}, highlighted: ${value.colors.highlighted?.value?.swift ?: "nil"}, focused: ${value.colors.focused?.value?.swift ?: "nil"})")
+                    appendLine("public static let ${entry.key}: UIColor = UIColor(named: \"color_${entry.key}\")!")
+                    appendLine("public static let ${entry.key}State: StateSelector<UIColor> = StateSelector(normal: ${value.colors.normal.value.swift}, selected: ${value.colors.selected?.value?.swift ?: "nil"}, highlighted: ${value.colors.highlighted?.value?.swift ?: "nil"}, disabled: ${value.colors.disabled?.value?.swift ?: "nil"}, focused: ${value.colors.focused?.value?.swift ?: "nil"})")
                 }
             }
         }

@@ -8,5 +8,9 @@ data class IosProject(
 ) {
     val assetsFolder: File get() = folder.resolve("Assets.xcassets")
     val swiftResourcesFolder: File get() = folder.resolve("resources")
+    val layoutsFolder: File get() = swiftResourcesFolder.resolve("layouts")
     val baseFolderForLocalizations: File get() = folder.resolve("localizations")
 }
+
+
+

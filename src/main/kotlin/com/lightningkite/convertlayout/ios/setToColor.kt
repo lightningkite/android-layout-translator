@@ -19,7 +19,7 @@ fun Appendable.setToColor(color: AndroidColorValue?, controlView: String = "view
 }
 
 val AndroidColorValue.swift: String get() = when(this) {
-    is AndroidColor -> "UIColor(argb: 0x${value.android.drop(1)})"
+    is AndroidColor -> "UIColor(red: ${value.redFloat}, green: ${value.greenFloat}, blue: ${value.blueFloat}, alpha: ${value.alphaFloat})"
     is AndroidColorResource -> "R.color.${name}"
     is AndroidColorStateResource -> "R.color.${name}"
 }
