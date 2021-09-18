@@ -22,6 +22,11 @@ interface ReplacementRule: Comparable<ReplacementRule> {
     val debug: Boolean
     val priority: Int
     override fun compareTo(other: ReplacementRule): Int {
-        return other.priority - this.priority
+        val diff = other.priority - this.priority
+        if(diff != 0) return diff
+        if(this == other) return 0
+        val diff2 = System.identityHashCode(other) - System.identityHashCode(this)
+        if(diff2 != 0) return diff2
+        return 1
     }
 }

@@ -13,6 +13,10 @@ class IosProjectTest {
         "/Users/joseph/sync/XmlToXibRuntime/XmlToXibRuntimeExample/XmlToXibRuntimeExample"
     )
 
+    @Test fun justPush() {
+        macLocation.push()
+    }
+
     @Test
     fun testResources() {
         macLocation.pull()
@@ -44,7 +48,7 @@ class IosProjectTest {
         translator()
         println("Complete!")
 
-//        println("Pushing...")
-//        macLocation.push()
+        println("Pushing...")
+        macLocation.push()
     }
 }

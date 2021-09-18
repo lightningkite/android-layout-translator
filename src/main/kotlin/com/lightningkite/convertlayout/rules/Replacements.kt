@@ -22,6 +22,9 @@ class Replacements() {
         elementName: String,
         attributes: Map<String, String>
     ): ElementReplacement? = elements[elementName]?.firstOrNull {
+        if(it.debug) {
+            println("Checking against rule $it")
+        }
         it.attributes.entries.all { (key, value) ->
             val otherValue = attributes[key]
             when(value) {
@@ -37,8 +40,15 @@ class Replacements() {
         attributeName: String,
         attributeType: AttributeReplacement.ValueType
     ): AttributeReplacement? = attributes[attributeName]?.firstOrNull {
-        (it.valueType == attributeType)
+        val res = (it.valueType == attributeType)
                 && (it.element == null || it.element == elementName)
+        if(it.debug) {
+            println("Checking against rule $it")
+            println("    ${it.valueType} == ${attributeType}")
+            println("    ${it.element} == ${elementName}")
+            println("    ${res}")
+        }
+        res
     }
 
 

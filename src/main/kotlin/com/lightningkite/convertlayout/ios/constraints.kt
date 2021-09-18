@@ -22,7 +22,7 @@ enum class ConstraintRelation {
     lessThanOrEqual,
 }
 
-fun Element.addConstraint(
+private fun Element.addConstraint(
     firstItem: Element?,
     firstAttribute: ConstraintAttribute,
     secondItem: Element?,
@@ -40,6 +40,7 @@ fun Element.addConstraint(
             this["constant"] = constant.toString()
             this["multiplier"] = multiplier.toString()
             this["relation"] = relation.toString()
+            this["id"] = generateId()
         }
 }
 
@@ -80,30 +81,20 @@ fun ElementAnchor.constraint(other: ElementAnchor, relationship: ConstraintRelat
         else it
     }
     commonView.addConstraint(
-        firstItem = if(this.element == commonView) null else this.element,
-        firstAttribute = this.attribute,
-        secondItem = other.element,
-        secondAttribute = other.attribute,
+        firstItem = if(other.element == commonView) null else other.element,
+        firstAttribute = other.attribute,
+        secondItem = this.element,
+        secondAttribute = this.attribute,
+//        firstItem = if(this.element == commonView) null else this.element,
+//        firstAttribute = this.attribute,
+//        secondItem = other.element,
+//        secondAttribute = other.attribute,
         constant = constant,
         multiplier = multiplier,
         relation = relationship
     )
 }
-infix fun ElementAnchor.matches(other: ElementAnchor) {
-    val commonView = this.element.commonAncestor(other.element)!!.let {
-        if(it.tagName == "subviews") it.parentNode as Element
-        else it
-    }
-    commonView.addConstraint(
-        firstItem = if(this.element == commonView) null else this.element,
-        firstAttribute = this.attribute,
-        secondItem = other.element,
-        secondAttribute = other.attribute,
-        constant = 0.0,
-        multiplier = 1.0,
-        relation = ConstraintRelation.equal
-    )
-}
+infix fun ElementAnchor.matches(other: ElementAnchor) = this.constraint(other)
 fun ElementAnchor.setTo(constant: Double) {
     this.element.addConstraint(
         firstItem = null,

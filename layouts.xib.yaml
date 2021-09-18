@@ -59,7 +59,7 @@
     - 'android:drawableTop'
     - 'android:drawableBottom'
   template: |
-    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="248" verticalHuggingPriority="248" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" >
+    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" >
     </label>
 
 #Button
@@ -138,7 +138,7 @@
   insertChildrenAt: subviews
   childRule: linear
   template: |
-    <stackView opaque="NO" contentMode="scaleToFill" alignment="center" translatesAutoresizingMaskIntoConstraints="NO" >
+    <stackView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" >
       <subviews>
       </subviews>
       <constraints>
@@ -175,8 +175,6 @@
     </subviews>
     <constraints>
     </constraints>
-    <viewLayoutGuide key="contentLayoutGuide" />
-    <viewLayoutGuide key="frameLayoutGuide" />
     </scrollView>
 
 #HorizontalScrollView
@@ -190,8 +188,6 @@
     </subviews>
     <constraints>
     </constraints>
-    <viewLayoutGuide key="contentLayoutGuide" />
-    <viewLayoutGuide key="frameLayoutGuide" />
     </scrollView>
 
 #- id: "android:text"
@@ -274,6 +270,14 @@
 - id: android:text
   type: attribute  # TODO
 
+- id: android:text
+  type: attribute
+  element: TextView
+  rules:
+    "":
+      attribute:
+        text: ~value~
+
 - id: android:textColor
   type: attribute  # TODO
 
@@ -284,7 +288,20 @@
   type: attribute  # TODO
 
 - id: android:background
-  type: attribute  # TODO
+  type: attribute
+  valueType: Color
+  rules:
+    "":
+      append:
+        - '<color key="backgroundColor" red="~redFloat~" green="~greenFloat~" blue="~blueFloat~" alpha="~alphaFloat~" colorSpace="calibratedRGB"/>'
+
+- id: android:background
+  type: attribute
+  valueType: ColorResource
+  rules:
+    "":
+      append:
+        - '<color key="backgroundColor" name="color_~name~"/>'
 
 - id: android:color
   type: attribute  # TODO
@@ -338,7 +355,12 @@
   type: attribute  # TODO
 
 - id: android:orientation
-  type: attribute  # TODO
+  type: attribute
+  element: LinearLayout
+  rules:
+    "":
+      attribute:
+        axis: ~value~
 
 - id: android:showDividers
   type: attribute  # TODO

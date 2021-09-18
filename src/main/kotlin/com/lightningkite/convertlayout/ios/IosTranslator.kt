@@ -3,6 +3,7 @@ package com.lightningkite.convertlayout.ios
 import com.lightningkite.convertlayout.android.AndroidLayoutFile
 import com.lightningkite.convertlayout.android.AndroidResources
 import com.lightningkite.convertlayout.rules.Replacements
+import com.lightningkite.convertlayout.xml.cleanBlanks
 import com.lightningkite.convertlayout.xml.readXml
 import com.lightningkite.convertlayout.xml.writeXml
 import java.io.File
@@ -40,7 +41,7 @@ data class IosTranslator(
         project.layoutsFolder
             .also { it.mkdirs() }
             .resolve(layout.name + "Xml.xib")
-            .writeXml(instance.convertDocument(layout, layout.files.first().readXml()))
+            .writeXml(instance.convertDocument(layout, layout.files.first().readXml()).also { it.documentElement.cleanBlanks() })
         project.layoutsFolder
             .also { it.mkdirs() }
             .resolve(layout.name + "Xml.swift")

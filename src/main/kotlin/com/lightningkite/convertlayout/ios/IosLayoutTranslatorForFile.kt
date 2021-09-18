@@ -16,6 +16,7 @@ internal class IosLayoutTranslatorForFile(
 ) : AndroidLayoutTranslator(replacements, resources) {
 
     var outlets: MutableMap<String, SwiftIdentifier> = HashMap()
+    val usedResources: MutableSet<AndroidValue> = HashSet()
 
     override fun convertElement(
         destOwner: Element,
@@ -40,6 +41,13 @@ internal class IosLayoutTranslatorForFile(
                 ?.substringAfter('/')
                 ?.also { outlets[it] = newElement.swiftIdentifier() }
                 ?.let { newElement["id"] = it }
+            newElement.getOrPut("id") { generateId() }
+            if(sourceElement.childElements.none()) {
+                if(allAttributes["android:layout_width"] == "wrap_content")
+                    newElement["horizontalHuggingPriority"] = "750"
+                if(allAttributes["android:layout_height"] == "wrap_content")
+                    newElement["verticalHuggingPriority"] = "750"
+            }
 
             // Handle children
             handleChildren(rules, newElement, sourceElement)
@@ -50,12 +58,22 @@ internal class IosLayoutTranslatorForFile(
             return newElement
         } else {
             val outerElement = destOwner.appendElement("view")
+            outerElement["translatesAutoresizingMaskIntoConstraints"] = "NO"
             val innerElement =
                 outerElement.getOrAppendChild("subviews").appendFragment(rules.asSequence().mapNotNull { it.template }.first().write { sourceElement.getPath(it) })
             allAttributes["android:id"]
                 ?.substringAfter('/')
                 ?.also { outlets[it] = innerElement.swiftIdentifier() }
                 ?.let { innerElement["id"] = it }
+            outerElement.getOrPut("id") { generateId() }
+            innerElement.getOrPut("id") { generateId() }
+
+            if(sourceElement.childElements.none()) {
+                if(allAttributes["android:layout_width"] == "wrap_content")
+                    innerElement["horizontalHuggingPriority"] = "750"
+                if(allAttributes["android:layout_height"] == "wrap_content")
+                    innerElement["verticalHuggingPriority"] = "750"
+            }
 
             // Set up constraints between outer/inner based on padding
             val padding = outerAttributes.insets("android:padding", resources)
@@ -71,7 +89,7 @@ internal class IosLayoutTranslatorForFile(
             handleAttributes(outerAttributes, sourceElement, outerElement)
             handleAttributes(innerAttributes, sourceElement, innerElement)
 
-            return innerElement
+            return outerElement
         }
     }
 
@@ -99,7 +117,7 @@ internal class IosLayoutTranslatorForFile(
                     .groupingBy { it }
                     .eachCount()
                     .entries
-                    .maxByOrNull { it.value }
+                    .maxByOrNull { it.value + if(it.key == AlignOrStretch.STRETCH) 0.1 else 0.0 }
                     ?.key ?: defaultAlignInSource
                 val minMargins: Insets = sourceElement.childElements
                     .map { it.allAttributes.insets("android:layout_margin", resources) }
@@ -131,17 +149,18 @@ internal class IosLayoutTranslatorForFile(
                 destElement["spacing"] = (minMargins.start(isVertical) + minMargins.end(isVertical)).toString()
 
                 // Set default margin on stackView via adding to content insets
+                val myMargins = myPadding + minMargins
                 destElement.getOrAppendChildWithKey("edgeInsets", "layoutMargins").apply {
                     if(isVertical) {
-                        this["top"] = (myPadding.top + minMargins.top).toString()
-                        this["bottom"] = (myPadding.bottom + minMargins.bottom).toString()
-                        this["left"] = myPadding.left.toString()
-                        this["right"] = myPadding.right.toString()
+                        this["top"] = myMargins.top.toString()
+                        this["bottom"] = myMargins.bottom.toString()
+                        this["left"] = myMargins.left.toString()
+                        this["right"] = myMargins.right.toString()
                     } else {
-                        this["left"] = (myPadding.left + minMargins.left).toString()
-                        this["right"] = (myPadding.right + minMargins.right).toString()
-                        this["top"] = myPadding.top.toString()
-                        this["bottom"] = myPadding.bottom.toString()
+                        this["left"] = myMargins.left.toString()
+                        this["right"] = myMargins.right.toString()
+                        this["top"] = myMargins.top.toString()
+                        this["bottom"] = myMargins.bottom.toString()
                     }
                 }
 
@@ -162,20 +181,27 @@ internal class IosLayoutTranslatorForFile(
 
                         if(additionalStartPadding > 0.0) {
                             val spacer = target.appendElement("view")
+                            spacer.getOrPut("id") { generateId() }
+                            spacer["translatesAutoresizingMaskIntoConstraints"] = "NO"
                             spacer.anchorSize(isVertical).setTo(additionalStartPadding)
                         }
-                        val d = convertElement(target, child)
+                        val destChild = convertElement(target, child)
                         if(additionalEndPadding > 0.0) {
                             val spacer = target.appendElement("view")
+                            spacer.getOrPut("id") { generateId() }
+                            spacer["translatesAutoresizingMaskIntoConstraints"] = "NO"
                             spacer.anchorSize(isVertical).setTo(additionalEndPadding)
                         }
-                        d
+                        destChild
                     } else {
                         val outerElement = target.appendElement("view")
-                        when(defaultAlignInSource) {
-                            AlignOrStretch.START -> outerElement.anchorEnd(!isVertical) matches destElement.anchorEnd(!isVertical)
+                        outerElement.getOrPut("id") { generateId() }
+                        outerElement["translatesAutoresizingMaskIntoConstraints"] = "NO"
+                        println("Wrapping, $commonAlign -> $childAlign")
+                        when(commonAlign) {
+                            AlignOrStretch.START -> outerElement.anchorEnd(!isVertical).constraint(destElement.anchorEnd(!isVertical), constant = myMargins.left.also { println("myMargins.left -> $it") })
                             AlignOrStretch.CENTER,
-                            AlignOrStretch.END -> destElement.anchorStart(!isVertical) matches outerElement.anchorStart(!isVertical)
+                            AlignOrStretch.END -> destElement.anchorStart(!isVertical).constraint(outerElement.anchorStart(!isVertical), constant = myMargins.right.also { println("myMargins.right -> $it") })
                             AlignOrStretch.STRETCH -> {}
                         }
 
@@ -186,11 +212,15 @@ internal class IosLayoutTranslatorForFile(
                         when(childAlign) {
                             AlignOrStretch.START -> {
                                 outerElement.anchorStart(!isVertical).constraint(innerElement.anchorStart(!isVertical), constant = childMargins.start(!isVertical))
+                                innerElement.anchorEnd(!isVertical).constraint(outerElement.anchorEnd(!isVertical), relationship = ConstraintRelation.greaterThanOrEqual, constant = childMargins.end(!isVertical))
                             }
                             AlignOrStretch.CENTER -> {
+                                outerElement.anchorStart(!isVertical).constraint(innerElement.anchorStart(!isVertical), relationship = ConstraintRelation.greaterThanOrEqual, constant = childMargins.start(!isVertical))
+                                innerElement.anchorEnd(!isVertical).constraint(outerElement.anchorEnd(!isVertical), relationship = ConstraintRelation.greaterThanOrEqual, constant = childMargins.end(!isVertical))
                                 outerElement.anchorCenter(!isVertical).constraint(innerElement.anchorCenter(!isVertical))
                             }
                             AlignOrStretch.END -> {
+                                outerElement.anchorStart(!isVertical).constraint(innerElement.anchorStart(!isVertical), relationship = ConstraintRelation.greaterThanOrEqual, constant = childMargins.start(!isVertical))
                                 innerElement.anchorEnd(!isVertical).constraint(outerElement.anchorEnd(!isVertical), constant = childMargins.end(!isVertical))
                             }
                             AlignOrStretch.STRETCH -> {
@@ -205,7 +235,7 @@ internal class IosLayoutTranslatorForFile(
                     if(childWeight > 0) {
                         destChild["${if(isVertical) "vertical" else "horizontal"}HuggingPriority"] = "100"
                         firstWeightedChild?.let {
-                            destChild.anchorSize(isVertical).constraint(it.anchorSize(isVertical), multiplier = childWeight / firstWeightedChildWeight)
+                            destChild.anchorSize(isVertical).constraint(it.anchorSize(isVertical), multiplier = firstWeightedChildWeight / childWeight)
                         } ?: run {
                             firstWeightedChild = destChild
                             firstWeightedChildWeight = childWeight
@@ -214,9 +244,11 @@ internal class IosLayoutTranslatorForFile(
                     handleSetSize(childAttributes, destChild)
                 }
 
-                // If no weights, add final spacer view
-                if(firstWeightedChild == null) {
+                // If no weights AND size isn't wrap content, add final spacer view
+                if(firstWeightedChild == null && sourceElement.allAttributes["android:layout_${if(isVertical) "height" else "width"}"] != "wrap_content") {
                     target.appendElement("view") {
+                        getOrPut("id") { generateId() }
+                        this["translatesAutoresizingMaskIntoConstraints"] = "NO"
                         this["${if(isVertical) "vertical" else "horizontal"}HuggingPriority"] = "100"
                     }
                 }
@@ -224,7 +256,7 @@ internal class IosLayoutTranslatorForFile(
             "frame" -> {
                 val myAttributes = sourceElement.allAttributes
                 for (child in sourceElement.children.mapNotNull { it as? Element }) {
-                    val childAttributes = sourceElement.allAttributes
+                    val childAttributes = child.allAttributes
                     val childElement = convertElement(target, child)
                     val total = myAttributes.insets("android:padding", resources) + childAttributes.insets("android:layout_margin", resources)
                     val gravity = childAttributes["android:layout_gravity"]?.toGravity() ?: Gravity()
@@ -278,25 +310,35 @@ internal class IosLayoutTranslatorForFile(
         }
     }
 
+    override fun handleAttribute(sourceElement: Element, destElement: Element, key: String, raw: String) {
+        usedResources.add(resources.read(raw))
+        super.handleAttribute(sourceElement, destElement, key, raw)
+    }
+
     private fun handleSetSize(
         childAttributes: Map<String, String>,
         childElement: Element
     ) {
-        childAttributes["android:layout_width"]?.let { resources.read(it) as? AndroidDimensionValue }?.measurement?.number?.let {
-            childElement.anchorWidth.setTo(it)
+        childAttributes["android:layout_width"]?.let {
+            (resources.read(it) as? AndroidDimensionValue)?.measurement?.number?.takeUnless { it == 0.0 }?.let {
+                childElement.anchorWidth.setTo(it)
+            }
         }
-        childAttributes["android:layout_height"]?.let { resources.read(it) as? AndroidDimensionValue }?.measurement?.number?.let {
-            childElement.anchorHeight.setTo(it)
+        childAttributes["android:layout_height"]?.let {
+            (resources.read(it) as? AndroidDimensionValue)?.measurement?.number?.takeUnless { it == 0.0 }?.let {
+                childElement.anchorHeight.setTo(it)
+            }
         }
     }
 
     fun convertDocument(layout: AndroidLayoutFile, androidXml: Document): Document {
         outlets.clear()
         val xib = baseFile.clone()
-        val resourceNode = xib.documentElement.xpathElement("resources")
+        val resourceNode = xib.documentElement.xpathElement("resources")!!
         val objectsNode = xib.documentElement.xpathElement("objects")!!
         val fileOwnerIdentifier = objectsNode.xpathElement("placeholder[@placeholderIdentifier=\"IBFilesOwner\"]")!!
         val view = convertElement(objectsNode, androidXml.documentElement)
+        view.getOrPut("id") { generateId() }
         fileOwnerIdentifier["customClass"] = layout.name + "Xml"
         fileOwnerIdentifier["customModule"] = project.name
         fileOwnerIdentifier.getOrAppendChild("connections").apply {
@@ -308,6 +350,22 @@ internal class IosLayoutTranslatorForFile(
                 }
             }
         }
+        usedResources
+            .asSequence()
+            .mapNotNull { it as? AndroidColorResource }
+            .forEach {
+                resourceNode.appendElement("namedColor") {
+                    this["name"] = "color_${it.name}"
+                    appendElement("color") {
+                        this["red"] = it.value.redFloat.toString()
+                        this["green"] = it.value.greenFloat.toString()
+                        this["blue"] = it.value.blueFloat.toString()
+                        this["alpha"] = it.value.alphaFloat.toString()
+                        this["colorSpace"] = "custom"
+                        this["customColorSpace"] = "sRGB"
+                    }
+                }
+            }
         return xib
     }
 

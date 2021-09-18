@@ -1,9 +1,6 @@
 package com.lightningkite.convertlayout.xml
 
-import org.w3c.dom.Document
-import org.w3c.dom.Element
-import org.w3c.dom.Node
-import org.w3c.dom.NodeList
+import org.w3c.dom.*
 import org.xml.sax.InputSource
 import java.io.File
 import java.io.StringReader
@@ -11,6 +8,7 @@ import java.io.StringWriter
 import java.util.*
 import java.util.function.Consumer
 import javax.xml.parsers.DocumentBuilderFactory
+import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
@@ -182,6 +180,17 @@ fun Element.appendElement(name: String): Element {
 fun Element.appendText(text: String) = appendChild(ownerDocument.createTextNode(text))
 inline fun Element.appendElement(name: String, setup: Element.()->Unit): Element = appendChild(ownerDocument.createElement(name).apply(setup)) as Element
 
+fun Element.cleanBlanks() {
+    children.toList().forEach {
+        when (it) {
+            is Text -> if(it.wholeText.all { it.isWhitespace() }) {
+                removeChild(it)
+            } else it.replaceWholeText(it.wholeText.trim())
+            is Element -> it.cleanBlanks()
+        }
+    }
+}
+
 fun NodeList.fix(): NodeListList = NodeListList(this)
 inline fun XPathExpression.evaluateNodeSet(on: Any): NodeList? = evaluate(on, XPathConstants.NODESET) as? NodeList
 inline fun XPathExpression.evaluateNode(on: Any): Node? = evaluate(on, XPathConstants.NODE) as? Node
@@ -207,12 +216,20 @@ fun File.writeXml(document: Document) = this.bufferedWriter().use { writer ->
     TransformerFactory
         .newInstance()
         .newTransformer()
+        .apply {
+            setOutputProperty(OutputKeys.INDENT, "yes")
+            setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+        }
         .transform(DOMSource(document), StreamResult(writer))
 }
 fun Document.writeToString(): String = StringWriter().use {
     TransformerFactory
         .newInstance()
         .newTransformer()
+        .apply {
+            setOutputProperty(OutputKeys.INDENT, "yes")
+            setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+        }
         .transform(DOMSource(this), StreamResult(it))
     it.toString()
 }
