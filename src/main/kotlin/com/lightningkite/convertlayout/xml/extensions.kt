@@ -1,6 +1,5 @@
 package com.lightningkite.convertlayout.xml
 
-import com.fasterxml.jackson.databind.node.TextNode
 import org.w3c.dom.Document
 import org.w3c.dom.Element
 import org.w3c.dom.Node
@@ -23,6 +22,11 @@ val defaultBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
 val defaultXPathFactory = XPathFactory.newInstance()
 
 operator fun Element.get(key: String): String? = this.getAttribute(key).takeUnless { it.isEmpty() }
+fun Element.getOrPut(key: String, generate: ()->String): String = this.getAttribute(key).takeUnless { it.isEmpty() } ?: run {
+    val g = generate()
+    this.setAttribute(key, g)
+    g
+}
 operator fun Element.set(key: String, value: String) = this.setAttribute(key, value)
 val Element.attributeMap: AttributesMap get() = AttributesMap(this)
 val Element.children: List<Node> get() = NodeListList(this.childNodes)
@@ -161,12 +165,20 @@ class DeferIterator<E>(val parentList: List<E>, var cursor: Int = 0): ListIterat
 }
 
 fun Element.appendFragment(fragment: String): Element {
-    val node = defaultBuilder.parse(InputSource(StringReader(fragment))).documentElement
-    ownerDocument.adoptNode(node)
-    this.appendChild(node)
-    return node
+    try {
+        val node = defaultBuilder.parse(InputSource(StringReader(fragment))).documentElement
+        ownerDocument.adoptNode(node)
+        this.appendChild(node)
+        return node
+    } catch(e: Exception) {
+        throw Exception("Unable to inflate $fragment", e)
+    }
 }
-fun Element.appendElement(name: String) = appendChild(ownerDocument.createElement(name)) as Element
+fun Element.appendElement(name: String): Element {
+    val newElement = appendChild(ownerDocument.createElement(name)) as Element
+    assert(childElements.contains(newElement))
+    return newElement
+}
 fun Element.appendText(text: String) = appendChild(ownerDocument.createTextNode(text))
 inline fun Element.appendElement(name: String, setup: Element.()->Unit): Element = appendChild(ownerDocument.createElement(name).apply(setup)) as Element
 

@@ -1,10 +1,8 @@
 package com.lightningkite.convertlayout.ios
 
-import com.lightningkite.convertlayout.xml.appendElement
-import com.lightningkite.convertlayout.xml.get
-import com.lightningkite.convertlayout.xml.getOrAppendChild
-import com.lightningkite.convertlayout.xml.set
+import com.lightningkite.convertlayout.xml.*
 import org.w3c.dom.Element
+import kotlin.collections.getOrPut
 
 
 enum class ConstraintAttribute {
@@ -35,9 +33,9 @@ fun Element.addConstraint(
 ) {
     this.getOrAppendChild("constraints")
         .appendElement("constraint") {
-            firstItem?.let { this["firstItem"] = it["id"]!! }
+            firstItem?.let { this["firstItem"] = it.getOrPut("id") { generateId() } }
             this["firstAttribute"] = firstAttribute.toString()
-            secondItem?.let { this["secondItem"] = it["id"]!! }
+            secondItem?.let { this["secondItem"] = it.getOrPut("id") { generateId() } }
             secondAttribute?.let { this["secondAttribute"] = it.toString() }
             this["constant"] = constant.toString()
             this["multiplier"] = multiplier.toString()

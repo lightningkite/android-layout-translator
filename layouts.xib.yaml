@@ -4,52 +4,52 @@
 - id: View
   type: element
   template: |
-    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" >
     </view>
 
 #Space
 - id: Space
   type: element
   template: |
-    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" >
     </view>
 
 #ProgressBar
 - id: ProgressBar
   type: element
-  autowrapFor:
+  autoWrapFor:
     - 'android:padding'
     - 'android:background'
   template: |
-    <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" >
     </activityIndicatorView>
 
 #ProgressBar
 - id: ProgressBar
   type: element
-  autowrapFor:
+  autoWrapFor:
     - 'android:padding'
     - 'android:background'
   attributes:
     style: ?android:attr/progressBarStyleHorizontal
   template: |
-    <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" >
     </progressView>
 
 #ImageView
 - id: ImageView
   type: element
-  autowrapFor:
+  autoWrapFor:
     - 'android:padding'
     - 'android:background'
   template: |
-    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" >
     </imageView>
 
 #TextView
 - id: TextView
   type: element
-  autowrapFor:
+  autoWrapFor:
     - 'android:padding'
     - 'android:background'
     - 'android:drawableLeft'
@@ -59,13 +59,13 @@
     - 'android:drawableTop'
     - 'android:drawableBottom'
   template: |
-    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="248" verticalHuggingPriority="248" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="248" verticalHuggingPriority="248" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" >
     </label>
 
 #Button
 - id: Button
   type: element
-  autowrapFor:
+  autoWrapFor:
     - 'android:drawableLeft'
     - 'android:drawableRight'
     - 'android:drawableStart'
@@ -73,7 +73,7 @@
     - 'android:drawableTop'
     - 'android:drawableBottom'
   template: |
-    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" >
     <inset key="contentEdgeInsets" top="~android:paddingTop~" left="~android:paddingLeft~" bottom="~android:paddingBottom~" right="~android:paddingRight~"/>
     </button>
 
@@ -81,25 +81,25 @@
 - id: ImageButton
   type: element
   template: |
-    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" >
     <inset key="contentEdgeInsets" top="~android:paddingTop~" left="~android:paddingLeft~" bottom="~android:paddingBottom~" right="~android:paddingRight~"/>
     </button>
 
 #ToggleButton
 - id: ToggleButton
   type: element
-  deferTo: Button
+  parent: Button
 
 #Spinner
 - id: ToggleButton
   type: element
-  deferTo: Button
+  parent: Button
 
 #SeekBar
 - id: SeekBar
   type: element
   template: |
-    <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" >
     </slider>
 
 #RatingBar TODO
@@ -107,18 +107,38 @@
 #RadioButton TODO
 #Switch TODO
 #RadioGroup TODO
-#EditText TODO
+
+#EditText
+- id: EditText
+  type: element
+  autoWrapFor:
+    - 'android:padding'
+    - 'android:background'
+    - 'android:drawableLeft'
+    - 'android:drawableRight'
+    - 'android:drawableStart'
+    - 'android:drawableEnd'
+    - 'android:drawableTop'
+    - 'android:drawableBottom'
+  insertChildrenAt: subviews
+  childRule: linear
+  template: |
+    <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" >
+        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+        <textInputTraits key="textInputTraits"/>
+    </textField>
+
 #AutoCompleteTextView TODO
 
 #LinearLayout
 - id: LinearLayout
   type: element
-  autowrapFor:
+  autoWrapFor:
     - 'android:background'
   insertChildrenAt: subviews
   childRule: linear
   template: |
-    <stackView opaque="NO" contentMode="scaleToFill" alignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <stackView opaque="NO" contentMode="scaleToFill" alignment="center" translatesAutoresizingMaskIntoConstraints="NO" >
       <subviews>
       </subviews>
       <constraints>
@@ -132,7 +152,7 @@
   insertChildrenAt: subviews
   childRule: frame
   template: |
-    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" >
       <subviews>
       </subviews>
       <constraints>
@@ -142,7 +162,7 @@
 #ViewFlipper
 - id: ViewFlipper
   type: element
-  deferTo: FrameLayout
+  parent: FrameLayout
 
 #ScrollView
 - id: ScrollView
@@ -150,13 +170,13 @@
   insertChildrenAt: subviews
   childRule: scroll-vertical
   template: |
-    <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" >
     <subviews>
     </subviews>
     <constraints>
     </constraints>
-    <viewLayoutGuide key="contentLayoutGuide" id="contentLayoutGuide"/>
-    <viewLayoutGuide key="frameLayoutGuide" id="frameLayoutGuide"/>
+    <viewLayoutGuide key="contentLayoutGuide" />
+    <viewLayoutGuide key="frameLayoutGuide" />
     </scrollView>
 
 #HorizontalScrollView
@@ -165,13 +185,13 @@
   insertChildrenAt: subviews
   childRule: scroll-horizontal
   template: |
-    <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="view">
+    <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" >
     <subviews>
     </subviews>
     <constraints>
     </constraints>
-    <viewLayoutGuide key="contentLayoutGuide" id="contentLayoutGuide"/>
-    <viewLayoutGuide key="frameLayoutGuide" id="frameLayoutGuide"/>
+    <viewLayoutGuide key="contentLayoutGuide" />
+    <viewLayoutGuide key="frameLayoutGuide" />
     </scrollView>
 
 #- id: "android:text"

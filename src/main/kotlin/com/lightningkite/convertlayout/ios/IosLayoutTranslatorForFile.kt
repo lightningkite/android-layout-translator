@@ -36,6 +36,10 @@ internal class IosLayoutTranslatorForFile(
         if(outerAttributes.isEmpty()) {
             val newElement =
                 destOwner.appendFragment(rules.asSequence().mapNotNull { it.template }.first().write { sourceElement.getPath(it) })
+            allAttributes["android:id"]
+                ?.substringAfter('/')
+                ?.also { outlets[it] = newElement.swiftIdentifier() }
+                ?.let { newElement["id"] = it }
 
             // Handle children
             handleChildren(rules, newElement, sourceElement)
@@ -43,12 +47,15 @@ internal class IosLayoutTranslatorForFile(
             // Handle attributes
             handleAttributes(innerAttributes, sourceElement, newElement)
 
-            newElement["id"] = allAttributes["android:id"]?.also { outlets[it] = newElement.swiftIdentifier() } ?: generateId()
             return newElement
         } else {
             val outerElement = destOwner.appendElement("view")
             val innerElement =
                 outerElement.getOrAppendChild("subviews").appendFragment(rules.asSequence().mapNotNull { it.template }.first().write { sourceElement.getPath(it) })
+            allAttributes["android:id"]
+                ?.substringAfter('/')
+                ?.also { outlets[it] = innerElement.swiftIdentifier() }
+                ?.let { innerElement["id"] = it }
 
             // Set up constraints between outer/inner based on padding
             val padding = outerAttributes.insets("android:padding", resources)
@@ -64,7 +71,6 @@ internal class IosLayoutTranslatorForFile(
             handleAttributes(outerAttributes, sourceElement, outerElement)
             handleAttributes(innerAttributes, sourceElement, innerElement)
 
-            innerElement["id"] = allAttributes["android:id"]?.also { outlets[it] = innerElement.swiftIdentifier() } ?: generateId()
             return innerElement
         }
     }
@@ -289,12 +295,11 @@ internal class IosLayoutTranslatorForFile(
         val xib = baseFile.clone()
         val resourceNode = xib.documentElement.xpathElement("resources")
         val objectsNode = xib.documentElement.xpathElement("objects")!!
-        val fileOwnerIdentifier = xib.documentElement.xpathElement("objects[@placeholderIdentifier=IBFilesOwner]")
-        val firstResponderIdentifier = xib.documentElement.xpathElement("objects[@placeholderIdentifier=IBFirstResponder]")
+        val fileOwnerIdentifier = objectsNode.xpathElement("placeholder[@placeholderIdentifier=\"IBFilesOwner\"]")!!
         val view = convertElement(objectsNode, androidXml.documentElement)
-        view["customClass"] = layout.name + "Xml"
-        view["customModule"] = project.name
-        view.getOrAppendChild("connections").apply {
+        fileOwnerIdentifier["customClass"] = layout.name + "Xml"
+        fileOwnerIdentifier["customModule"] = project.name
+        fileOwnerIdentifier.getOrAppendChild("connections").apply {
             for(entry in outlets) {
                 appendElement("outlet") {
                     this["property"] = entry.key

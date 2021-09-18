@@ -83,6 +83,7 @@ class AndroidResources {
         getDrawables(androidResourcesDirectory)
         getStyles(androidResourcesDirectory.resolve("values/styles.xml"))
         getStyles(androidResourcesDirectory.resolve("values/themes.xml"))
+        layouts.putAll(AndroidLayoutFile.parseAll(androidResourcesDirectory, this).mapValues { AndroidLayoutResource(it.key, Lazy(it.value)) })
     }
 
     private fun getStyles(file: File) {

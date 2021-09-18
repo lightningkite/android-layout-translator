@@ -30,10 +30,21 @@ class IosProjectTest {
             println(i.key + ": " + i.value)
         }
 
+        println("Rules for Elements: ")
+        for(i in translator.replacements.elements) {
+            println(i.key + ": " + i.value)
+        }
+
+        println("Rules for Attributes: ")
+        for(i in translator.replacements.attributes) {
+            println(i.key + ": " + i.value)
+        }
+
         println("Starting...")
         translator()
+        println("Complete!")
 
-        println("Pushing...")
-        macLocation.push()
+//        println("Pushing...")
+//        macLocation.push()
     }
 }

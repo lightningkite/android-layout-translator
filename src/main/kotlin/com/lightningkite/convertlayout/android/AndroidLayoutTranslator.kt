@@ -39,6 +39,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         destElement: Element,
         sourceElement: Element
     ) {
+        if(sourceElement.childElements.none()) return
         rules.mapNotNull { it.insertChildrenAt }.firstOrNull()?.let { path ->
             val target =
                 destElement.xpathElement(path) ?: throw IllegalArgumentException("No element found for path '$path'")

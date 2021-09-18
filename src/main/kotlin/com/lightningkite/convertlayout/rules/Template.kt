@@ -1,17 +1,20 @@
 package com.lightningkite.convertlayout.rules
 
+import com.fasterxml.jackson.annotation.JsonCreator
+
 data class Template(val parts: List<TemplatePart>) {
-    constructor(string: String):this(Unit.run {
+    @JsonCreator constructor(string: String):this(Unit.run {
+        val substring = string.trim()
         val parts = ArrayList<TemplatePart>()
         var position = 0
         var inside = false
         while(true) {
-            val next = string.indexOf('~', position)
+            val next = substring.indexOf('~', position)
             if(next == -1) {
-                parts.add(TemplatePart.Text(string.substring(position + 1)))
+                parts.add(TemplatePart.Text(substring.substring(position)))
                 break
             } else {
-                val section = string.substring(position + 1, next)
+                val section = substring.substring(position, next)
                 if(inside){
                     parts.add(TemplatePart.Variable(section))
                 } else {

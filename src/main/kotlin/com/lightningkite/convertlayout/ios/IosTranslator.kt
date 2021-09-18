@@ -4,6 +4,7 @@ import com.lightningkite.convertlayout.android.AndroidLayoutFile
 import com.lightningkite.convertlayout.android.AndroidResources
 import com.lightningkite.convertlayout.rules.Replacements
 import com.lightningkite.convertlayout.xml.readXml
+import com.lightningkite.convertlayout.xml.writeXml
 import java.io.File
 
 data class IosTranslator(
@@ -22,7 +23,7 @@ data class IosTranslator(
             replacementFolders
                 .asSequence()
                 .flatMap { it.walkTopDown() }
-                .filter { it.endsWith(".xib.yaml") }
+                .filter { it.name.endsWith(".xib.yaml") }
                 .forEach { this += it }
         },
         resources = AndroidResources().apply {
@@ -36,10 +37,13 @@ data class IosTranslator(
     }
     fun translate(layout: AndroidLayoutFile) {
         val instance = make()
-        instance.convertDocument(layout, layout.files.find { it.path.contains("drawable" + org.jetbrains.kotlin.konan.file.File.separator) }!!.readXml())
         project.layoutsFolder
             .also { it.mkdirs() }
-            .resolve(layout.name + "Xml")
+            .resolve(layout.name + "Xml.xib")
+            .writeXml(instance.convertDocument(layout, layout.files.first().readXml()))
+        project.layoutsFolder
+            .also { it.mkdirs() }
+            .resolve(layout.name + "Xml.swift")
             .writeText(instance.swiftFile(layout))
     }
     operator fun invoke() {
