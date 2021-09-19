@@ -13,7 +13,7 @@ class AndroidResources {
     var styles: MutableMap<String, AndroidStyle> = HashMap()
     val colors: MutableMap<String, AndroidColorValue> = HashMap()
     val drawables: MutableMap<String, AndroidDrawable> = HashMap()
-    val fonts: MutableMap<String, AndroidFont> = HashMap()
+    val fonts: MutableMap<String, AndroidFontValue> = HashMap()
     val strings: MutableMap<String, AndroidStringResource> = HashMap()
     val dimensions: MutableMap<String, AndroidDimensionResource> = HashMap()
     val layouts: MutableMap<String, AndroidLayoutResource> = HashMap()
@@ -64,7 +64,7 @@ class AndroidResources {
                 )
             )
             value.toDoubleOrNull() != null -> AndroidNumber(value.toDouble())
-            else -> AndroidString(value)
+            else -> AndroidString(value.replace("\\n", "\n").replace("\\t", "\t"))
         }
     }
     
@@ -263,7 +263,6 @@ class AndroidResources {
     private fun getFonts(folder: File) {
         if (!folder.exists()) return
         if (!folder.isDirectory) return
-        println("Looking for fonts in ${folder}...")
         //fonts themselves first
         folder.listFiles()!!
             .filter { it.extension.toLowerCase() == "otf" || it.extension.toLowerCase() == "ttf" }
@@ -278,7 +277,6 @@ class AndroidResources {
                         name = font.name.filter { it in '!'..'~' },
                         file = file
                     )
-                    println("Found font $iosFont")
                     fonts[file.nameWithoutExtension] = iosFont
                 } catch (e: Exception) {
                     println("Font read failed for $file")
@@ -293,16 +291,14 @@ class AndroidResources {
         folder.listFiles()!!
             .filter { it.extension.toLowerCase() == "xml" }
             .forEach { file ->
-                println("Found font set $file")
                 val xml = file.readXml().documentElement
-                xml.childElements
-                    .filter { it.tagName == "font" }
-                    .mapNotNull { it["android:font"] }
-                    .forEach {
-                        val name = it.substringAfter('/')
-                        fonts[file.nameWithoutExtension] =
-                            fonts[name] ?: throw IllegalArgumentException("No font $name found")
-                    }
+                fonts[file.nameWithoutExtension] = AndroidFontSet(
+                    xml.childElements
+                        .filter { it.tagName == "font" }
+                        .mapNotNull { it["android:font"] }
+                        .map { readLazy<AndroidFont>(it) }
+                        .toList()
+                )
             }
     }
 

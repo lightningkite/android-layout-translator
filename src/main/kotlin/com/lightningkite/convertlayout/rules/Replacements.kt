@@ -1,18 +1,17 @@
 package com.lightningkite.convertlayout.rules
 
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.MapperFeature
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import java.io.File
 import java.util.*
 import kotlin.collections.HashMap
-import kotlin.collections.HashSet
 
 class Replacements() {
 
     companion object {
-        val mapper = YAMLMapper().registerKotlinModule()
+        val mapper = YAMLMapper().registerKotlinModule().enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
     }
 
     val elements: HashMap<String, TreeSet<ElementReplacement>> = HashMap()
@@ -38,14 +37,19 @@ class Replacements() {
     fun getAttribute(
         elementName: String,
         attributeName: String,
-        attributeType: AttributeReplacement.ValueType
+        attributeType: AttributeReplacement.ValueType,
+        rawValue: String
     ): AttributeReplacement? = attributes[attributeName]?.firstOrNull {
-        val res = (it.valueType == attributeType)
+        val res = (it.valueType == attributeType.general)
+                && (it.subtype == null || it.subtype == attributeType)
                 && (it.element == null || it.element == elementName)
+                && (it.equalTo == null || it.equalTo == rawValue)
         if(it.debug) {
             println("Checking against rule $it")
-            println("    ${it.valueType} == ${attributeType}")
-            println("    ${it.element} == ${elementName}")
+            println("    ${it.valueType} == ${attributeType.general}")
+            println("    ${it.subtype} == null or ${attributeType}")
+            println("    ${it.element} == null or ${elementName}")
+            println("    ${it.equalTo} == null or ${rawValue}")
             println("    ${res}")
         }
         res

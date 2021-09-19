@@ -2,8 +2,21 @@ package com.lightningkite.convertlayout.android
 
 import com.lightningkite.convertlayout.rules.AttributeReplacement
 import com.lightningkite.convertlayout.xml.get
+import com.lightningkite.convertlayout.xml.readXml
 import org.w3c.dom.Element
 import java.io.File
+import javax.imageio.ImageIO
+
+data class Size(val width: Int, val height: Int) {
+    operator fun times(amount: Int): Size = Size(
+        width * amount,
+        height * amount,
+    )
+    operator fun div(amount: Int): Size = Size(
+        width / amount,
+        height / amount,
+    )
+}
 
 class Lazy<T>(val name: String, val getter: () -> T) {
     constructor(direct: T) : this(direct.toString(), { direct })
@@ -66,6 +79,9 @@ sealed interface AndroidDrawable : AndroidValue {
 sealed interface AndroidNamedDrawable : AndroidDrawable {
     val name: String
 }
+sealed interface AndroidNamedDrawableWithSize : AndroidNamedDrawable {
+    val size: Size
+}
 
 sealed interface AndroidXmlDrawable : AndroidNamedDrawable {
     val value: AndroidDrawableXml
@@ -83,13 +99,26 @@ sealed interface AndroidColorValue : AndroidDrawable {
 
 sealed interface AndroidStringValue : AndroidValue {
     val value: String
+    override fun get(key: String): Any? = when(key){
+        "escaped" -> value
+            .replace("\n", "&#xA;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&apos;")
+            .replace("\t", "&#x9;")
+        else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
+    }
+}
+
+sealed interface AndroidFontValue : AndroidValue {
 }
 
 data class AndroidFont(
     val family: String,
     val name: String,
     val file: File? = null
-) : AndroidValue {
+) : AndroidFontValue {
     override val type: AttributeReplacement.ValueType
         get() = AttributeReplacement.ValueType.Font
 
@@ -99,6 +128,15 @@ data class AndroidFont(
         "file" -> file?.toString() ?: ""
         else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
     }
+}
+
+data class AndroidFontSet(
+    val subFonts: List<Lazy<AndroidFont>>
+) : AndroidFontValue {
+    override val type: AttributeReplacement.ValueType
+        get() = AttributeReplacement.ValueType.FontSet
+
+    override fun get(key: String): Any? = throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
 }
 
 data class AndroidColor(
@@ -143,9 +181,18 @@ data class AndroidColorStateResource(
 data class AndroidVector(
     override val name: String,
     val file: File
-) : AndroidNamedDrawable {
+) : AndroidNamedDrawableWithSize {
     override val type: AttributeReplacement.ValueType
         get() = AttributeReplacement.ValueType.Vector
+
+    override val size: Size by lazy {
+        file.readXml().documentElement.let {
+            Size(
+                width = it["android:width"]!!.filter { it.isDigit() || it == '.' }.toInt(),
+                height = it["android:height"]!!.filter { it.isDigit() || it == '.' }.toInt()
+            )
+        }
+    }
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -155,14 +202,33 @@ data class AndroidVector(
 
 data class AndroidBitmap(
     override val name: String,
-    val files: Map<String, File>
-) : AndroidNamedDrawable {
+    val files: Map<String, File>,
+//    override val width: Int,
+//    override val height: Int,
+) : AndroidNamedDrawableWithSize {
     override val type: AttributeReplacement.ValueType
         get() = AttributeReplacement.ValueType.Bitmap
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
         else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
+    }
+
+    val sizes: Map<String, Size> by lazy {
+        files.mapValues {
+            ImageIO.read(it.value).let { Size(it.width, it.height) }
+        }
+    }
+
+    override val size: Size by lazy {
+        sizes[""]
+            ?: sizes["mdpi"]
+            ?: sizes["xhdpi"]?.div(2)
+            ?: sizes["xxxhdpi"]?.div(4)
+            ?: sizes["xxhdpi"]?.div(3)
+            ?: sizes["hdpi"]?.times(2)?.div(3)
+            ?: sizes["ldpi"]?.times(3)?.div(2)
+            ?: Size(24, 24)
     }
 
     data class Reference(val base: Lazy<AndroidBitmap>, val tint: Lazy<AndroidColorValue>? = null) :
@@ -341,7 +407,7 @@ data class AndroidString(
 
     override fun get(key: String): Any? = when (key) {
         "value" -> value
-        else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
+        else -> super.get(key)
     }
 }
 
@@ -356,7 +422,7 @@ data class AndroidStringResource(
     override fun get(key: String): Any? = when (key) {
         "name" -> name
         "value" -> value
-        else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
+        else -> super.get(key)
     }
 }
 

@@ -205,6 +205,24 @@ fun Element.xpathElement(path: String): Element? {
     if(path.isEmpty()) return this
     return defaultXPathFactory.newXPath().compile(path).evaluateNode(this) as? Element
 }
+fun Element.xpathElementOrCreate(path: String): Element {
+    val existing = xpathElement(path)
+    if(existing != null) return existing
+    val parent = xpathElement(path.substringBeforeLast('/', ""))!!
+    val tagInfo = path.substringAfterLast('/')
+    val tagName = tagInfo.substringBefore('[')
+    val tagAttributes = tagInfo
+        .substringAfter('[')
+        .substringBeforeLast(']')
+        .split(" and ")
+        .associate {
+            it.substringBefore('=').removePrefix("@") to it.substringAfter('=').trim('\'')
+        }
+    val newNode = parent.appendElement(tagName) {
+        this.attributeMap.putAll(tagAttributes)
+    }
+    return newNode
+}
 
 fun String.readXml(): Document {
     return defaultBuilder.parse(this.toByteArray().inputStream())
@@ -255,6 +273,6 @@ fun Element.getOrAppendChild(name: String): Element {
     return this.childElements.find { it.tagName == name } ?: this.appendElement(name)
 }
 
-fun Element.getOrAppendChildWithKey(name: String, key: String): Element {
-    return this.childElements.find { it.tagName == name && it["key"] == key } ?: this.appendElement(name) { this["key"] = key }
+fun Element.getOrAppendChildWithKey(name: String, key: String, keyPropertyName: String = "key"): Element {
+    return this.childElements.find { it.tagName == name && it[keyPropertyName] == key } ?: this.appendElement(name) { this[keyPropertyName] = key }
 }

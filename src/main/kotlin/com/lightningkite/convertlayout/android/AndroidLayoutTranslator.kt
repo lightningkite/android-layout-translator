@@ -42,7 +42,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         if(sourceElement.childElements.none()) return
         rules.mapNotNull { it.insertChildrenAt }.firstOrNull()?.let { path ->
             val target =
-                destElement.xpathElement(path) ?: throw IllegalArgumentException("No element found for path '$path'")
+                destElement.xpathElementOrCreate(path)
             val rule = rules.mapNotNull { it.childRule }.firstOrNull()
             handleChildren(rules, rule, sourceElement, destElement, target)
         }
@@ -77,9 +77,17 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         raw: String
     ) {
         val value = resources.read(raw)
-        val attributeRule = replacements.getAttribute(sourceElement.tagName, key, value.type) ?: return
-        for ((path, sub) in attributeRule.rules) {
-            val target = destElement.xpathElement(path)!!
+        val attributeRule = replacements.getAttribute(sourceElement.tagName, key, value.type, raw) ?: return
+        handleAttribute(attributeRule, destElement, value)
+    }
+
+    open fun handleAttribute(
+        attributeRule: AttributeReplacement,
+        destElement: Element,
+        value: AndroidValue
+    ) {
+        fun subrule(path: String, sub: AttributeReplacement.SubRule) {
+            val target = destElement.xpathElementOrCreate(path)
             if (sub.css.isNotEmpty()) {
                 val broken = target.getAttribute("style").split(';')
                     .associate { it.substringBefore(':').trim() to it.substringAfter(':').trim() }
@@ -96,6 +104,17 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
             for ((attKey, attTemplate) in sub.attribute) {
                 target.setAttribute(attKey, attTemplate.write { value.getPath(it) })
             }
+            sub.ifContains?.let { ifContains ->
+                val raw = (value as AndroidStringValue).value
+                for(entry in ifContains) {
+                    if(entry.key in raw) {
+                        subrule(path, entry.value)
+                    }
+                }
+            }
+        }
+        for ((path, sub) in attributeRule.rules) {
+            subrule(path, sub)
         }
     }
 }

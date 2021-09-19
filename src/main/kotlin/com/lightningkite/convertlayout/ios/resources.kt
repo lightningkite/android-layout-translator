@@ -4,19 +4,19 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lightningkite.convertlayout.android.*
 import com.lightningkite.convertlayout.util.*
 
-fun IosProject.importResources(resources: AndroidResources) {
+fun IosTranslator.importResources(resources: AndroidResources) {
     importDrawables(resources)
     importStringsDimensionsColors(resources)
     importColorAssets(resources)
 }
 
-fun IosProject.importDrawables(resources: AndroidResources) {
+fun IosTranslator.importDrawables(resources: AndroidResources) {
     for (it in resources.drawables.values) {
         importDrawable(resources, it)
     }
 }
 
-fun IosProject.importDrawable(resources: AndroidResources, drawableResource: AndroidDrawable) {
+fun IosTranslator.importDrawable(resources: AndroidResources, drawableResource: AndroidDrawable) {
     try {
         when (drawableResource) {
             is AndroidBitmap -> importBitmap(drawableResource)
@@ -28,8 +28,8 @@ fun IosProject.importDrawable(resources: AndroidResources, drawableResource: And
     }
 }
 
-fun IosProject.importDrawableXml(resources: AndroidResources, drawableResource: AndroidXmlDrawable) {
-    swiftResourcesFolder
+fun IosTranslator.importDrawableXml(resources: AndroidResources, drawableResource: AndroidXmlDrawable) {
+    project.swiftResourcesFolder
         .resolve("drawables")
         .also { it.mkdirs() }
         .resolve(drawableResource.name + ".swift")
@@ -161,8 +161,8 @@ fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawable
     }
 }
 
-fun IosProject.importVector(resources: AndroidResources, drawableResource: AndroidVector) {
-    val iosFolder = assetsFolder.resolve(drawableResource.name + ".imageset").apply { mkdirs() }
+fun IosTranslator.importVector(resources: AndroidResources, drawableResource: AndroidVector) {
+    val iosFolder = project.assetsFolder.resolve(drawableResource.name + ".imageset").apply { mkdirs() }
 
     val one =
         drawableResource.toSvg(resources, 1f).convertSvgToPng(iosFolder.resolve("${drawableResource.name}-one.png"))
@@ -179,14 +179,14 @@ fun IosProject.importVector(resources: AndroidResources, drawableResource: Andro
     )
 }
 
-fun IosProject.importBitmap(drawableResource: AndroidBitmap) {
+fun IosTranslator.importBitmap(drawableResource: AndroidBitmap) {
     val one = drawableResource.files["ldpi"] ?: drawableResource.files["drawble-mdpi"]
     val two = drawableResource.files["hdpi"] ?: drawableResource.files["xhdpi"] ?: drawableResource.files[""]
     val three = drawableResource.files["xxhdpi"] ?: drawableResource.files["xxxhdpi"]
 
     if (one == null && two == null && three == null) throw IllegalArgumentException("No PNGs found!")
 
-    val iosFolder = assetsFolder.resolve(drawableResource.name + ".imageset").apply { mkdirs() }
+    val iosFolder = project.assetsFolder.resolve(drawableResource.name + ".imageset").apply { mkdirs() }
     jacksonObjectMapper().writeValue(
         iosFolder.resolve("Contents.json"),
         PngJsonContents(images = listOf(one, two, three).mapIndexed { index, file ->
@@ -209,10 +209,10 @@ private data class PngJsonContents(
     data class Image(val filename: String, val scale: String = "1x", val idiom: String = "universal")
 }
 
-fun IosProject.importStringsDimensionsColors(resources: AndroidResources) {
+fun IosTranslator.importStringsDimensionsColors(resources: AndroidResources) {
     val locales = resources.strings.values.flatMap { it.languages.keys }.filter { it.isNotEmpty() }.toSet()
     locales.forEach { locale ->
-        baseFolderForLocalizations
+        project.baseFolderForLocalizations
             .resolve("${locale}.lproj")
             .resolve("Localizable.strings")
             .apply { parentFile.mkdirs() }
@@ -237,8 +237,8 @@ fun IosProject.importStringsDimensionsColors(resources: AndroidResources) {
                 }
             }
     }
-    swiftResourcesFolder.mkdirs()
-    swiftResourcesFolder.resolve("R.swift").writeText(buildSmartTabbedString {
+    project.swiftResourcesFolder.mkdirs()
+    project.swiftResourcesFolder.resolve("R.swift").writeText(buildSmartTabbedString {
         appendLine("//")
         appendLine("// R.swift")
         appendLine("// Created by Khrysalis")
@@ -307,11 +307,11 @@ fun IosProject.importStringsDimensionsColors(resources: AndroidResources) {
     })
 }
 
-fun IosProject.importColorAssets(resources: AndroidResources) {
-    assetsFolder.mkdirs()
+fun IosTranslator.importColorAssets(resources: AndroidResources) {
+    project.assetsFolder.mkdirs()
     val mapper = jacksonObjectMapper()
     for ((k, v) in resources.colors) {
-        assetsFolder.resolve("color_$k.colorset").apply { mkdirs() }.resolve("Contents.json").writeText(
+        project.assetsFolder.resolve("color_$k.colorset").apply { mkdirs() }.resolve("Contents.json").writeText(
             mapper.writeValueAsString(
                 mapOf<String, Any?>(
                     "colors" to listOf(

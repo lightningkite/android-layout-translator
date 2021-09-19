@@ -1,6 +1,7 @@
 package com.lightningkite.convertlayout.ios
 
 import com.lightningkite.convertlayout.android.*
+import com.lightningkite.convertlayout.rules.AttributeReplacement
 import com.lightningkite.convertlayout.rules.ElementReplacement
 import com.lightningkite.convertlayout.rules.Replacements
 import com.lightningkite.convertlayout.xml.*
@@ -17,6 +18,7 @@ internal class IosLayoutTranslatorForFile(
 
     var outlets: MutableMap<String, SwiftIdentifier> = HashMap()
     val usedResources: MutableSet<AndroidValue> = HashSet()
+    val iosCode = StringBuilder()
 
     override fun convertElement(
         destOwner: Element,
@@ -310,9 +312,82 @@ internal class IosLayoutTranslatorForFile(
         }
     }
 
-    override fun handleAttribute(sourceElement: Element, destElement: Element, key: String, raw: String) {
-        usedResources.add(resources.read(raw))
-        super.handleAttribute(sourceElement, destElement, key, raw)
+    override fun handleAttributes(allAttributes: Map<String, String>, sourceElement: Element, destElement: Element) {
+        super.handleAttributes(allAttributes, sourceElement, destElement)
+        if(sourceElement.tagName == "TextView" && sourceElement["android:layout_width"] != "wrap_content") {
+            destElement["numberOfLines"] = "0"
+        }
+    }
+
+    override fun handleAttribute(attributeRule: AttributeReplacement, destElement: Element, value: AndroidValue) {
+        usedResources.add(value)
+        super.handleAttribute(attributeRule, destElement, value)
+        attributeRule.code?.let {
+            this.iosCode.appendLine(it.write {
+                when(it) {
+                    "this" -> destElement["id"]!!
+                    else -> value.getPath(it)
+                }
+            })
+        }
+        attributeRule.xib.entries.forEach {
+            when(it.value) {
+                AttributeReplacement.XibRuleType.SubNode -> {
+                    when(value) {
+                        is AndroidColor -> destElement.appendElement("color") {
+                            this["key"] = it.key
+                            this["red"] = value.value.redFloat.toString()
+                            this["green"] = value.value.greenFloat.toString()
+                            this["blue"] = value.value.blueFloat.toString()
+                            this["alpha"] = value.value.alphaFloat.toString()
+                            this["colorSpace"] = "calibratedRGB"
+                        }
+                        is AndroidColorResource -> destElement.appendElement("color") {
+                            this["key"] = it.key
+                            this["name"] = "color_" + value.name
+                        }
+                        is AndroidColorStateResource -> destElement.appendElement("color") {
+                            this["key"] = it.key
+                            this["name"] = "color_" + value.name
+                        }
+                        else -> throw IllegalArgumentException("Type ${value::class.simpleName} and rule ${it.value} not compatible")
+                    }
+                }
+                AttributeReplacement.XibRuleType.Attribute -> {
+                    when(value) {
+                        is AndroidNamedDrawable -> destElement[it.key] = value.name
+                        is AndroidStringValue -> destElement[it.key] = value.value
+                        is AndroidNumber -> destElement[it.key] = value.value.toString()
+                        else -> throw IllegalArgumentException("Type ${value::class.simpleName} and rule ${it.value} not compatible")
+                    }
+                }
+                AttributeReplacement.XibRuleType.UserDefined -> {
+                    destElement.getOrAppendChild("userDefinedRuntimeAttributes").apply {
+                        getOrAppendChildWithKey("userDefinedRuntimeAttribute", it.key, "keyPath").apply {
+                            when(value) {
+                                is AndroidNumber -> {
+                                    this["type"] = "number"
+                                    this.getOrAppendChildWithKey("real", "value").apply {
+                                        this["value"] = value.value.toString()
+                                    }
+                                }
+                                is AndroidStringValue -> {
+                                    when(value.value) {
+                                        "true", "false" -> {
+                                            this["type"] = "boolean"
+                                            this["value"] = if(value.value.toBoolean()) "YES" else "NO"
+                                        }
+                                        else -> TODO()
+                                    }
+                                }
+                                else -> TODO()
+                            }
+                        }
+                    }
+                }
+                AttributeReplacement.XibRuleType.State -> TODO()
+            }
+        }
     }
 
     private fun handleSetSize(
@@ -352,17 +427,27 @@ internal class IosLayoutTranslatorForFile(
         }
         usedResources
             .asSequence()
-            .mapNotNull { it as? AndroidColorResource }
             .forEach {
-                resourceNode.appendElement("namedColor") {
-                    this["name"] = "color_${it.name}"
-                    appendElement("color") {
-                        this["red"] = it.value.redFloat.toString()
-                        this["green"] = it.value.greenFloat.toString()
-                        this["blue"] = it.value.blueFloat.toString()
-                        this["alpha"] = it.value.alphaFloat.toString()
-                        this["colorSpace"] = "custom"
-                        this["customColorSpace"] = "sRGB"
+                when(it) {
+                    is AndroidColorResource -> {
+                        resourceNode.appendElement("namedColor") {
+                            this["name"] = "color_${it.name}"
+                            appendElement("color") {
+                                this["red"] = it.value.redFloat.toString()
+                                this["green"] = it.value.greenFloat.toString()
+                                this["blue"] = it.value.blueFloat.toString()
+                                this["alpha"] = it.value.alphaFloat.toString()
+                                this["colorSpace"] = "custom"
+                                this["customColorSpace"] = "sRGB"
+                            }
+                        }
+                    }
+                    is AndroidNamedDrawableWithSize -> {
+                        resourceNode.appendElement("image") {
+                            this["name"] = it.name
+                            this["width"] = it.size.width.toString()
+                            this["height"] = it.size.height.toString()
+                        }
                     }
                 }
             }
@@ -412,6 +497,7 @@ internal class IosLayoutTranslatorForFile(
     |
     |    override func awakeFromNib() {
     |        super.awakeFromNib()
+    |        ${iosCode.split('\n').joinToString("\n|    ")}
     |    }
     |}
     """.trimMargin("|")

@@ -14,17 +14,36 @@
     <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" >
     </view>
 
-#ProgressBar
+
+
+
+# ProgressBar
+
 - id: ProgressBar
   type: element
   autoWrapFor:
     - 'android:padding'
     - 'android:background'
   template: |
-    <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" style="medium" translatesAutoresizingMaskIntoConstraints="NO" >
+    <activityIndicatorView opaque="NO" contentMode="scaleToFill" style="medium" translatesAutoresizingMaskIntoConstraints="NO" animating="YES" >
     </activityIndicatorView>
 
-#ProgressBar
+- id: style
+  type: attribute
+  element: ProgressBar
+  equalTo: "?android:attr/progressBarStyleLarge"
+  rules:
+    "":
+      attribute:
+        style: "large"
+
+- id: "android:indeterminateTint"
+  type: attribute
+  element: ProgressBar
+  valueType: Color
+  xib:
+    color: SubNode
+
 - id: ProgressBar
   type: element
   autoWrapFor:
@@ -33,8 +52,26 @@
   attributes:
     style: ?android:attr/progressBarStyleHorizontal
   template: |
-    <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" >
+    <progressView opaque="NO" contentMode="scaleToFill" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" >
     </progressView>
+
+- id: "android:progressTint"
+  type: attribute
+  element: ProgressBar
+  valueType: Color
+  xib:
+    progressTintColor: SubNode
+
+- id: "android:progressBackgroundTint"
+  type: attribute
+  element: ProgressBar
+  valueType: Color
+  xib:
+    trackTintColor: SubNode
+
+
+
+
 
 #ImageView
 - id: ImageView
@@ -45,6 +82,61 @@
   template: |
     <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" >
     </imageView>
+
+- id: "android:src"
+  type: attribute
+  element: ImageView
+  valueType: Drawable
+  subtype: Bitmap
+  xib:
+    image: attribute
+
+- id: "android:src"
+  type: attribute
+  element: ImageView
+  valueType: Drawable
+  subtype: Vector
+  xib:
+    image: attribute
+
+- id: "android:src"
+  type: attribute
+  element: ImageView
+  valueType: Drawable
+  code: ~this~.image = R.drawable.~name~().toImage()
+
+- id: "android:scaleType"
+  type: attribute
+  element: ImageView
+  valueType: String
+  equalTo: centerInside
+  rules:
+    "":
+      attribute:
+        "contentMode": center
+
+- id: "android:scaleType"
+  type: attribute
+  element: ImageView
+  valueType: String
+  equalTo: fitCenter
+  rules:
+    "":
+      attribute:
+        "contentMode": scaleAspectFit
+
+- id: "android:scaleType"
+  type: attribute
+  element: ImageView
+  valueType: String
+  equalTo: centerCrop
+  rules:
+    "":
+      attribute:
+        "contentMode": scaleAspectFill
+
+
+
 
 #TextView
 - id: TextView
@@ -60,7 +152,98 @@
     - 'android:drawableBottom'
   template: |
     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" >
+      <fontDescription key="fontDescription" type="system" pointSize="17"/>
     </label>
+
+- id: android:text
+  type: attribute
+  element: TextView
+  rules:
+    "":
+      attribute:
+        text: ~value~
+
+- id: "android:letterSpacing"
+  type: attribute
+  element: TextView
+  valueType: Number
+  xib:
+    letterSpacing: UserDefined
+  rules:
+    "":
+      attribute:
+        customClass: StyledUILabel
+        customModule: XmlToXibRuntime
+
+- id: "android:textAllCaps"
+  type: attribute
+  element: TextView
+  valueType: String
+  xib:
+    textAllCaps: UserDefined
+  rules:
+    "":
+      attribute:
+        customClass: StyledUILabel
+        customModule: XmlToXibRuntime
+
+- id: "android:lineSpacingMultiplier"
+  type: attribute
+  element: TextView
+  valueType: Number
+  xib:
+    lineSpacingMultiplier: UserDefined
+  rules:
+    "":
+      attribute:
+        customClass: StyledUILabel
+        customModule: XmlToXibRuntime
+
+- id: "android:textColor"
+  type: attribute
+  element: TextView
+  valueType: Color
+  xib:
+    textColor: subnode
+
+- id: "android:textSize"
+  type: attribute
+  element: TextView
+  valueType: Dimension
+  rules:
+    "fontDescription[key=fontDescription]":
+      attribute:
+        pointSize: ~number~
+
+- id: "android:fontFamily"
+  type: attribute
+  element: TextView
+  valueType: Font  # TODO
+
+- id: "android:textStyle"
+  type: attribute
+  element: TextView
+  valueType: String
+  rules:
+    "fontDescription[key=fontDescription]":
+      ifContains:
+        italic:
+          attribute:
+            type: "italicSystem"
+        bold:
+          attribute:
+            type: "boldSystem"
+
+- id: "android:maxLines"
+  type: attribute
+  element: TextView
+  valueType: Number
+  xib:
+    numberOfLines: attribute
+
+
+
+
 
 #Button
 - id: Button
@@ -270,14 +453,6 @@
 - id: android:text
   type: attribute  # TODO
 
-- id: android:text
-  type: attribute
-  element: TextView
-  rules:
-    "":
-      attribute:
-        text: ~value~
-
 - id: android:textColor
   type: attribute  # TODO
 
@@ -290,18 +465,8 @@
 - id: android:background
   type: attribute
   valueType: Color
-  rules:
-    "":
-      append:
-        - '<color key="backgroundColor" red="~redFloat~" green="~greenFloat~" blue="~blueFloat~" alpha="~alphaFloat~" colorSpace="calibratedRGB"/>'
-
-- id: android:background
-  type: attribute
-  valueType: ColorResource
-  rules:
-    "":
-      append:
-        - '<color key="backgroundColor" name="color_~name~"/>'
+  xib:
+    backgroundColor: SubNode
 
 - id: android:color
   type: attribute  # TODO

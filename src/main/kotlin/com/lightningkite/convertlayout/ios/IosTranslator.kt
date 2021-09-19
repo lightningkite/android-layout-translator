@@ -33,9 +33,6 @@ data class IosTranslator(
     )
 
     private fun make() = IosLayoutTranslatorForFile(project, replacements, resources)
-    fun importOtherResources() {
-        project.importResources(resources)
-    }
     fun translate(layout: AndroidLayoutFile) {
         val instance = make()
         project.layoutsFolder
@@ -48,7 +45,7 @@ data class IosTranslator(
             .writeText(instance.swiftFile(layout))
     }
     operator fun invoke() {
-        importOtherResources()
+        importResources(resources)
         for(layout in resources.layouts.values) {
             translate(layout.layout.value)
         }
