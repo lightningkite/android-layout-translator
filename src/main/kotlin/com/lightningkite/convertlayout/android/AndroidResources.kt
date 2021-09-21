@@ -89,11 +89,12 @@ class AndroidResources {
     private fun getStyles(file: File) {
         if(!file.exists()) return
         file.readXml().documentElement.childElements
+            .filter { it.tagName == "style" }
             .forEach {
                 styles[it["name"]!!] = AndroidStyle(
                     name = it["name"]!!,
                     map = it.childElements
-                        .filter { it.tagName == "style" }
+                        .filter { it.tagName == "item" }
                         .associate {
                             it["name"]!! to it.children
                                 .filter { it is Text }

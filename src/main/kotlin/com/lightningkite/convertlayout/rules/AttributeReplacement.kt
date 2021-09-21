@@ -4,7 +4,7 @@ data class AttributeReplacement(
     val id: String,
     var valueType: GeneralValueType = GeneralValueType.String,
     var subtype: ValueType? = null,
-    var element: String? = null,
+    var element: String = "View",
     var rules: Map<String, SubRule> = mapOf(),
     var xib: Map<String, XibRuleType> = mapOf(),
     var code: Template? = null,
@@ -19,7 +19,7 @@ data class AttributeReplacement(
         var css: Map<String, Template> = mapOf()
     )
 
-    enum class XibRuleType { SubNode, Attribute, UserDefined, State }
+    enum class XibRuleType { SubNode, Attribute, UserDefined, StateSubNode, StateAttribute }
 
     enum class GeneralValueType {
         Font,
@@ -52,5 +52,5 @@ data class AttributeReplacement(
         Style(GeneralValueType.Style),
     }
 
-    override val priority: Int get() = (if(equalTo != null) 4 else 0) + (if(element != null) 1 else 0) + (if(subtype != null) 1 else 0)
+    override val priority: Int get() = (if(equalTo != null) 4 else 0) + (if(subtype != null) 1 else 0)
 }

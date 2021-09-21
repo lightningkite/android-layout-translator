@@ -14,6 +14,7 @@ class Replacements() {
         val mapper = YAMLMapper().registerKotlinModule().enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
     }
 
+    val elementsByIdentifier: HashMap<String, ElementReplacement> = HashMap()
     val elements: HashMap<String, TreeSet<ElementReplacement>> = HashMap()
     val attributes: HashMap<String, TreeSet<AttributeReplacement>> = HashMap()
 
@@ -26,10 +27,12 @@ class Replacements() {
         }
         it.attributes.entries.all { (key, value) ->
             val otherValue = attributes[key]
-            when(value) {
-                "any", "set" -> otherValue != null
-                "unset" -> otherValue == null
-                else -> otherValue == value
+            value.split("|").any { part ->
+                when(part) {
+                    "any", "set" -> otherValue != null
+                    "unset" -> otherValue == null
+                    else -> otherValue == value
+                }
             }
         }
     }
@@ -41,14 +44,14 @@ class Replacements() {
         rawValue: String
     ): AttributeReplacement? = attributes[attributeName]?.firstOrNull {
         val res = (it.valueType == attributeType.general)
+                && (it.element == elementName)
                 && (it.subtype == null || it.subtype == attributeType)
-                && (it.element == null || it.element == elementName)
                 && (it.equalTo == null || it.equalTo == rawValue)
         if(it.debug) {
             println("Checking against rule $it")
             println("    ${it.valueType} == ${attributeType.general}")
+            println("    ${it.element} == ${elementName}")
             println("    ${it.subtype} == null or ${attributeType}")
-            println("    ${it.element} == null or ${elementName}")
             println("    ${it.equalTo} == null or ${rawValue}")
             println("    ${res}")
         }
@@ -61,7 +64,10 @@ class Replacements() {
             println("Debugging rule $item")
         }
         when (item) {
-            is ElementReplacement -> elements.getOrPut(item.id) { TreeSet() }.add(item)
+            is ElementReplacement -> {
+                elements.getOrPut(item.id) { TreeSet() }.add(item)
+                elementsByIdentifier[item.caseIdentifier ?: item.id] = item
+            }
             is AttributeReplacement -> attributes.getOrPut(item.id) { TreeSet() }.add(item)
         }
     }

@@ -106,6 +106,7 @@ sealed interface AndroidStringValue : AndroidValue {
             .replace(">", "&gt;")
             .replace("\"", "&quot;")
             .replace("'", "&apos;")
+            .replace("&", "&amp;")
             .replace("\t", "&#x9;")
         else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
     }
@@ -188,8 +189,8 @@ data class AndroidVector(
     override val size: Size by lazy {
         file.readXml().documentElement.let {
             Size(
-                width = it["android:width"]!!.filter { it.isDigit() || it == '.' }.toInt(),
-                height = it["android:height"]!!.filter { it.isDigit() || it == '.' }.toInt()
+                width = it["android:width"]!!.filter { it.isDigit() || it == '.' }.toDouble().toInt(),
+                height = it["android:height"]!!.filter { it.isDigit() || it == '.' }.toDouble().toInt()
             )
         }
     }
@@ -449,6 +450,7 @@ data class Measurement(
 ) {
     operator fun get(key: String): Any? = when (key) {
         "number" -> number.toString()
+        "integer" -> number.toInt().toString()
         "unit" -> unit.name.toLowerCase()
         else -> null
     }
@@ -536,6 +538,13 @@ data class StateSelector<T>(
     val disabled: T? = null,
     val focused: T? = null
 ) : HasGet {
+    val asMap: Map<UiState, T?> get() = mapOf(
+        UiState.Normal to normal,
+        UiState.Selected to selected,
+        UiState.Highlighted to highlighted,
+        UiState.Disabled to disabled,
+        UiState.Focused to focused,
+    )
     val isSet: Boolean get() = selected != null || highlighted != null || disabled != null || focused != null
     val variants: Map<String, T>
         get() = listOf(

@@ -3,6 +3,7 @@
 #View
 - id: View
   type: element
+  parent: null
   template: |
     <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" >
     </view>
@@ -211,7 +212,7 @@
   element: TextView
   valueType: Dimension
   rules:
-    "fontDescription[key=fontDescription]":
+    "fontDescription[@key='fontDescription']":
       attribute:
         pointSize: ~number~
 
@@ -225,7 +226,7 @@
   element: TextView
   valueType: String
   rules:
-    "fontDescription[key=fontDescription]":
+    "fontDescription[@key='fontDescription']":
       ifContains:
         italic:
           attribute:
@@ -241,6 +242,32 @@
   xib:
     numberOfLines: attribute
 
+- id: "android:gravity"
+  type: attribute
+  element: TextView
+  valueType: String
+  rules:
+    "":
+      ifContains:
+        start:
+          attribute:
+            textAlignment: left
+        left:
+          attribute:
+            textAlignment: left
+        center:
+          attribute:
+            textAlignment: center
+        center_horizontal:
+          attribute:
+            textAlignment: center
+        right:
+          attribute:
+            textAlignment: right
+        end:
+          attribute:
+            textAlignment: right
+
 
 
 
@@ -249,24 +276,295 @@
 - id: Button
   type: element
   autoWrapFor:
-    - 'android:drawableLeft'
+    - 'android:drawableLeft'  # TODO
     - 'android:drawableRight'
     - 'android:drawableStart'
     - 'android:drawableEnd'
     - 'android:drawableTop'
     - 'android:drawableBottom'
+  wrappedAttributes:
+    - 'android:padding'
+    - 'android:background'
+
   template: |
-    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" >
-    <inset key="contentEdgeInsets" top="~android:paddingTop~" left="~android:paddingLeft~" bottom="~android:paddingBottom~" right="~android:paddingRight~"/>
+    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="wordWrap" translatesAutoresizingMaskIntoConstraints="NO" >
+      <fontDescription key="fontDescription" type="system" pointSize="17"/>
     </button>
+
+- id: "android:padding"
+  type: attribute
+  element: Button
+  valueType: Dimension
+  rules:
+    "inset[@key='contentEdgeInsets']":
+      attribute:
+        minY: ~integer~
+        minX: ~integer~
+        maxY: ~integer~
+        maxX: ~integer~
+
+- id: "android:paddingLeft"
+  type: attribute
+  element: Button
+  valueType: Dimension
+  rules:
+    "inset[@key='contentEdgeInsets']":
+      attribute:
+        minX: ~integer~
+- id: "android:paddingTop"
+  type: attribute
+  element: Button
+  valueType: Dimension
+  rules:
+    "inset[@key='contentEdgeInsets']":
+      attribute:
+        minY: ~integer~
+- id: "android:paddingRight"
+  type: attribute
+  element: Button
+  valueType: Dimension
+  rules:
+    "inset[@key='contentEdgeInsets']":
+      attribute:
+        maxX: ~integer~
+- id: "android:paddingBottom"
+  type: attribute
+  element: Button
+  valueType: Dimension
+  rules:
+    "inset[@key='contentEdgeInsets']":
+      attribute:
+        maxY: ~integer~
+
+- id: "android:letterSpacing"
+  type: attribute
+  element: Button
+  valueType: Number
+  xib:
+    letterSpacing: UserDefined
+  rules:
+    "":
+      attribute:
+        customClass: StyledUIButton
+        customModule: XmlToXibRuntime
+
+- id: "android:textAllCaps"
+  type: attribute
+  element: Button
+  valueType: String
+  xib:
+    textAllCaps: UserDefined
+  rules:
+    "":
+      attribute:
+        customClass: StyledUIButton
+        customModule: XmlToXibRuntime
+
+- id: "android:lineSpacingMultiplier"
+  type: attribute
+  element: Button
+  valueType: Number
+  xib:
+    lineSpacingMultiplier: UserDefined
+  rules:
+    "":
+      attribute:
+        customClass: StyledUIButton
+        customModule: XmlToXibRuntime
+
+- id: android:text
+  type: attribute
+  element: Button
+  rules:
+    "state[@key='normal']":
+      attribute:
+        title: ~value~
+
+- id: "android:textColor"
+  type: attribute
+  element: Button
+  valueType: Color
+  subtype: ColorStateResource
+  xib:
+    titleColor: StateSubnode
+
+- id: "android:textSize"
+  type: attribute
+  element: Button
+  valueType: Dimension
+  rules:
+    "fontDescription[@key='fontDescription']":
+      attribute:
+        pointSize: ~number~
+
+- id: "android:fontFamily"
+  type: attribute
+  element: Button
+  valueType: Font  # TODO
+
+- id: "android:textStyle"
+  type: attribute
+  element: Button
+  valueType: String
+  rules:
+    "fontDescription[@key='fontDescription']":
+      ifContains:
+        italic:
+          attribute:
+            type: "italicSystem"
+        bold:
+          attribute:
+            type: "boldSystem"
+
+- id: "android:gravity"
+  type: attribute
+  element: Button
+  valueType: String
+  rules:
+    "":
+      ifContains:
+        start:
+          attribute:
+            contentHorizontalAlignment: left
+        left:
+          attribute:
+            contentHorizontalAlignment: left
+        center:
+          attribute:
+            contentHorizontalAlignment: center
+            contentVerticalAlignment: center
+        center_horizontal:
+          attribute:
+            contentHorizontalAlignment: center
+        right:
+          attribute:
+            contentHorizontalAlignment: right
+        end:
+          attribute:
+            contentHorizontalAlignment: right
+        top:
+          attribute:
+            contentVerticalAlignment: top
+        bottom:
+          attribute:
+            contentVerticalAlignment: bottom
+
+
+
+
+
 
 #ImageButton
 - id: ImageButton
   type: element
   template: |
-    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" >
-    <inset key="contentEdgeInsets" top="~android:paddingTop~" left="~android:paddingLeft~" bottom="~android:paddingBottom~" right="~android:paddingRight~"/>
+    <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="wordWrap" translatesAutoresizingMaskIntoConstraints="NO" >
     </button>
+
+- id: "android:padding"
+  type: attribute
+  element: ImageButton
+  valueType: Dimension
+  rules:
+    "inset[@key='contentEdgeInsets']":
+      attribute:
+        minY: ~integer~
+        minX: ~integer~
+        maxY: ~integer~
+        maxX: ~integer~
+
+- id: "android:paddingLeft"
+  type: attribute
+  element: ImageButton
+  valueType: Dimension
+  rules:
+    "inset[@key='contentEdgeInsets']":
+      attribute:
+        minX: ~integer~
+- id: "android:paddingTop"
+  type: attribute
+  element: ImageButton
+  valueType: Dimension
+  rules:
+    "inset[@key='contentEdgeInsets']":
+      attribute:
+        minY: ~integer~
+- id: "android:paddingRight"
+  type: attribute
+  element: ImageButton
+  valueType: Dimension
+  rules:
+    "inset[@key='contentEdgeInsets']":
+      attribute:
+        maxX: ~integer~
+- id: "android:paddingBottom"
+  type: attribute
+  element: ImageButton
+  valueType: Dimension
+  rules:
+    "inset[@key='contentEdgeInsets']":
+      attribute:
+        maxY: ~integer~
+
+- id: "android:gravity"
+  type: attribute
+  element: ImageButton
+  valueType: String
+  rules:
+    "":
+      ifContains:
+        start:
+          attribute:
+            contentHorizontalAlignment: left
+        left:
+          attribute:
+            contentHorizontalAlignment: left
+        center:
+          attribute:
+            contentHorizontalAlignment: center
+            contentVerticalAlignment: center
+        center_horizontal:
+          attribute:
+            contentHorizontalAlignment: center
+        right:
+          attribute:
+            contentHorizontalAlignment: right
+        end:
+          attribute:
+            contentHorizontalAlignment: right
+        top:
+          attribute:
+            contentVerticalAlignment: top
+        bottom:
+          attribute:
+            contentVerticalAlignment: bottom
+
+- id: "android:src"
+  type: attribute
+  element: ImageButton
+  valueType: Drawable
+  subtype: Bitmap
+  xib:
+    image: StateAttribute
+
+- id: "android:src"
+  type: attribute
+  element: ImageButton
+  valueType: Drawable
+  subtype: Vector
+  xib:
+    image: StateAttribute
+
+- id: "android:src"
+  type: attribute
+  element: ImageButton
+  valueType: Drawable
+  code: ~this~.image = R.drawable.~name~().toImage()
+
+
+
+
+
 
 #ToggleButton
 - id: ToggleButton
@@ -274,9 +572,11 @@
   parent: Button
 
 #Spinner
-- id: ToggleButton
+- id: Spinner
   type: element
   parent: Button
+
+
 
 #SeekBar
 - id: SeekBar
@@ -285,14 +585,479 @@
     <slider opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" >
     </slider>
 
-#RatingBar TODO
-#CheckBox TODO
-#RadioButton TODO
-#Switch TODO
-#RadioGroup TODO
+- id: "android:progress"
+  type: attribute
+  element: SeekBar
+  valueType: Number
+  xib:
+    value: attribute
+
+- id: "android:min"
+  type: attribute
+  element: SeekBar
+  valueType: Number
+  xib:
+    minValue: attribute
+
+- id: "android:max"
+  type: attribute
+  element: SeekBar
+  valueType: Number
+  xib:
+    maxValue: attribute
+
+- id: "android:thumbTint"
+  type: attribute
+  element: SeekBar
+  valueType: Color
+  xib:
+    thumbTintColor: SubNode
+
+- id: "android:progressTint"
+  type: attribute
+  element: SeekBar
+  valueType: Color
+  xib:
+    minimumTrackTintColor: SubNode
+
+- id: "android:progressBackgroundTint"
+  type: attribute
+  element: SeekBar
+  valueType: Color
+  xib:
+    maximumTrackTintColor: SubNode
+
+
+
+#RatingBar
+- id: RatingBar
+  type: element
+  autoWrapFor:
+    - 'android:padding'
+    - 'android:background'
+  template: |
+    <view opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" customClass="CosmosView" customModule="Cosmos">
+    </view>
+
+- id: "android:progressTint"
+  type: attribute
+  element: RatingBar
+  valueType: Color
+  xib:
+    filledColor: UserDefined
+
+- id: "android:progressBackgroundTint"
+  type: attribute
+  element: RatingBar
+  valueType: Color
+  xib:
+    emptyColor: UserDefined
+
+- id: "android:numStars"
+  type: attribute
+  element: RatingBar
+  valueType: Number
+  xib:
+    totalStars: UserDefined
+
+- id: "android:rating"
+  type: attribute
+  element: RatingBar
+  valueType: Number
+  xib:
+    rating: UserDefined
+
+- id: "android:stepSize"
+  type: attribute
+  element: RatingBar
+  valueType: Number
+  equalTo: "1"
+  rules:
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='fillMode']/integer[@key='value']":
+      attribute:
+        value: "0"
+
+- id: "android:stepSize"
+  type: attribute
+  element: RatingBar
+  valueType: Number
+  equalTo: "0.5"
+  rules:
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='fillMode']/integer[@key='value']":
+      attribute:
+        value: "1"
+
+- id: "android:stepSize"
+  type: attribute
+  element: RatingBar
+  valueType: Number
+  rules:
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='fillMode']/integer[@key='value']":
+      attribute:
+        value: "2"
+
+- id: style
+  type: attribute
+  element: RatingBar
+  equalTo: "?android:attr/ratingBarStyleIndicator"
+  rules:
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='starSize']/real[@key='value']":
+      attribute:
+        value: "32"
+
+- id: style
+  type: attribute
+  element: RatingBar
+  equalTo: "?android:attr/ratingBarStyleSmall"
+  rules:
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='starSize']/real[@key='value']":
+      attribute:
+        value: "20"
+
+- id: style
+  type: attribute
+  element: RatingBar
+  equalTo: "?android:attr/ratingBarStyle"
+  rules:
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='starSize']/real[@key='value']":
+      attribute:
+        value: "42"
+
+
+
+
+- id: LabeledToggle
+  type: element
+  autoWrapFor:
+    - "android:background"
+  template: |
+    <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" customClass="LabeledToggle" customModule="XmlToXibRuntime">
+        <subviews>
+            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO">
+            </switch>
+            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO">
+                <fontDescription key="fontDescription" type="system" pointSize="17"/>
+            </label>
+        </subviews>
+        <edgeInsets key="layoutMargins" top="16" left="16" bottom="16" right="16"/>
+    </stackView>
+
+- id: "android:padding"
+  type: attribute
+  element: LabeledToggle
+  valueType: Dimension
+  rules:
+    "edgeInsets[@key='layoutMargins']":
+      attribute:
+        top: ~integer~
+        left: ~integer~
+        right: ~integer~
+        bottom: ~integer~
+
+- id: "android:paddingLeft"
+  type: attribute
+  element: LabeledToggle
+  valueType: Dimension
+  rules:
+    "edgeInsets[@key='layoutMargins']":
+      attribute:
+        left: ~integer~
+- id: "android:paddingTop"
+  type: attribute
+  element: LabeledToggle
+  valueType: Dimension
+  rules:
+    "edgeInsets[@key='layoutMargins']":
+      attribute:
+        top: ~integer~
+- id: "android:paddingRight"
+  type: attribute
+  element: LabeledToggle
+  valueType: Dimension
+  rules:
+    "edgeInsets[@key='layoutMargins']":
+      attribute:
+        right: ~integer~
+- id: "android:paddingBottom"
+  type: attribute
+  element: LabeledToggle
+  valueType: Dimension
+  rules:
+    "edgeInsets[@key='layoutMargins']":
+      attribute:
+        bottom: ~integer~
+
+- id: "android:letterSpacing"
+  type: attribute
+  element: LabeledToggle
+  valueType: Number
+  xib:
+    subviews/label|letterSpacing: UserDefined
+  rules:
+    "subviews/label":
+      attribute:
+        customClass: StyledUILabel
+        customModule: XmlToXibRuntime
+
+- id: "android:textAllCaps"
+  type: attribute
+  element: LabeledToggle
+  valueType: String
+  xib:
+    subviews/label|textAllCaps: UserDefined
+  rules:
+    "subviews/label":
+      attribute:
+        customClass: StyledUILabel
+        customModule: XmlToXibRuntime
+
+- id: "android:lineSpacingMultiplier"
+  type: attribute
+  element: LabeledToggle
+  valueType: Number
+  xib:
+    subviews/label|lineSpacingMultiplier: UserDefined
+  rules:
+    "subviews/label":
+      attribute:
+        customClass: StyledUILabel
+        customModule: XmlToXibRuntime
+
+- id: android:text
+  type: attribute
+  element: LabeledToggle
+  rules:
+    "subviews/label":
+      attribute:
+        text: ~value~
+
+- id: "android:textColor"
+  type: attribute
+  element: LabeledToggle
+  valueType: Color
+  subtype: ColorStateResource
+  xib:
+    subviews/label|textColor: Subnode
+
+- id: "android:textSize"
+  type: attribute
+  element: LabeledToggle
+  valueType: Dimension
+  rules:
+    "subviews/label/fontDescription[@key='fontDescription']":
+      attribute:
+        pointSize: ~number~
+
+- id: "android:fontFamily"
+  type: attribute
+  element: LabeledToggle
+  valueType: Font  # TODO
+
+- id: "android:textStyle"
+  type: attribute
+  element: LabeledToggle
+  valueType: String
+  rules:
+    "subviews/label/fontDescription[@key='fontDescription']":
+      ifContains:
+        italic:
+          attribute:
+            type: "italicSystem"
+        bold:
+          attribute:
+            type: "boldSystem"
+
+#- id: "android:gravity"
+#  type: attribute
+#  element: LabeledToggle
+#  valueType: String
+#  rules:
+#    "":
+#      ifContains:
+#        start:
+#          attribute:
+#            contentHorizontalAlignment: left
+#        left:
+#          attribute:
+#            contentHorizontalAlignment: left
+#        center:
+#          attribute:
+#            contentHorizontalAlignment: center
+#            contentVerticalAlignment: center
+#        center_horizontal:
+#          attribute:
+#            contentHorizontalAlignment: center
+#        right:
+#          attribute:
+#            contentHorizontalAlignment: right
+#        end:
+#          attribute:
+#            contentHorizontalAlignment: right
+#        top:
+#          attribute:
+#            contentVerticalAlignment: top
+#        bottom:
+#          attribute:
+#            contentVerticalAlignment: bottom
+
+#Switch
+- id: Switch
+  parent: LabeledToggle
+  type: element
+  template: |
+    <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" customClass="LabeledToggle" customModule="XmlToXibRuntime">
+      <subviews>
+        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO">
+          <fontDescription key="fontDescription" type="system" pointSize="17"/>
+        </label>
+        <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="NO" translatesAutoresizingMaskIntoConstraints="NO">
+        </switch>
+      </subviews>
+    </stackView>
+
+- id: M13LabeledToggle
+  type: element
+  parent: LabeledToggle
+
+- id: "android:buttonTint"
+  type: attribute
+  valueType: Color
+  element: M13LabeledToggle
+  xib:
+    subviews/view|secondaryTintColor: userDefined
+    subviews/view|secondaryCheckmarkTintColor: userDefined
+    subviews/view|tintColor: subnode
+
+- id: "android:buttonTint"
+  type: attribute
+  valueType: Color
+  subtype: ColorStateResource
+  element: M13LabeledToggle
+  xib:
+    subviews/view|secondaryTintColor: userDefined
+    subviews/view|secondaryCheckmarkTintColor: userDefined
+  rules:
+    "color[@key='tintColor']":
+      attribute:
+        red: ~selected.redFloat~
+        green: ~selected.greenFloat~
+        blue: ~selected.blueFloat~
+        alpha: ~selected.alphaFloat~
+        colorSpace: calibratedRGB
+
+#CheckBox
+- id: CheckBox
+  parent: M13LabeledToggle
+  type: element
+  template: |
+    <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" customClass="LabeledToggle" customModule="XmlToXibRuntime">
+      <subviews>
+          <view contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13Checkbox" customModule="M13Checkbox">
+            <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+            <constraints>
+              <constraint firstAttribute="height" constant="20.5"/>
+              <constraint firstAttribute="width" constant="20.5"/>
+            </constraints>
+            <userDefinedRuntimeAttributes>
+              <userDefinedRuntimeAttribute type="string" keyPath="_IBMarkType" value="Checkmark"/>
+              <userDefinedRuntimeAttribute type="string" keyPath="_IBBoxType" value="Square"/>
+              <userDefinedRuntimeAttribute type="number" keyPath="cornerRadius">
+                  <real key="value" value="2"/>
+              </userDefinedRuntimeAttribute>
+              <userDefinedRuntimeAttribute type="string" keyPath="_IBCheckState" value="Unchecked"/>
+              <userDefinedRuntimeAttribute type="number" keyPath="checkmarkLineWidth">
+                  <real key="value" value="1"/>
+              </userDefinedRuntimeAttribute>
+              <userDefinedRuntimeAttribute type="number" keyPath="boxLineWidth">
+                  <real key="value" value="1"/>
+              </userDefinedRuntimeAttribute>
+            </userDefinedRuntimeAttributes>
+          </view>
+          <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="100" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO">
+            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+          </label>
+      </subviews>
+    </stackView>
+
+#RadioButton
+- id: RadioButton
+  parent: M13LabeledToggle
+  type: element
+  template: |
+    <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" customClass="LabeledToggle" customModule="XmlToXibRuntime">
+      <subviews>
+          <view contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13Checkbox" customModule="M13Checkbox">
+            <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+            <constraints>
+              <constraint firstAttribute="height" constant="20.5"/>
+              <constraint firstAttribute="width" constant="20.5"/>
+            </constraints>
+            <userDefinedRuntimeAttributes>
+              <userDefinedRuntimeAttribute type="string" keyPath="_IBMarkType" value="Radio"/>
+              <userDefinedRuntimeAttribute type="string" keyPath="_IBBoxType" value="Circle"/>
+              <userDefinedRuntimeAttribute type="string" keyPath="_IBCheckState" value="Unchecked"/>
+              <userDefinedRuntimeAttribute type="number" keyPath="checkmarkLineWidth">
+                  <real key="value" value="1"/>
+              </userDefinedRuntimeAttribute>
+              <userDefinedRuntimeAttribute type="number" keyPath="boxLineWidth">
+                  <real key="value" value="1"/>
+              </userDefinedRuntimeAttribute>
+            </userDefinedRuntimeAttributes>
+          </view>
+          <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="100" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO">
+            <fontDescription key="fontDescription" type="system" pointSize="17"/>
+          </label>
+      </subviews>
+    </stackView>
+
+#RadioGroup
+- id: RadioGroup
+  type: element
+  parent: LinearLayout
+
+
+
+
+
 
 #EditText
+
+- id: EditTextLike
+  type: element
+  template: ""
+
 - id: EditText
+  type: element
+  parent: EditTextLike
+  attributes:
+    android:maxLines: unset|1
+  autoWrapFor:
+    - 'android:padding'
+    - 'android:background'
+    - 'android:drawableLeft'
+    - 'android:drawableRight'
+    - 'android:drawableStart'
+    - 'android:drawableEnd'
+    - 'android:drawableTop'
+    - 'android:drawableBottom'
+  template: |
+    <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" >
+        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+        <textInputTraits key="textInputTraits"/>
+    </textField>
+
+- id: AutoCompleteTextView
+  type: element
+  parent: EditText
+  template: |
+    <textView opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" customClass="SearchTextField" customModule="SearchTextField" >
+        <fontDescription key="fontDescription" type="system" pointSize="14"/>
+        <textInputTraits key="textInputTraits"/>
+    </textView>
+
+- id: EditText
+  caseIdentifier: MultilineEditText
+  parent: EditTextLike
   type: element
   autoWrapFor:
     - 'android:padding'
@@ -303,15 +1068,290 @@
     - 'android:drawableEnd'
     - 'android:drawableTop'
     - 'android:drawableBottom'
-  insertChildrenAt: subviews
-  childRule: linear
   template: |
-    <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" >
+    <textView opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" >
         <fontDescription key="fontDescription" type="system" pointSize="14"/>
         <textInputTraits key="textInputTraits"/>
-    </textField>
+    </textView>
 
-#AutoCompleteTextView TODO
+- id: "android:text"
+  type: attribute
+  element: EditTextLike
+  valueType: String
+  rules:
+    "":
+      attribute:
+        text: ~value~
+
+- id: "android:textColor"
+  type: attribute
+  element: EditTextLike
+  valueType: Color
+  xib:
+    textColor: SubNode
+
+- id: "android:hint"
+  type: attribute
+  element: EditText
+  valueType: String
+  rules:
+    "":
+      attribute:
+        placeholder: ~value~
+
+- id: "android:textColorHint"
+  type: attribute
+  element: EditText
+  valueType: Color
+  xib:
+    textColorPlaceholder: UserDefined
+  rules:
+    "":
+      attribute:
+        customClass: StyledUITextField
+        customModule: XmlToXibRuntime
+
+- id: "android:imeOptions"
+  type: attribute
+  element: EditText
+  valueType: String
+  rules:
+    "textInputTraits[@key='textInputTraits']":
+      ifContains:
+        actionGo:
+          attribute:
+            returnKeyType: go
+        actionSearch:
+          attribute:
+            returnKeyType: search
+        actionSend:
+          attribute:
+            returnKeyType: send
+        actionNext:
+          attribute:
+            returnKeyType: next
+        actionDone:
+          attribute:
+            returnKeyType: done
+
+- id: "android:autofillHints"
+  type: attribute
+  element: EditText
+  valueType: String
+  rules:
+    "textInputTraits[@key='textInputTraits']":
+      ifContains:
+        emailAddress:
+          attribute:
+            textContentType: email
+        name:
+          attribute:
+            textContentType: name
+        password:
+          attribute:
+            textContentType: password
+        phone:
+          attribute:
+            textContentType: tel
+        postalAddress:
+          attribute:
+            textContentType: street-address
+        addressCity:
+          attribute:
+            textContentType: address-level1
+        addressCityAndState:
+          attribute:
+            textContentType: address-level1+2
+        addressState:
+          attribute:
+            textContentType: address-level2
+#        birthday:
+#        birthdayDay:
+#        birthdayMonth:
+#        birthdayYear:
+        countryCode:
+          attribute:
+            textContentType: country-name
+        countryName:
+          attribute:
+            textContentType: country-name
+#        creditCardExpirationDate:
+#        creditCardExpirationDay:
+#        creditCardExpirationMonth:
+#        creditCardExpirationYear:
+        creditCardFamilyName:
+          attribute:
+            textContentType: family-name
+        creditCardGivenName:
+          attribute:
+            textContentType: given-name
+        creditCardMiddleName:
+          attribute:
+            textContentType: additional-name
+#        creditCardName:
+#        creditCardNumber:
+#        creditCardSecurityCode:
+#        creditCardType:
+        email:
+          attribute:
+            textContentType: email
+        familyName:
+          attribute:
+            textContentType: family-name
+        fullStreetAddress:
+          attribute:
+            textContentType: street-address
+#        gender:
+        givenName:
+          attribute:
+            textContentType: given-name
+#        impp:
+#        jobTitle:
+#        language:
+#        location:
+#        middleInitial:
+        middleName:
+          attribute:
+            textContentType: additional-name
+        namePrefix:
+          attribute:
+            textContentType: honorific-prefix
+        nameSuffix:
+          attribute:
+            textContentType: honorific-suffix
+        newPassword:
+          attribute:
+            textContentType: new-password
+        newUsername:
+          attribute:
+            textContentType: username
+        nickname:
+          attribute:
+            textContentType: nickname
+#        oneTimeCode:
+        organizationName:
+          attribute:
+            textContentType: name
+#        photo:
+#        postalAddressExtended:
+#        postalAddressExtendedPostalCode:
+        postalCode:
+          attribute:
+            textContentType: postal-code
+        streetAddressLevel1:
+          attribute:
+            textContentType: address-level1
+        streetAddressLevel2:
+          attribute:
+            textContentType: address-level2
+        streetAddressLevel3:
+          attribute:
+            textContentType: address-level3
+#        streetAddressLevel4:
+        streetAddressLine1:
+          attribute:
+            textContentType: address-line1
+        streetAddressLine2:
+          attribute:
+            textContentType: address-line2
+#        streetAddressLine3:
+        sublocality:
+          attribute:
+            textContentType: city
+        telephoneNumber:
+          attribute:
+            textContentType: tel
+        url:
+          attribute:
+            textContentType: url
+        username:
+          attribute:
+            textContentType: username
+
+
+- id: "android:inputType"
+  type: attribute
+  element: EditText
+  valueType: String
+  rules:
+    "textInputTraits[@key='textInputTraits']":
+      attribute:
+        smartDashesType: "no"
+        smartQuotesType: "no"
+      ifContains:
+#        text:
+        textCapCharacters:
+          attribute:
+            autocapitalizationType: allCharacters
+        textCapWords:
+          attribute:
+            autocapitalizationType: words
+        textCapSentences:
+          attribute:
+            autocapitalizationType: sentences
+        textAutoCorrect:
+          attribute:
+            autocorrectionType: "yes"
+#        textAutoComplete:
+        textNoSuggestions:
+          attribute:
+            spellCheckingType: "no"
+        textUri:
+          attribute:
+            keyboardType: URL
+            textContentType: url
+        textEmailAddress:
+          attribute:
+            keyboardType: emailAddress
+            textContentType: email
+#        textEmailSubject:
+#        textShortMessage:
+#        textLongMessage:
+        textPersonName:
+          attribute:
+            textContentType: name
+        textPostalAddress:
+          attribute:
+            textContentType: street-address
+        textPassword:
+          attribute:
+            textContentType: password
+            secureTextEntry: "YES"
+        textVisiblePassword:
+          attribute:
+            textContentType: password
+#        textWebEditText:
+#        textFilter:
+#        textPhonetic:
+        textWebEmailAddress:
+          attribute:
+            keyboardType: emailAddress
+            textContentType: email
+        textWebPassword:
+          attribute:
+            textContentType: password
+            secureTextEntry: "YES"
+        number:
+          attribute:
+            keyboardType: numberPad
+        numberSigned:
+          attribute:
+            keyboardType: numbersAndPunctuation
+        numberDecimal:
+          attribute:
+            keyboardType: decimalPad
+        numberPassword:
+          attribute:
+            secureTextEntry: "YES"
+            keyboardType: numberPad
+        phone:
+          attribute:
+            keyboardType: phonePad
+            textContentType: tel
+
+
+
+
 
 #LinearLayout
 - id: LinearLayout
@@ -326,7 +1366,6 @@
       </subviews>
       <constraints>
       </constraints>
-      <edgeInsets key="layoutMargins" top="paddingTop" left="paddingLeft" bottom="paddingBottom" right="paddingRight"/>
     </stackView>
 
 #FrameLayout
@@ -390,8 +1429,6 @@
 
 
 ## Attributes
-- id: android:progressTint
-  type: attribute  # TODO
 
 - id: android:thumbTint
   type: attribute  # TODO
@@ -408,40 +1445,7 @@
 - id: android:textOn
   type: attribute  # TODO
 
-- id: android:padding
-  type: attribute  # TODO
-
-- id: android:paddingTop
-  type: attribute  # TODO
-
-- id: android:paddingLeft
-  type: attribute  # TODO
-
-- id: android:paddingBottom
-  type: attribute  # TODO
-
-- id: android:paddingRight
-  type: attribute  # TODO
-
 - id: android:gravity
-  type: attribute  # TODO
-
-- id: android:drawablePadding
-  type: attribute  # TODO
-
-- id: android:drawableTint
-  type: attribute  # TODO
-
-- id: android:drawableLeft
-  type: attribute  # TODO
-
-- id: android:drawableTop
-  type: attribute  # TODO
-
-- id: android:drawableRight
-  type: attribute  # TODO
-
-- id: android:drawableBottom
   type: attribute  # TODO
 
 - id: android:src
@@ -456,17 +1460,17 @@
 - id: android:textColor
   type: attribute  # TODO
 
-- id: android:scaleType
-  type: attribute  # TODO
-
-- id: android:id
-  type: attribute  # TODO
-
 - id: android:background
   type: attribute
   valueType: Color
   xib:
     backgroundColor: SubNode
+
+- id: android:background
+  type: attribute
+  valueType: Drawable
+  xib:
+    backgroundLayerName: UserDefined
 
 - id: android:color
   type: attribute  # TODO
@@ -537,39 +1541,6 @@
   type: attribute  # TODO
 
 - id: android:minHeight
-  type: attribute  # TODO
-
-- id: android:layout_width
-  type: attribute  # TODO
-
-- id: android:layout_height
-  type: attribute  # TODO
-
-- id: android:layout_gravity
-  type: attribute  # TODO
-
-- id: android:layout_weight
-  type: attribute  # TODO
-
-- id: android:layout_margin
-  type: attribute  # TODO
-
-- id: android:layout_marginTop
-  type: attribute  # TODO
-
-- id: android:layout_marginLeft
-  type: attribute  # TODO
-
-- id: android:layout_marginStart
-  type: attribute  # TODO
-
-- id: android:layout_marginBottom
-  type: attribute  # TODO
-
-- id: android:layout_marginRight
-  type: attribute  # TODO
-
-- id: android:layout_marginEnd
   type: attribute  # TODO
 
 - id: android:hint

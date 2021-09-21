@@ -20,34 +20,35 @@ internal class IosLayoutTranslatorForFile(
     val usedResources: MutableSet<AndroidValue> = HashSet()
     val iosCode = StringBuilder()
 
+    fun assignIds(destElement: Element) {
+        destElement.getOrPut("id") { generateId() }
+        destElement.getChild("subviews")?.childElements?.forEach { assignIds(it) }
+        destElement.getChild("constraints")?.childElements?.forEach { it["id"] = generateId() }
+    }
+
     override fun convertElement(
         destOwner: Element,
         rules: List<ElementReplacement>,
         sourceElement: Element,
         allAttributes: Map<String, String>
     ): Element {
-        val innerAttributes = HashMap<String, String>()
-        val outerAttributes = HashMap<String, String>()
         val autowrap = rules.asSequence()
             .flatMap { it.autoWrapFor?.asSequence() ?: sequenceOf() }
             .toSet()
-        for((key, value) in allAttributes) {
-            if(key in autowrap) outerAttributes[key] = value
-            else innerAttributes[key] = value
-        }
 
-        if(outerAttributes.isEmpty()) {
+        if (allAttributes.keys.none { it in autowrap }) {
             val newElement =
-                destOwner.appendFragment(rules.asSequence().mapNotNull { it.template }.first().write { sourceElement.getPath(it) })
+                destOwner.appendFragment(
+                    rules.asSequence().mapNotNull { it.template }.first().write { sourceElement.getPath(it) })
             allAttributes["android:id"]
                 ?.substringAfter('/')
                 ?.also { outlets[it] = newElement.swiftIdentifier() }
                 ?.let { newElement["id"] = it }
-            newElement.getOrPut("id") { generateId() }
-            if(sourceElement.childElements.none()) {
-                if(allAttributes["android:layout_width"] == "wrap_content")
+            assignIds(newElement)
+            if (sourceElement.childElements.none()) {
+                if (allAttributes["android:layout_width"] == "wrap_content")
                     newElement["horizontalHuggingPriority"] = "750"
-                if(allAttributes["android:layout_height"] == "wrap_content")
+                if (allAttributes["android:layout_height"] == "wrap_content")
                     newElement["verticalHuggingPriority"] = "750"
             }
 
@@ -55,25 +56,37 @@ internal class IosLayoutTranslatorForFile(
             handleChildren(rules, newElement, sourceElement)
 
             // Handle attributes
-            handleAttributes(innerAttributes, sourceElement, newElement)
+            handleAttributes(rules, allAttributes, sourceElement, newElement)
 
             return newElement
         } else {
+            val wrappedAttributes = rules.asSequence()
+                .flatMap { it.wrappedAttributes?.asSequence() ?: sequenceOf() }
+                .toSet().plus(autowrap)
+            val innerAttributes = HashMap<String, String>()
+            val outerAttributes = HashMap<String, String>()
+            for ((key, value) in allAttributes) {
+                if (key in wrappedAttributes) outerAttributes[key] = value
+                else innerAttributes[key] = value
+            }
+
             val outerElement = destOwner.appendElement("view")
             outerElement["translatesAutoresizingMaskIntoConstraints"] = "NO"
             val innerElement =
-                outerElement.getOrAppendChild("subviews").appendFragment(rules.asSequence().mapNotNull { it.template }.first().write { sourceElement.getPath(it) })
+                outerElement.getOrAppendChild("subviews")
+                    .appendFragment(rules.asSequence().mapNotNull { it.template }.first()
+                        .write { sourceElement.getPath(it) })
+            assignIds(innerElement)
             allAttributes["android:id"]
                 ?.substringAfter('/')
                 ?.also { outlets[it] = innerElement.swiftIdentifier() }
                 ?.let { innerElement["id"] = it }
             outerElement.getOrPut("id") { generateId() }
-            innerElement.getOrPut("id") { generateId() }
 
-            if(sourceElement.childElements.none()) {
-                if(allAttributes["android:layout_width"] == "wrap_content")
+            if (sourceElement.childElements.none()) {
+                if (allAttributes["android:layout_width"] == "wrap_content")
                     innerElement["horizontalHuggingPriority"] = "750"
-                if(allAttributes["android:layout_height"] == "wrap_content")
+                if (allAttributes["android:layout_height"] == "wrap_content")
                     innerElement["verticalHuggingPriority"] = "750"
             }
 
@@ -88,8 +101,8 @@ internal class IosLayoutTranslatorForFile(
             handleChildren(rules, innerElement, sourceElement)
 
             // Handle attributes
-            handleAttributes(outerAttributes, sourceElement, outerElement)
-            handleAttributes(innerAttributes, sourceElement, innerElement)
+            handleAttributes(listOfNotNull(replacements.getElement("View", mapOf())), outerAttributes, sourceElement, outerElement)
+            handleAttributes(rules, innerAttributes, sourceElement, innerElement)
 
             return outerElement
         }
@@ -108,18 +121,20 @@ internal class IosLayoutTranslatorForFile(
                 val myPadding = sourceElement.allAttributes.insets("android:padding", resources)
 
                 // Find most common alignment
-                val defaultAlignInSource: AlignOrStretch = sourceElement["android:gravity"]?.toGravity()?.get(!isVertical)?.orStretch() ?: AlignOrStretch.START
+                val defaultAlignInSource: AlignOrStretch =
+                    sourceElement["android:gravity"]?.toGravity()?.get(!isVertical)?.orStretch() ?: AlignOrStretch.START
                 val childAlignments = sourceElement.childElements
                     .map {
-                        if(it["android:layout_${if(isVertical) "width" else "height"}"] == "match_parent") AlignOrStretch.STRETCH
-                        else it["android:layout_gravity"]?.toGravity()?.get(!isVertical)?.orStretch() ?: defaultAlignInSource
+                        if (it["android:layout_${if (isVertical) "width" else "height"}"] == "match_parent") AlignOrStretch.STRETCH
+                        else it["android:layout_gravity"]?.toGravity()?.get(!isVertical)?.orStretch()
+                            ?: defaultAlignInSource
                     }
                     .toList()
                 val commonAlign: AlignOrStretch = childAlignments
                     .groupingBy { it }
                     .eachCount()
                     .entries
-                    .maxByOrNull { it.value + if(it.key == AlignOrStretch.STRETCH) 0.1 else 0.0 }
+                    .maxByOrNull { it.value + if (it.key == AlignOrStretch.STRETCH) 0.1 else 0.0 }
                     ?.key ?: defaultAlignInSource
                 val minMargins: Insets = sourceElement.childElements
                     .map { it.allAttributes.insets("android:layout_margin", resources) }
@@ -132,19 +147,21 @@ internal class IosLayoutTranslatorForFile(
                     }
 
                 // Set default alignment on stackView
-                if(isVertical)
-                    when(commonAlign) {
+                if (isVertical)
+                    when (commonAlign) {
                         AlignOrStretch.START -> destElement["alignment"] = "top"
                         AlignOrStretch.CENTER -> destElement["alignment"] = "center"
                         AlignOrStretch.END -> destElement["alignment"] = "bottom"
-                        AlignOrStretch.STRETCH -> {}
+                        AlignOrStretch.STRETCH -> {
+                        }
                     }
                 else
-                    when(commonAlign) {
+                    when (commonAlign) {
                         AlignOrStretch.START -> destElement["alignment"] = "leading"
                         AlignOrStretch.CENTER -> destElement["alignment"] = "center"
                         AlignOrStretch.END -> destElement["alignment"] = "trailing"
-                        AlignOrStretch.STRETCH -> {}
+                        AlignOrStretch.STRETCH -> {
+                        }
                     }
 
                 // Set default margin matching orientation on stackView via default spacing
@@ -153,7 +170,7 @@ internal class IosLayoutTranslatorForFile(
                 // Set default margin on stackView via adding to content insets
                 val myMargins = myPadding + minMargins
                 destElement.getOrAppendChildWithKey("edgeInsets", "layoutMargins").apply {
-                    if(isVertical) {
+                    if (isVertical) {
                         this["top"] = myMargins.top.toString()
                         this["bottom"] = myMargins.bottom.toString()
                         this["left"] = myMargins.left.toString()
@@ -173,73 +190,112 @@ internal class IosLayoutTranslatorForFile(
                     val childAlign: AlignOrStretch = childAlignments[index]
                     val childMargins = childAttributes.insets("android:layout_margin", resources) - minMargins
 
-                    val destChild = if(childAlign == commonAlign && childMargins == Insets.zero) {
+                    val (destChild, outerElement) = if (childAlign == commonAlign && childMargins == Insets.zero) {
                         // If matching common alignment and margins, be direct
-                        convertElement(target, child)
-                    } else if(childAlign == commonAlign && childMargins.start(!isVertical) == 0.0 && childMargins.end(!isVertical) == 0.0) {
+                        val e = convertElement(target, child)
+                        e to e
+                    } else if (childAlign == commonAlign && childMargins.start(!isVertical) == 0.0 && childMargins.end(!isVertical) == 0.0) {
                         // If matching common alignment but not margins, be direct but add spacer views
                         val additionalStartPadding = childMargins.start(isVertical)
                         val additionalEndPadding = childMargins.end(isVertical)
 
-                        if(additionalStartPadding > 0.0) {
+                        if (additionalStartPadding > 0.0) {
                             val spacer = target.appendElement("view")
                             spacer.getOrPut("id") { generateId() }
                             spacer["translatesAutoresizingMaskIntoConstraints"] = "NO"
                             spacer.anchorSize(isVertical).setTo(additionalStartPadding)
                         }
                         val destChild = convertElement(target, child)
-                        if(additionalEndPadding > 0.0) {
+                        if (additionalEndPadding > 0.0) {
                             val spacer = target.appendElement("view")
                             spacer.getOrPut("id") { generateId() }
                             spacer["translatesAutoresizingMaskIntoConstraints"] = "NO"
                             spacer.anchorSize(isVertical).setTo(additionalEndPadding)
                         }
-                        destChild
+                        destChild to destChild
                     } else {
                         val outerElement = target.appendElement("view")
                         outerElement.getOrPut("id") { generateId() }
                         outerElement["translatesAutoresizingMaskIntoConstraints"] = "NO"
-                        println("Wrapping, $commonAlign -> $childAlign")
-                        when(commonAlign) {
-                            AlignOrStretch.START -> outerElement.anchorEnd(!isVertical).constraint(destElement.anchorEnd(!isVertical), constant = myMargins.left.also { println("myMargins.left -> $it") })
+                        when (commonAlign) {
+                            AlignOrStretch.START -> outerElement.anchorEnd(!isVertical).constraint(
+                                destElement.anchorEnd(!isVertical),
+                                constant = myMargins.left.also { println("myMargins.left -> $it") })
                             AlignOrStretch.CENTER,
-                            AlignOrStretch.END -> destElement.anchorStart(!isVertical).constraint(outerElement.anchorStart(!isVertical), constant = myMargins.right.also { println("myMargins.right -> $it") })
-                            AlignOrStretch.STRETCH -> {}
+                            AlignOrStretch.END -> destElement.anchorStart(!isVertical).constraint(
+                                outerElement.anchorStart(!isVertical),
+                                constant = myMargins.right.also { println("myMargins.right -> $it") })
+                            AlignOrStretch.STRETCH -> {
+                            }
                         }
 
                         val innerElement = convertElement(outerElement.getOrAppendChild("subviews"), child)
-                        outerElement.anchorStart(isVertical).constraint(innerElement.anchorStart(isVertical), constant = childMargins.start(isVertical))
-                        innerElement.anchorEnd(isVertical).constraint(outerElement.anchorEnd(isVertical), constant = childMargins.end(isVertical))
+                        outerElement.anchorStart(isVertical)
+                            .constraint(innerElement.anchorStart(isVertical), constant = childMargins.start(isVertical))
+                        innerElement.anchorEnd(isVertical)
+                            .constraint(outerElement.anchorEnd(isVertical), constant = childMargins.end(isVertical))
 
-                        when(childAlign) {
+                        when (childAlign) {
                             AlignOrStretch.START -> {
-                                outerElement.anchorStart(!isVertical).constraint(innerElement.anchorStart(!isVertical), constant = childMargins.start(!isVertical))
-                                innerElement.anchorEnd(!isVertical).constraint(outerElement.anchorEnd(!isVertical), relationship = ConstraintRelation.greaterThanOrEqual, constant = childMargins.end(!isVertical))
+                                outerElement.anchorStart(!isVertical).constraint(
+                                    innerElement.anchorStart(!isVertical),
+                                    constant = childMargins.start(!isVertical)
+                                )
+                                innerElement.anchorEnd(!isVertical).constraint(
+                                    outerElement.anchorEnd(!isVertical),
+                                    relationship = ConstraintRelation.greaterThanOrEqual,
+                                    constant = childMargins.end(!isVertical)
+                                )
                             }
                             AlignOrStretch.CENTER -> {
-                                outerElement.anchorStart(!isVertical).constraint(innerElement.anchorStart(!isVertical), relationship = ConstraintRelation.greaterThanOrEqual, constant = childMargins.start(!isVertical))
-                                innerElement.anchorEnd(!isVertical).constraint(outerElement.anchorEnd(!isVertical), relationship = ConstraintRelation.greaterThanOrEqual, constant = childMargins.end(!isVertical))
-                                outerElement.anchorCenter(!isVertical).constraint(innerElement.anchorCenter(!isVertical))
+                                outerElement.anchorStart(!isVertical).constraint(
+                                    innerElement.anchorStart(!isVertical),
+                                    relationship = ConstraintRelation.greaterThanOrEqual,
+                                    constant = childMargins.start(!isVertical)
+                                )
+                                innerElement.anchorEnd(!isVertical).constraint(
+                                    outerElement.anchorEnd(!isVertical),
+                                    relationship = ConstraintRelation.greaterThanOrEqual,
+                                    constant = childMargins.end(!isVertical)
+                                )
+                                outerElement.anchorCenter(!isVertical)
+                                    .constraint(innerElement.anchorCenter(!isVertical))
                             }
                             AlignOrStretch.END -> {
-                                outerElement.anchorStart(!isVertical).constraint(innerElement.anchorStart(!isVertical), relationship = ConstraintRelation.greaterThanOrEqual, constant = childMargins.start(!isVertical))
-                                innerElement.anchorEnd(!isVertical).constraint(outerElement.anchorEnd(!isVertical), constant = childMargins.end(!isVertical))
+                                outerElement.anchorStart(!isVertical).constraint(
+                                    innerElement.anchorStart(!isVertical),
+                                    relationship = ConstraintRelation.greaterThanOrEqual,
+                                    constant = childMargins.start(!isVertical)
+                                )
+                                innerElement.anchorEnd(!isVertical).constraint(
+                                    outerElement.anchorEnd(!isVertical),
+                                    constant = childMargins.end(!isVertical)
+                                )
                             }
                             AlignOrStretch.STRETCH -> {
-                                outerElement.anchorStart(!isVertical).constraint(innerElement.anchorStart(!isVertical), constant = childMargins.start(!isVertical))
-                                innerElement.anchorEnd(!isVertical).constraint(outerElement.anchorEnd(!isVertical), constant = childMargins.end(!isVertical))
+                                outerElement.anchorStart(!isVertical).constraint(
+                                    innerElement.anchorStart(!isVertical),
+                                    constant = childMargins.start(!isVertical)
+                                )
+                                innerElement.anchorEnd(!isVertical).constraint(
+                                    outerElement.anchorEnd(!isVertical),
+                                    constant = childMargins.end(!isVertical)
+                                )
                             }
                         }
-                        outerElement
+                        innerElement to outerElement
                     }
 
                     val childWeight = childAttributes["android:layout_weight"]?.toDouble() ?: 0.0
-                    if(childWeight > 0) {
-                        destChild["${if(isVertical) "vertical" else "horizontal"}HuggingPriority"] = "100"
+                    if (childWeight > 0) {
+                        outerElement["${if (isVertical) "vertical" else "horizontal"}HuggingPriority"] = "100"
                         firstWeightedChild?.let {
-                            destChild.anchorSize(isVertical).constraint(it.anchorSize(isVertical), multiplier = firstWeightedChildWeight / childWeight)
+                            outerElement.anchorSize(isVertical).constraint(
+                                it.anchorSize(isVertical),
+                                multiplier = firstWeightedChildWeight / childWeight
+                            )
                         } ?: run {
-                            firstWeightedChild = destChild
+                            firstWeightedChild = outerElement
                             firstWeightedChildWeight = childWeight
                         }
                     }
@@ -247,11 +303,11 @@ internal class IosLayoutTranslatorForFile(
                 }
 
                 // If no weights AND size isn't wrap content, add final spacer view
-                if(firstWeightedChild == null && sourceElement.allAttributes["android:layout_${if(isVertical) "height" else "width"}"] != "wrap_content") {
+                if (firstWeightedChild == null && sourceElement.allAttributes["android:layout_${if (isVertical) "height" else "width"}"] != "wrap_content") {
                     target.appendElement("view") {
                         getOrPut("id") { generateId() }
                         this["translatesAutoresizingMaskIntoConstraints"] = "NO"
-                        this["${if(isVertical) "vertical" else "horizontal"}HuggingPriority"] = "100"
+                        this["${if (isVertical) "vertical" else "horizontal"}HuggingPriority"] = "100"
                     }
                 }
             }
@@ -260,25 +316,37 @@ internal class IosLayoutTranslatorForFile(
                 for (child in sourceElement.children.mapNotNull { it as? Element }) {
                     val childAttributes = child.allAttributes
                     val childElement = convertElement(target, child)
-                    val total = myAttributes.insets("android:padding", resources) + childAttributes.insets("android:layout_margin", resources)
+                    val total = myAttributes.insets(
+                        "android:padding",
+                        resources
+                    ) + childAttributes.insets("android:layout_margin", resources)
                     val gravity = childAttributes["android:layout_gravity"]?.toGravity() ?: Gravity()
 
-                    if(childAttributes["android:layout_width"] == "match_parent") {
+                    if (childAttributes["android:layout_width"] == "match_parent") {
                         destElement.anchorLeading.constraint(childElement.anchorLeading, constant = total.left)
                         childElement.anchorTrailing.constraint(destElement.anchorTrailing, constant = total.right)
-                    } else when(gravity.horizontal) {
-                        Align.START -> destElement.anchorLeading.constraint(childElement.anchorLeading, constant = total.left)
+                    } else when (gravity.horizontal) {
+                        Align.START -> destElement.anchorLeading.constraint(
+                            childElement.anchorLeading,
+                            constant = total.left
+                        )
                         Align.CENTER -> childElement.anchorCenterX.constraint(destElement.anchorCenterX)
-                        Align.END -> childElement.anchorTrailing.constraint(destElement.anchorTrailing, constant = total.right)
+                        Align.END -> childElement.anchorTrailing.constraint(
+                            destElement.anchorTrailing,
+                            constant = total.right
+                        )
                     }
 
-                    if(childAttributes["android:layout_height"] == "match_parent") {
+                    if (childAttributes["android:layout_height"] == "match_parent") {
                         destElement.anchorTop.constraint(childElement.anchorTop, constant = total.left)
                         childElement.anchorBottom.constraint(destElement.anchorBottom, constant = total.right)
-                    } else when(gravity.vertical) {
+                    } else when (gravity.vertical) {
                         Align.START -> destElement.anchorTop.constraint(childElement.anchorTop, constant = total.left)
                         Align.CENTER -> childElement.anchorCenterY.constraint(destElement.anchorCenterY)
-                        Align.END -> childElement.anchorBottom.constraint(destElement.anchorBottom, constant = total.right)
+                        Align.END -> childElement.anchorBottom.constraint(
+                            destElement.anchorBottom,
+                            constant = total.right
+                        )
                     }
 
                     handleSetSize(childAttributes, childElement)
@@ -291,9 +359,15 @@ internal class IosLayoutTranslatorForFile(
                     val paddingPlusMargins = padding + child.allAttributes.insets("android:layout_margin", resources)
                     destElement.anchorLeading.constraint(innerElement.anchorLeading, constant = paddingPlusMargins.left)
                     destElement.anchorTop.constraint(innerElement.anchorTop, constant = paddingPlusMargins.top)
-                    innerElement.anchorTrailing.constraint(destElement.anchorTrailing, constant = paddingPlusMargins.right)
+                    innerElement.anchorTrailing.constraint(
+                        destElement.anchorTrailing,
+                        constant = paddingPlusMargins.right
+                    )
                     innerElement.anchorBottom.constraint(destElement.anchorBottom, constant = paddingPlusMargins.bottom)
-                    innerElement.anchorWidth.constraint(destElement.anchorWidth, constant = -paddingPlusMargins.left - paddingPlusMargins.right)
+                    innerElement.anchorWidth.constraint(
+                        destElement.anchorWidth,
+                        constant = -paddingPlusMargins.left - paddingPlusMargins.right
+                    )
                 }
             }
             "scroll-horizontal" -> {
@@ -303,19 +377,140 @@ internal class IosLayoutTranslatorForFile(
                     val paddingPlusMargins = padding + child.allAttributes.insets("android:layout_margin", resources)
                     destElement.anchorLeading.constraint(innerElement.anchorLeading, constant = paddingPlusMargins.left)
                     destElement.anchorTop.constraint(innerElement.anchorTop, constant = paddingPlusMargins.top)
-                    innerElement.anchorTrailing.constraint(destElement.anchorTrailing, constant = paddingPlusMargins.right)
+                    innerElement.anchorTrailing.constraint(
+                        destElement.anchorTrailing,
+                        constant = paddingPlusMargins.right
+                    )
                     innerElement.anchorBottom.constraint(destElement.anchorBottom, constant = paddingPlusMargins.bottom)
-                    innerElement.anchorHeight.constraint(destElement.anchorHeight, constant = -paddingPlusMargins.top - paddingPlusMargins.bottom)
+                    innerElement.anchorHeight.constraint(
+                        destElement.anchorHeight,
+                        constant = -paddingPlusMargins.top - paddingPlusMargins.bottom
+                    )
                 }
             }
             else -> super.handleChildren(rules, childAddRule, sourceElement, destElement, target)
         }
     }
 
-    override fun handleAttributes(allAttributes: Map<String, String>, sourceElement: Element, destElement: Element) {
-        super.handleAttributes(allAttributes, sourceElement, destElement)
-        if(sourceElement.tagName == "TextView" && sourceElement["android:layout_width"] != "wrap_content") {
+    override fun handleAttributes(
+        rules: List<ElementReplacement>,
+        allAttributes: Map<String, String>,
+        sourceElement: Element,
+        destElement: Element
+    ) {
+//        println("Translating ${rules.joinToString { it.id }} with attrs ${allAttributes.entries.joinToString { "${it.key}: ${it.value}" }}")
+        super.handleAttributes(rules, allAttributes, sourceElement, destElement)
+        if (sourceElement.tagName == "TextView" && sourceElement["android:layout_width"] != "wrap_content") {
             destElement["numberOfLines"] = "0"
+        }
+    }
+
+    fun handleXibEntry(destElement: Element, value: AndroidValue, key: String, type: AttributeReplacement.XibRuleType) {
+        when (type) {
+            AttributeReplacement.XibRuleType.SubNode -> {
+                when (value) {
+                    is AndroidColor -> destElement.appendElement("color") {
+                        this["key"] = key
+                        this["red"] = value.value.redFloat.toString()
+                        this["green"] = value.value.greenFloat.toString()
+                        this["blue"] = value.value.blueFloat.toString()
+                        this["alpha"] = value.value.alphaFloat.toString()
+                        this["colorSpace"] = "calibratedRGB"
+                    }
+                    is AndroidColorResource -> destElement.appendElement("color") {
+                        this["key"] = key
+                        this["name"] = "color_" + value.name
+                    }
+                    is AndroidColorStateResource -> destElement.appendElement("color") {
+                        this["key"] = key
+                        this["name"] = "color_" + value.name
+                    }
+                    else -> throw IllegalArgumentException("Type ${value::class.simpleName} and rule $type not compatible")
+                }
+            }
+            AttributeReplacement.XibRuleType.Attribute -> {
+                when (value) {
+                    is AndroidNamedDrawable -> destElement[key] = value.name
+                    is AndroidStringValue -> destElement[key] = value.value
+                    is AndroidNumber -> destElement[key] = value.value.toString()
+                    else -> throw IllegalArgumentException("Type ${value::class.simpleName} and rule $type not compatible")
+                }
+            }
+            AttributeReplacement.XibRuleType.UserDefined -> {
+                destElement.getOrAppendChild("userDefinedRuntimeAttributes").apply {
+                    getOrAppendChildWithKey("userDefinedRuntimeAttribute", key, "keyPath").apply {
+                        when (value) {
+                            is AndroidNumber -> {
+                                this["type"] = "number"
+                                this.getOrAppendChildWithKey("real", "value").apply {
+                                    this["value"] = value.value.toString()
+                                }
+                            }
+                            is AndroidStringValue -> {
+                                when (value.value) {
+                                    "true", "false" -> {
+                                        this["type"] = "boolean"
+                                        this["value"] = if (value.value.toBoolean()) "YES" else "NO"
+                                    }
+                                    else -> {
+                                        this["type"] = "string"
+                                        this["value"] = value.value
+                                    }
+                                }
+                            }
+                            is AndroidNamedDrawable -> {
+                                this["type"] = "string"
+                                this["value"] = value.name
+                            }
+                            is AndroidColorValue -> {
+                                this["type"] = "color"
+                                handleXibEntry(this, value, "value", AttributeReplacement.XibRuleType.SubNode)
+                            }
+                            else -> TODO()
+                        }
+                    }
+                }
+            }
+            AttributeReplacement.XibRuleType.StateSubNode -> {
+                when (value) {
+                    is AndroidColorStateResource -> {
+                        value.colors.asMap.entries.forEach { state ->
+                            when (val subvalue = state.value?.value) {
+                                is AndroidColor -> {
+                                    destElement.getOrAppendChildWithKey("state", state.key.toString().toLowerCase())
+                                        .apply {
+                                            getOrAppendChildWithKey("color", key).apply {
+                                                this["red"] = subvalue.value.redFloat.toString()
+                                                this["green"] = subvalue.value.greenFloat.toString()
+                                                this["blue"] = subvalue.value.blueFloat.toString()
+                                                this["alpha"] = subvalue.value.alphaFloat.toString()
+                                                this["colorSpace"] = "calibratedRGB"
+                                            }
+                                        }
+                                }
+                                is AndroidColorResource -> {
+                                    destElement.getOrAppendChildWithKey("state", state.key.toString().toLowerCase())
+                                        .apply {
+                                            getOrAppendChildWithKey("color", key).apply {
+                                                this["name"] = "color_" + subvalue.name
+                                            }
+                                        }
+                                }
+                            }
+                        }
+                    }
+                    else -> {
+                        handleXibEntry(destElement.getOrAppendChildWithKey("state", "normal"), value, key, AttributeReplacement.XibRuleType.SubNode)
+                    }
+                }
+            }
+            AttributeReplacement.XibRuleType.StateAttribute -> {
+                when (value) {
+                    else -> {
+                        handleXibEntry(destElement.getOrAppendChildWithKey("state", "normal"), value, key, AttributeReplacement.XibRuleType.Attribute)
+                    }
+                }
+            }
         }
     }
 
@@ -324,69 +519,14 @@ internal class IosLayoutTranslatorForFile(
         super.handleAttribute(attributeRule, destElement, value)
         attributeRule.code?.let {
             this.iosCode.appendLine(it.write {
-                when(it) {
+                when (it) {
                     "this" -> destElement["id"]!!
                     else -> value.getPath(it)
                 }
             })
         }
         attributeRule.xib.entries.forEach {
-            when(it.value) {
-                AttributeReplacement.XibRuleType.SubNode -> {
-                    when(value) {
-                        is AndroidColor -> destElement.appendElement("color") {
-                            this["key"] = it.key
-                            this["red"] = value.value.redFloat.toString()
-                            this["green"] = value.value.greenFloat.toString()
-                            this["blue"] = value.value.blueFloat.toString()
-                            this["alpha"] = value.value.alphaFloat.toString()
-                            this["colorSpace"] = "calibratedRGB"
-                        }
-                        is AndroidColorResource -> destElement.appendElement("color") {
-                            this["key"] = it.key
-                            this["name"] = "color_" + value.name
-                        }
-                        is AndroidColorStateResource -> destElement.appendElement("color") {
-                            this["key"] = it.key
-                            this["name"] = "color_" + value.name
-                        }
-                        else -> throw IllegalArgumentException("Type ${value::class.simpleName} and rule ${it.value} not compatible")
-                    }
-                }
-                AttributeReplacement.XibRuleType.Attribute -> {
-                    when(value) {
-                        is AndroidNamedDrawable -> destElement[it.key] = value.name
-                        is AndroidStringValue -> destElement[it.key] = value.value
-                        is AndroidNumber -> destElement[it.key] = value.value.toString()
-                        else -> throw IllegalArgumentException("Type ${value::class.simpleName} and rule ${it.value} not compatible")
-                    }
-                }
-                AttributeReplacement.XibRuleType.UserDefined -> {
-                    destElement.getOrAppendChild("userDefinedRuntimeAttributes").apply {
-                        getOrAppendChildWithKey("userDefinedRuntimeAttribute", it.key, "keyPath").apply {
-                            when(value) {
-                                is AndroidNumber -> {
-                                    this["type"] = "number"
-                                    this.getOrAppendChildWithKey("real", "value").apply {
-                                        this["value"] = value.value.toString()
-                                    }
-                                }
-                                is AndroidStringValue -> {
-                                    when(value.value) {
-                                        "true", "false" -> {
-                                            this["type"] = "boolean"
-                                            this["value"] = if(value.value.toBoolean()) "YES" else "NO"
-                                        }
-                                        else -> TODO()
-                                    }
-                                }
-                                else -> TODO()
-                            }
-                        }
-                    }
-                }
-                AttributeReplacement.XibRuleType.State -> TODO()
-            }
+            handleXibEntry(destElement.xpathElementOrCreate(it.key.substringBefore("|", "")), value, it.key.substringAfter("|", it.key), it.value)
         }
     }
 
@@ -417,7 +557,7 @@ internal class IosLayoutTranslatorForFile(
         fileOwnerIdentifier["customClass"] = layout.name + "Xml"
         fileOwnerIdentifier["customModule"] = project.name
         fileOwnerIdentifier.getOrAppendChild("connections").apply {
-            for(entry in outlets) {
+            for (entry in outlets) {
                 appendElement("outlet") {
                     this["property"] = entry.key
                     this["destination"] = entry.key
@@ -427,9 +567,29 @@ internal class IosLayoutTranslatorForFile(
         }
         usedResources
             .asSequence()
-            .forEach {
+            .flatMap {
                 when(it) {
+                    is AndroidColorStateResource -> it.colors.asMap.values.mapNotNull { it?.value }.asSequence() + sequenceOf(it)
+                    else -> sequenceOf(it)
+                }
+            }
+            .distinct()
+            .forEach {
+                when (it) {
                     is AndroidColorResource -> {
+                        resourceNode.appendElement("namedColor") {
+                            this["name"] = "color_${it.name}"
+                            appendElement("color") {
+                                this["red"] = it.value.redFloat.toString()
+                                this["green"] = it.value.greenFloat.toString()
+                                this["blue"] = it.value.blueFloat.toString()
+                                this["alpha"] = it.value.alphaFloat.toString()
+                                this["colorSpace"] = "custom"
+                                this["customColorSpace"] = "sRGB"
+                            }
+                        }
+                    }
+                    is AndroidColorStateResource -> {
                         resourceNode.appendElement("namedColor") {
                             this["name"] = "color_${it.name}"
                             appendElement("color") {
@@ -478,8 +638,11 @@ internal class IosLayoutTranslatorForFile(
         layout: AndroidLayoutFile
     ): String {
 
-        fun AndroidIdHook.swiftDeclaration(): String = "@IBOutlet weak public var ${this.name}: ${outlets[this.name]!!.name}${if (this.optional) "?" else "!"}"
-        fun AndroidSubLayout.swiftDeclaration(): String = "@IBOutlet weak public var ${this.name}: ${this.layoutXmlClass}${if (this.optional) "?" else "!"}"
+        fun AndroidIdHook.swiftDeclaration(): String =
+            "@IBOutlet weak public var ${this.name}: ${outlets[this.name]!!.name}${if (this.optional) "?" else "!"}"
+
+        fun AndroidSubLayout.swiftDeclaration(): String =
+            "@IBOutlet weak public var ${this.name}: ${this.layoutXmlClass}${if (this.optional) "?" else "!"}"
 
         return """
     |//

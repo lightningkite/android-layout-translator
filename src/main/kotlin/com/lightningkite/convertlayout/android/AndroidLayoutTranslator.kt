@@ -13,7 +13,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         val firstRule = replacements.getElement(sourceElement.tagName, allAttributes)
             ?: throw IllegalArgumentException("No rule ${sourceElement.tagName} found")
         val rules = generateSequence(firstRule) {
-            it.parent?.let { replacements.getElement(it, allAttributes) }
+            it.parent?.let { replacements.elementsByIdentifier[it] }
         }.toList()
         return convertElement(owner, rules, sourceElement, allAttributes)
     }
@@ -30,7 +30,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         handleChildren(rules, newElement, sourceElement)
 
         // Handle attributes
-        handleAttributes(allAttributes, sourceElement, newElement)
+        handleAttributes(rules, allAttributes, sourceElement, newElement)
         return newElement
     }
 
@@ -61,23 +61,27 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
     }
 
     open fun handleAttributes(
+        rules: List<ElementReplacement>,
         allAttributes: Map<String, String>,
         sourceElement: Element,
         destElement: Element
     ) {
         for ((key, raw) in allAttributes) {
-            handleAttribute(sourceElement, destElement, key, raw)
+            handleAttribute(rules, sourceElement, destElement, key, raw)
         }
     }
 
     open fun handleAttribute(
+        rules: List<ElementReplacement>,
         sourceElement: Element,
         destElement: Element,
         key: String,
         raw: String
     ) {
         val value = resources.read(raw)
-        val attributeRule = replacements.getAttribute(sourceElement.tagName, key, value.type, raw) ?: return
+        val attributeRule = rules.asSequence()
+            .mapNotNull { replacements.getAttribute(it.caseIdentifier ?: it.id, key, value.type, raw) }
+            .firstOrNull() ?: return
         handleAttribute(attributeRule, destElement, value)
     }
 

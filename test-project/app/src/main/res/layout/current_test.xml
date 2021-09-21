@@ -1,29 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:tools="http://schemas.android.com/tools"
               android:orientation="vertical"
+              android:padding="8dp"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
 
-    <TextView
+    <EditText
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/colorPrimary"
-            android:letterSpacing="0.5"
-            android:textSize="18sp"
-            android:fontFamily="@font/proxima_nova_regular"
-            android:textStyle="bold"
-            android:lineSpacingMultiplier="1.5"
-            android:maxLines="3"
-            android:padding="8dp"
-            android:textAllCaps="true"
-            android:text="Some multiline\ntext for testing\nwith &lt;cursed&gt;\tparts"/>
+            android:textColor="@color/colorPrimaryDarker"
+            android:textColorHint="@color/colorPrimary"
+            android:hint="Hint"
+            android:background="@drawable/plain_border"
+            android:layout_margin="8dp"
+            android:inputType="text|textCapWords|textPersonName"
+            android:imeOptions="actionDone"
+            android:autofillHints=""
+            android:drawableEnd="@drawable/ic_android_black_24dp"
+            android:padding="8dp"/>
 
-    <TextView
-            style="@style/Body"
+    <EditText
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="8dp"
-            android:textStyle=""
-            android:text="@string/lorem_ipsum"/>
+            android:layout_height="200dp"
+            android:gravity="top|start"
+            android:maxLines="20"
+            android:textColor="@color/colorPrimaryDarker"
+            android:textColorHint="@color/colorPrimary"
+            android:hint="Hint"
+            android:background="@drawable/plain_border"
+            android:layout_margin="8dp"
+            android:inputType="text|textCapWords|textPersonName"
+            android:drawableEnd="@drawable/ic_android_black_24dp"
+            android:padding="8dp"/>
 
 </LinearLayout>

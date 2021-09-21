@@ -208,7 +208,7 @@ fun Element.xpathElement(path: String): Element? {
 fun Element.xpathElementOrCreate(path: String): Element {
     val existing = xpathElement(path)
     if(existing != null) return existing
-    val parent = xpathElement(path.substringBeforeLast('/', ""))!!
+    val parent = xpathElementOrCreate(path.substringBeforeLast('/', ""))
     val tagInfo = path.substringAfterLast('/')
     val tagName = tagInfo.substringBefore('[')
     val tagAttributes = tagInfo
@@ -267,6 +267,10 @@ fun Document.clone(): Document {
     val copy = defaultBuilder.newDocument()
     copy.appendChild(copy.importNode(documentElement, true))
     return copy
+}
+
+fun Element.getChild(name: String): Element? {
+    return this.childElements.find { it.tagName == name }
 }
 
 fun Element.getOrAppendChild(name: String): Element {
