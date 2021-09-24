@@ -58,6 +58,7 @@ internal class IosLayoutTranslatorForFile(
             // Handle attributes
             handleAttributes(rules, allAttributes, sourceElement, newElement)
 
+            assignIds(newElement)
             return newElement
         } else {
             val wrappedAttributes = rules.asSequence()
@@ -104,6 +105,7 @@ internal class IosLayoutTranslatorForFile(
             handleAttributes(listOfNotNull(replacements.getElement("View", mapOf())), outerAttributes, sourceElement, outerElement)
             handleAttributes(rules, innerAttributes, sourceElement, innerElement)
 
+            assignIds(outerElement)
             return outerElement
         }
     }
@@ -443,7 +445,11 @@ internal class IosLayoutTranslatorForFile(
                             is AndroidNumber -> {
                                 this["type"] = "number"
                                 this.getOrAppendChildWithKey("real", "value").apply {
-                                    this["value"] = value.value.toString()
+                                    if(key.contains("rotation")) {
+                                        this["value"] = value.value.times(Math.PI).div(180).toString()
+                                    } else {
+                                        this["value"] = value.value.toString()
+                                    }
                                 }
                             }
                             is AndroidStringValue -> {

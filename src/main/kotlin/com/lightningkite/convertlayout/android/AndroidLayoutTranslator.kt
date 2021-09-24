@@ -111,7 +111,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
             sub.ifContains?.let { ifContains ->
                 val raw = (value as AndroidStringValue).value
                 for(entry in ifContains) {
-                    if(entry.key in raw) {
+                    if(entry.key in raw.split('|')) {
                         subrule(path, entry.value)
                     }
                 }
