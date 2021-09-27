@@ -178,7 +178,7 @@ fun Element.appendElement(name: String): Element {
     return newElement
 }
 fun Element.appendText(text: String) = appendChild(ownerDocument.createTextNode(text))
-inline fun Element.appendElement(name: String, setup: Element.()->Unit): Element = appendChild(ownerDocument.createElement(name).apply(setup)) as Element
+inline fun Element.appendElement(name: String, setup: Element.()->Unit): Element = appendElement(name).apply(setup)
 
 fun Element.cleanBlanks() {
     children.toList().forEach {

@@ -29,7 +29,7 @@ class IosProjectTest {
         val translator = IosTranslator(
             androidFolder = File("test-project/app"),
             iosFolder = macLocation.file.also { it.mkdirs() },
-            iosName = "XmlToXibRuntime",
+            iosName = "XmlToXibRuntimeExample",
             replacementFolders = listOf(File("."))
         )
 

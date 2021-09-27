@@ -1,6 +1,8 @@
 package com.lightningkite.convertlayout.android
 
 import com.lightningkite.convertlayout.rules.AttributeReplacement
+import com.lightningkite.convertlayout.util.DeferMap
+import com.lightningkite.convertlayout.util.camelCase
 import com.lightningkite.convertlayout.xml.get
 import com.lightningkite.convertlayout.xml.readXml
 import org.w3c.dom.Element
@@ -35,26 +37,6 @@ class Lazy<T>(val name: String, val getter: () -> T) {
 
 interface HasGet {
     operator fun get(key: String): Any?
-}
-
-fun HasGet.getPath(path: String): String = (this as Any).getPath(path)
-fun Element.getPath(path: String): String = (this as Any).getPath(path)
-private fun Any.getPath(path: String): String {
-    var current: Any? = this
-    for (part in path.split('.')) {
-        while (current is Lazy<*>) {
-            current = current.value
-        }
-        current = when (current) {
-            is HasGet -> current[part]
-            is Element -> current[part]
-            else -> return current.toString()
-        }
-    }
-    while (current is Lazy<*>) {
-        current = current.value
-    }
-    return current.toString()
 }
 
 sealed interface AndroidValue : HasGet {
@@ -364,6 +346,7 @@ data class AndroidLayoutResource(
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
+        "xmlClass" -> name.camelCase().capitalize() + "Xml"
         else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
     }
 }
@@ -429,8 +412,11 @@ data class AndroidStringResource(
 
 data class AndroidStyle(
     val name: String,
-    val map: Map<String, String>
+    val map: Map<String, String>,
+    val parent: Lazy<AndroidStyle>? = null
 ) : AndroidValue {
+    val chainedMap: Map<String, String> get() = DeferMap(listOfNotNull(map, parent?.value?.chainedMap))
+
     override val type: AttributeReplacement.ValueType
         get() = AttributeReplacement.ValueType.Style
 

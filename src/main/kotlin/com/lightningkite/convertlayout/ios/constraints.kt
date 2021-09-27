@@ -29,18 +29,20 @@ private fun Element.addConstraint(
     secondAttribute: ConstraintAttribute?,
     constant: Double,
     multiplier: Double,
-    relation: ConstraintRelation = ConstraintRelation.equal
+    relation: ConstraintRelation = ConstraintRelation.equal,
+    priority: Int = 999
 ) {
     this.getOrAppendChild("constraints")
         .appendElement("constraint") {
-            firstItem?.let { this["firstItem"] = it.getOrPut("id") { generateId() } }
+            firstItem?.let { this["firstItem"] = it.id() }
             this["firstAttribute"] = firstAttribute.toString()
-            secondItem?.let { this["secondItem"] = it.getOrPut("id") { generateId() } }
+            secondItem?.let { this["secondItem"] = it.id() }
             secondAttribute?.let { this["secondAttribute"] = it.toString() }
             this["constant"] = constant.toString()
             this["multiplier"] = multiplier.toString()
             this["relation"] = relation.toString()
-            this["id"] = generateId()
+            this["priority"] = priority.toString()
+            id()
         }
 }
 
@@ -75,7 +77,7 @@ private fun Element.commonAncestor(with: Element): Element? {
     }
     return a
 }
-fun ElementAnchor.constraint(other: ElementAnchor, relationship: ConstraintRelation = ConstraintRelation.equal, constant: Double = 0.0, multiplier: Double = 1.0) {
+fun ElementAnchor.constraint(other: ElementAnchor, relationship: ConstraintRelation = ConstraintRelation.equal, constant: Double = 0.0, multiplier: Double = 1.0, priority: Int = 1000) {
     val commonView = this.element.commonAncestor(other.element)!!.let {
         if(it.tagName == "subviews") it.parentNode as Element
         else it
@@ -91,7 +93,8 @@ fun ElementAnchor.constraint(other: ElementAnchor, relationship: ConstraintRelat
 //        secondAttribute = other.attribute,
         constant = constant,
         multiplier = multiplier,
-        relation = relationship
+        relation = relationship,
+        priority = priority
     )
 }
 infix fun ElementAnchor.matches(other: ElementAnchor) = this.constraint(other)

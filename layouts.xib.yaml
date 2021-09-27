@@ -380,6 +380,22 @@
       attribute:
         title: ~value~
 
+- id: android:textOn
+  type: attribute
+  element: Button
+  rules:
+    "state[@key='selected']":
+      attribute:
+        title: ~value~
+
+- id: android:textOff
+  type: attribute
+  element: Button
+  rules:
+    "state[@key='normal']":
+      attribute:
+        title: ~value~
+
 - id: "android:textColor"
   type: attribute
   element: Button
@@ -559,7 +575,7 @@
   type: attribute
   element: ImageButton
   valueType: Drawable
-  code: ~this~.image = R.drawable.~name~().toImage()
+  code: '~this~.setImage(R.drawable.~name~().toImage(), for: .normal)'
 
 
 
@@ -673,7 +689,7 @@
   valueType: Number
   equalTo: "1"
   rules:
-    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='fillMode']/integer[@key='value']":
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='fillMode' and @type='number']/integer[@key='value']":
       attribute:
         value: "0"
 
@@ -683,7 +699,7 @@
   valueType: Number
   equalTo: "0.5"
   rules:
-    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='fillMode']/integer[@key='value']":
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='fillMode' and @type='number']/integer[@key='value']":
       attribute:
         value: "1"
 
@@ -692,7 +708,7 @@
   element: RatingBar
   valueType: Number
   rules:
-    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='fillMode']/integer[@key='value']":
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='fillMode' and @type='number']/integer[@key='value']":
       attribute:
         value: "2"
 
@@ -701,7 +717,7 @@
   element: RatingBar
   equalTo: "?android:attr/ratingBarStyleIndicator"
   rules:
-    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='starSize']/real[@key='value']":
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='starSize' and @type='number']/real[@key='value']":
       attribute:
         value: "32"
 
@@ -710,7 +726,7 @@
   element: RatingBar
   equalTo: "?android:attr/ratingBarStyleSmall"
   rules:
-    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='starSize']/real[@key='value']":
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='starSize' and @type='number']/real[@key='value']":
       attribute:
         value: "20"
 
@@ -719,7 +735,7 @@
   element: RatingBar
   equalTo: "?android:attr/ratingBarStyle"
   rules:
-    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='starSize']/real[@key='value']":
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='starSize' and @type='number']/real[@key='value']":
       attribute:
         value: "42"
 
@@ -1073,6 +1089,10 @@
         <fontDescription key="fontDescription" type="system" pointSize="14"/>
         <textInputTraits key="textInputTraits"/>
     </textView>
+
+- id: com.lightningkite.butterfly.views.widget.SelectableText
+  parent: MultilineEditText
+  type: element
 
 - id: "android:text"
   type: attribute
@@ -1501,3 +1521,92 @@
     constraints:
       append:
         - '<constraint firstAttribute="height" relation="greaterThanOrEqual" constant="~number~"/>'
+
+- id: include
+  type: element
+  parent: null
+  template: |
+    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" customClass="~layout.xmlClass~" customModule="~projectName~">
+    </view>
+
+- id: com.lightningkite.butterfly.views.widget.ColorRatingBar
+  type: element
+  parent: RatingBar
+
+- id: com.lightningkite.butterfly.views.widget.MultilineEditText
+  type: element
+  parent: EditText
+
+- id: com.lightningkite.butterfly.views.widget.CustomView
+  type: element
+  parent: View
+
+- id: com.lightningkite.butterfly.views.widget.TimeButton
+  type: element
+  parent: Button
+
+- id: com.lightningkite.butterfly.views.widget.DateButton
+  type: element
+  parent: Button
+
+- id: com.lightningkite.butterfly.views.widget.SwapView
+  type: element
+  parent: View
+
+- id: com.klypme.actuals.TwilioVideoCallView
+  type: element
+  parent: View
+
+- id: com.stripe.android.view.CardInputWidget
+  type: element
+  parent: View
+
+- id: com.adamstyrc.cookiecutter.CookieCutterImageView
+  type: element
+  parent: View
+
+- id: de.hdodenhof.circleimageview.CircleImageView
+  type: element
+  parent: ImageView
+
+- id: com.google.android.gms.maps.MapView
+  type: element
+  template: |
+    <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO">
+    </mapView>
+
+- id: androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+  type: element
+  parent: View
+
+- id: com.rd.PageIndicatorView
+  type: element
+  parent: View #TODO
+
+- id: com.lightningkite.butterfly.views.widget.VerticalRecyclerView
+  type: element
+  parent: androidx.recyclerview.widget.RecyclerView
+
+- id: androidx.recyclerview.widget.RecyclerView
+  type: element
+  template: |
+    <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="none" translatesAutoresizingMaskIntoConstraints="NO">
+        <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="TAY-Sl-kKJ">
+            <size key="itemSize" width="128" height="128"/>
+            <size key="headerReferenceSize" width="0.0" height="0.0"/>
+            <size key="footerReferenceSize" width="0.0" height="0.0"/>
+            <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
+        </collectionViewFlowLayout>
+    </collectionView>
+
+- id: androidx.viewpager.widget.ViewPager
+  type: element
+  template: |
+    <collectionView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="none" translatesAutoresizingMaskIntoConstraints="NO">
+        <collectionViewFlowLayout key="collectionViewLayout" minimumLineSpacing="10" minimumInteritemSpacing="10" id="TAY-Sl-kKJ">
+            <size key="itemSize" width="128" height="128"/>
+            <size key="headerReferenceSize" width="0.0" height="0.0"/>
+            <size key="footerReferenceSize" width="0.0" height="0.0"/>
+            <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
+        </collectionViewFlowLayout>
+    </collectionView>

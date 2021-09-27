@@ -63,8 +63,12 @@ val AndroidDrawableXml.scaleOverResize: Boolean
 
 fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawableXml) {
     when (xml) {
-        is AndroidDrawable.Reference -> appendLine("R.drawable.${(xml.drawable.value as AndroidXmlDrawable).name}")
-        is AndroidBitmap.Reference -> appendLine("R.drawable.${xml.base.value.name}")
+        is AndroidDrawable.Reference -> when(val sub = xml.drawable.value){
+            is AndroidNamedDrawable -> appendLine("R.drawable.${sub.name}()")
+            is AndroidColorResource -> writeAndroidXml(resources, AndroidShape.Value(AndroidShape.Value.ShapeType.Rectangle, fill = Lazy(sub)))
+            is AndroidColorStateResource -> writeAndroidXml(resources, AndroidShape.Value(AndroidShape.Value.ShapeType.Rectangle, fill = Lazy(sub)))
+        }
+        is AndroidBitmap.Reference -> appendLine("R.drawable.${xml.base.value.name}()")
         is AndroidShape.Value -> {
             xml.gradient?.let { gradient ->
                 when (xml.shapeType) {
@@ -140,23 +144,28 @@ fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawable
             appendLine("))")
         }
         is AndroidLayer.Value -> {
-            appendLine("LayerMaker.autosize([")
-            for (sub in xml.states) {
-                append(".init(layer: ")
-                writeAndroidXml(resources, sub.drawable)
-                append(", .init(top: ")
-                append(sub.top?.value?.swift ?: "0")
-                append("left: ")
-                append(sub.left?.value?.swift ?: "0")
-                append("bottom: ")
-                append(sub.bottom?.value?.swift ?: "0")
-                append("right: ")
-                append(sub.right?.value?.swift ?: "0")
-                append("), scaleOverResize: ")
-                append(sub.drawable.scaleOverResize.toString())
-                appendLine(")")
-            }
-            appendLine("])")
+            appendLine("LayerMaker.autosize(")
+            xml.states.forEachBetween(
+                forItem = { sub ->
+                    append(".init(layer: ")
+                    writeAndroidXml(resources, sub.drawable)
+                    append(", insets: .init(top: ")
+                    append(sub.top?.value?.swift ?: "0")
+                    append(", left: ")
+                    append(sub.left?.value?.swift ?: "0")
+                    append(", bottom: ")
+                    append(sub.bottom?.value?.swift ?: "0")
+                    append(", right: ")
+                    append(sub.right?.value?.swift ?: "0")
+                    append("), scaleOverResize: ")
+                    append(sub.drawable.scaleOverResize.toString())
+                    append(")")
+                },
+                between = {
+                    appendLine(", ")
+                }
+            )
+            appendLine(")")
         }
     }
 }
@@ -273,9 +282,10 @@ fun IosTranslator.importStringsDimensionsColors(resources: AndroidResources) {
         appendLine("public enum string {")
         for ((key, value) in resources.strings.entries) {
             val fixedString = value.value
-                .replace("\\'", "'")
-                .replace("\\$", "$")
-                .replace(Regex("\n *"), " ")
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\t", "\\t")
             appendLine("public static let ${key.safeSwiftIdentifier()} = NSLocalizedString(\"$fixedString\", comment: \"$key\")")
         }
         appendLine("}")

@@ -11,19 +11,17 @@ import java.io.File
 
 data class AndroidLayoutFile(
     val name: String,
-    val fileName: String,
     val variants: Set<String>,
     val files: Set<File>,
     val bindings: Map<String, AndroidIdHook>,
     val sublayouts: Map<String, AndroidSubLayout>,
     val emitCurse: Map<String, AndroidAction>
 ) {
-    @get:JsonIgnore val className: String get() = name + "Xml"
+    @get:JsonIgnore val className: String get() = name.capitalize().camelCase() + "Xml"
     companion object {
         fun combine(iter: Sequence<AndroidLayoutFile>): AndroidLayoutFile =
             AndroidLayoutFile(
                 name = iter.first().name,
-                fileName = iter.first().fileName,
                 variants = iter.flatMap { it.variants.asSequence() }.toSet(),
                 files = iter.flatMap { it.files }.toSet(),
                 bindings = run {
@@ -65,7 +63,6 @@ data class AndroidLayoutFile(
 
         fun parse(file: File, variant: String, resources: AndroidResources): AndroidLayoutFile {
             val node = file.readXml().documentElement
-            val fileName = file.nameWithoutExtension.camelCase().capitalize()
             val bindings = ArrayList<AndroidIdHook>()
             val sublayouts = ArrayList<AndroidSubLayout>()
             val emitCurse = HashMap<String, AndroidAction>()
@@ -105,8 +102,7 @@ data class AndroidLayoutFile(
             }
             addBindings(node)
             return AndroidLayoutFile(
-                name = fileName,
-                fileName = file.nameWithoutExtension,
+                name = file.nameWithoutExtension,
                 variants = if(variant.isNotEmpty()) setOf(variant) else setOf(),
                 files = setOf(file),
                 bindings = bindings.associateBy { it.name },
@@ -134,7 +130,7 @@ data class AndroidLayoutFile(
     |    lateinit var xmlRoot: View
     |
     |    fun inflate(context: Context): View {
-    |        val view = LayoutInflater.from(context).inflate(R.layout.$fileName, null, false)
+    |        val view = LayoutInflater.from(context).inflate(R.layout.$name, null, false)
     |        return setup(view)
     |    }
     |    fun setup(view: View): View {

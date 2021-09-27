@@ -24,15 +24,15 @@ class AndroidResources {
     fun read(value: String): AndroidValue {
         return when {
             value.startsWith('#') -> AndroidColor(value.hashColorToParts())
-            value.startsWith("@style/") -> styles[value.substringAfter('/')]!!
-            value.startsWith("@layout/") -> layouts[value.substringAfter('/')]!!
-            value.startsWith("@font/") -> fonts[value.substringAfter('/')]!!
-            value.startsWith("@mipmap/") -> drawables[value.substringAfter('/')]!!
-            value.startsWith("@drawable/") -> drawables[value.substringAfter('/')]!!
-            value.startsWith("@android:color/") -> AndroidColor(ColorInParts.basicColors[value.substringAfter('/')]!!)
-            value.startsWith("@color/") -> colors[value.substringAfter('/')]!!
-            value.startsWith("@string/") -> strings[value.substringAfter('/')]!!
-            value.startsWith("@dimen/") -> dimensions[value.substringAfter('/')]!!
+            value.startsWith("@style/") -> styles[value.substringAfter('/')] ?: AndroidStyle(value.substringAfter('/'), mapOf())
+            value.startsWith("@layout/") -> layouts[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@font/") -> fonts[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@mipmap/") -> drawables[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@drawable/") -> drawables[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@android:color/") -> AndroidColor(ColorInParts.basicColors[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found"))
+            value.startsWith("@color/") -> colors[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@string/") -> strings[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@dimen/") -> dimensions[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
             value.endsWith("dp") -> AndroidDimension(
                 Measurement(
                     number = value.filter { it.isDigit() || it == '.' }.toDouble(),
@@ -64,13 +64,25 @@ class AndroidResources {
                 )
             )
             value.toDoubleOrNull() != null -> AndroidNumber(value.toDouble())
-            else -> AndroidString(value.replace("\\n", "\n").replace("\\t", "\t"))
+            else -> AndroidString(value
+                .replace("\\n", "\n")
+                .replace("\\t", "\t")
+                .replace("\\\"", "\"")
+                .replace("\\'", "'"))
         }
     }
     
-    inline fun <reified T: AndroidValue> readLazy(value: String): Lazy<T> = Lazy(value) { read(value) as T }
+    inline fun <reified T: AndroidValue> readLazy(value: String): Lazy<T> = Lazy(value) {
+        val v = read(value)
+        if(v !is T) throw IllegalStateException("Read $value (a ${v::class.simpleName}) but expected a ${T::class.simpleName}")
+        v
+    }
     @JvmName("readLazy1")
-    inline fun <reified T: AndroidValue> String.readLazy(): Lazy<T> = Lazy(this) { read(this) as T }
+    inline fun <reified T: AndroidValue> String.readLazy(): Lazy<T> = Lazy(this) {
+        val v = read(this)
+        if(v !is T) throw IllegalStateException("Read $this (a ${v::class.simpleName}) but expected a ${T::class.simpleName}")
+        v
+    }
 
     fun parse(androidResourcesDirectory: File) {
         getFonts(androidResourcesDirectory.resolve("font"))
@@ -100,7 +112,8 @@ class AndroidResources {
                                 .filter { it is Text }
                                 .joinToString { it.textContent }
                                 .trim()
-                        }
+                        },
+                    parent = it["parent"]?.let { Lazy(it) { read(it) as? AndroidStyle ?: AndroidStyle("x", mapOf()) } }
                 )
             }
     }
@@ -146,7 +159,7 @@ class AndroidResources {
     }
 
     private fun parseXmlSelector(element: Element): AndroidDrawableState.Value {
-        var normal: AndroidDrawableXml? = null
+        var normal: AndroidDrawableXml = AndroidShape.Value(AndroidShape.Value.ShapeType.Rectangle)
         var selected: AndroidDrawableXml? = null
         var highlighted: AndroidDrawableXml? = null
         var disabled: AndroidDrawableXml? = null
@@ -156,7 +169,6 @@ class AndroidResources {
             .filter { it.tagName == "item" }
             .forEach { subnode ->
                 val c: AndroidDrawableXml? = subnode["android:drawable"]
-                    ?.substringAfter('/')
                     ?.let { AndroidDrawable.Reference(readLazy(it)) }
                     ?: subnode.childElements.firstOrNull()
                         ?.let { parseXmlDrawable(it) }
@@ -170,7 +182,7 @@ class AndroidResources {
                 }
             }
         return AndroidDrawableState.Value(StateSelector(
-            normal = normal!!,
+            normal = normal,
             selected = selected,
             highlighted = highlighted,
             disabled = disabled,
@@ -205,7 +217,6 @@ class AndroidResources {
         return AndroidLayer.Value(element.childElements.map {
             AndroidLayer.Layer(
                 drawable = it["android:drawable"]
-                    ?.substringAfter('/')
                     ?.let { AndroidDrawable.Reference(readLazy(it)) }
                     ?: it.childElements.firstOrNull()
                         ?.let { parseXmlDrawable(it) } ?: throw IllegalStateException(),

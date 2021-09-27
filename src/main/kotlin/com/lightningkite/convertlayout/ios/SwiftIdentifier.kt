@@ -28,6 +28,8 @@ fun Element.swiftIdentifier(): SwiftIdentifier {
         "segmentedControl" -> SwiftIdentifier("UIKit", "UISegmentControl")
         "collectionView" -> SwiftIdentifier("UIKit", "UICollectionView")
         "pageControl" -> SwiftIdentifier("UIKit", "UIPageControl")
+        "label" -> SwiftIdentifier("UIKit", "UILabel")
+        "mapView" -> SwiftIdentifier("MapKit", "MKMapView")
         else -> throw IllegalArgumentException("Couldn't identify swift name of element for ${this.tagName}")
     }
 }

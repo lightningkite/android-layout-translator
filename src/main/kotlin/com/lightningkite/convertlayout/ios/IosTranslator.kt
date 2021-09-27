@@ -37,11 +37,11 @@ data class IosTranslator(
         val instance = make()
         project.layoutsFolder
             .also { it.mkdirs() }
-            .resolve(layout.name + "Xml.xib")
+            .resolve(layout.className + ".xib")
             .writeXml(instance.convertDocument(layout, layout.files.first().readXml()).also { it.documentElement.cleanBlanks() })
         project.layoutsFolder
             .also { it.mkdirs() }
-            .resolve(layout.name + "Xml.swift")
+            .resolve(layout.className + ".swift")
             .writeText(instance.swiftFile(layout))
     }
     operator fun invoke() {

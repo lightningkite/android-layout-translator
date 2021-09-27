@@ -2,11 +2,42 @@ package com.lightningkite.convertlayout.android
 
 import com.lightningkite.convertlayout.xml.*
 import com.lightningkite.convertlayout.rules.*
+import com.lightningkite.convertlayout.util.DeferMap
 import com.lightningkite.convertlayout.util.addLazy
 import org.w3c.dom.Element
 
 abstract class AndroidLayoutTranslator(val replacements: Replacements, val resources: AndroidResources) {
-    val Element.allAttributes: Map<String, String> get() = attributeMap addLazy (this["style"]?.let { resources.read(it) as? AndroidStyle }?.map ?: mapOf())
+    val Element.allAttributes: Map<String, String>
+        get() = DeferMap(
+            listOfNotNull(
+                attributeMap,
+                this["style"]?.let { resources.read(it) as? AndroidStyle }?.chainedMap,
+                this["layout"]?.let { resources.read(it) as? AndroidLayoutResource }?.let {
+                    it.layout.value.files.first().readXml().documentElement.allAttributes
+//                        .also { println("Borrowed ${it.entries.joinToString() { it.key + ": " + it.value }} from source") }
+                }
+            )
+        )
+
+    fun HasGet.getPath(path: String): String = (this as Any).getPath(path)
+    fun Element.getPath(path: String): String = (this as Any).getPath(path)
+    private fun Any.getPath(path: String): String {
+        var current: Any? = this
+        for (part in path.split('.')) {
+            while (current is Lazy<*>) {
+                current = current.value
+            }
+            current = when (current) {
+                is HasGet -> current[part]
+                is Element -> current[part]?.let { resources.read(it) }
+                else -> return current.toString()
+            }
+        }
+        while (current is Lazy<*>) {
+            current = current.value
+        }
+        return current.toString()
+    }
 
     open fun convertElement(owner: Element, sourceElement: Element): Element {
         val allAttributes = sourceElement.allAttributes
@@ -18,13 +49,16 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         return convertElement(owner, rules, sourceElement, allAttributes)
     }
 
+    abstract fun getProjectWide(key: String): String?
+
     open fun convertElement(
         destOwner: Element,
         rules: List<ElementReplacement>,
         sourceElement: Element,
         allAttributes: Map<String, String>
     ): Element {
-        val newElement = destOwner.appendFragment(rules.asSequence().mapNotNull { it.template }.first().write { sourceElement.getPath(it) })
+        val newElement = destOwner.appendFragment(rules.asSequence().mapNotNull { it.template }.first()
+            .write { getProjectWide(it) ?: sourceElement.getPath(it) })
 
         // Handle children
         handleChildren(rules, newElement, sourceElement)
@@ -39,7 +73,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         destElement: Element,
         sourceElement: Element
     ) {
-        if(sourceElement.childElements.none()) return
+        if (sourceElement.childElements.none()) return
         rules.mapNotNull { it.insertChildrenAt }.firstOrNull()?.let { path ->
             val target =
                 destElement.xpathElementOrCreate(path)
@@ -67,7 +101,11 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         destElement: Element
     ) {
         for ((key, raw) in allAttributes) {
-            handleAttribute(rules, sourceElement, destElement, key, raw)
+            if(key.startsWith("tools:")) {
+                handleAttribute(rules, sourceElement, destElement, "android:" + key.substringAfter(':'), raw)
+            } else {
+                handleAttribute(rules, sourceElement, destElement, key, raw)
+            }
         }
     }
 
@@ -95,23 +133,24 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
             if (sub.css.isNotEmpty()) {
                 val broken = target.getAttribute("style").split(';')
                     .associate { it.substringBefore(':').trim() to it.substringAfter(':').trim() }
-                val resultCss = broken + sub.css.mapValues { it.value.write { value.getPath(it) } }
+                val resultCss =
+                    broken + sub.css.mapValues { it.value.write { getProjectWide(it) ?: value.getPath(it) } }
                 target.setAttribute("style", resultCss.entries.joinToString("; ") { "${it.key}: ${it.value}" })
             }
             for (toAppend in sub.append) {
-                val content = toAppend.write { value.getPath(it) }
+                val content = toAppend.write { getProjectWide(it) ?: value.getPath(it) }
                 if (content.startsWith('<'))
                     target.appendFragment(content)
                 else
                     target.appendText(content)
             }
             for ((attKey, attTemplate) in sub.attribute) {
-                target.setAttribute(attKey, attTemplate.write { value.getPath(it) })
+                target.setAttribute(attKey, attTemplate.write { getProjectWide(it) ?: value.getPath(it) })
             }
             sub.ifContains?.let { ifContains ->
                 val raw = (value as AndroidStringValue).value
-                for(entry in ifContains) {
-                    if(entry.key in raw.split('|')) {
+                for (entry in ifContains) {
+                    if (entry.key in raw.split('|')) {
                         subrule(path, entry.value)
                     }
                 }
