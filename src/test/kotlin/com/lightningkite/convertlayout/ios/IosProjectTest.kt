@@ -55,6 +55,25 @@ class IosProjectTest {
         println("Pushing...")
         macLocation.push()
     }
+    @Test
+    fun testSection() {
+        macLocation.pull()
+
+        println("Reading...")
+        val translator = IosTranslator(
+            androidFolder = File("test-project/app"),
+            iosFolder = macLocation.file.also { it.mkdirs() },
+            iosName = "XmlToXibRuntimeExample",
+            replacementFolders = listOf(File("."))
+        )
+
+        with(translator) {
+            translate(translator.resources.layouts["current_test"]!!.layout.value)
+        }
+
+        println("Pushing...")
+        macLocation.push()
+    }
 
     @Test
     fun xpathTest() {

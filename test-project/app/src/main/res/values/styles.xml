@@ -58,6 +58,10 @@
         <item name="android:padding">8dp</item>
     </style>
 
+    <style name="ButtonPrimaryDarkText" parent="ButtonPrimary">
+        <item name="android:textColor">@color/linkedColor</item>
+    </style>
+
     <style name="ButtonAccent">
         <item name="android:background">@drawable/button_accent</item>
         <item name="android:textSize">16sp</item>

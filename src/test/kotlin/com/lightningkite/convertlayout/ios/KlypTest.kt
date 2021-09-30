@@ -68,10 +68,13 @@ class KlypTest {
             replacementFolders = listOf(File("."))
         )
 
+        println("drawables: ")
+        for(i in translator.resources.drawables) {
+            println(i.key + ": " + i.value)
+        }
+
         with(translator) {
-            translate(translator.resources.layouts["component_location_switch"]!!.layout.value)
-            translate(translator.resources.layouts["stylist_services_add"]!!.layout.value)
-            translate(translator.resources.layouts["appointment_add_service"]!!.layout.value)
+            translate(translator.resources.layouts["stylist_profile"]!!.layout.value)
         }
 
         println("Pushing...")

@@ -47,7 +47,7 @@ val AndroidDrawableXml.scaleOverResize: Boolean
     get() = when (this) {
         is AndroidDrawable.Reference -> when (this.drawable.value) {
             is AndroidBitmap -> true
-            is AndroidColor -> false
+            is AndroidColorLiteral -> false
             is AndroidColorResource -> false
             is AndroidColorStateResource -> false
             is AndroidDrawableState -> false

@@ -1,6 +1,6 @@
 package com.lightningkite.convertlayout.ios
 
-import com.lightningkite.convertlayout.android.AndroidDimensionValue
+import com.lightningkite.convertlayout.android.AndroidDimension
 import com.lightningkite.convertlayout.android.AndroidResources
 
 data class Insets(
@@ -9,6 +9,8 @@ data class Insets(
     var right: Double,
     var bottom: Double
 ) {
+    val localeDependent: Boolean get() = true
+
     companion object {
         val zero = Insets(0.0, 0.0, 0.0, 0.0)
     }
@@ -38,9 +40,15 @@ data class Insets(
         right -= other.right
         bottom -= other.bottom
     }
+    operator fun get(vertical: Boolean, end: Boolean, locale: Boolean = true) = if(vertical)
+        if(end) bottom else top
+    else
+        if(end) right else left
+
+    fun size(vertical: Boolean): Double = if(vertical) top + bottom else left + right
 }
 fun Map<String, String>.insets(prefix: String, resources: AndroidResources): Insets {
-    fun num(key: String): Double? = this[key]?.let { resources.read(it) as AndroidDimensionValue }?.measurement?.number
+    fun num(key: String): Double? = this[key]?.let { resources.read(it) as AndroidDimension }?.measurement?.number
     val default = num(prefix)
     val horz = num("${prefix}Horizontal")
     val vert = num("${prefix}Vertical")

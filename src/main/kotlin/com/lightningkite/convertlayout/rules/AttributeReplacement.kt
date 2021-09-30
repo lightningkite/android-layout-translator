@@ -1,16 +1,19 @@
 package com.lightningkite.convertlayout.rules
 
+import com.lightningkite.convertlayout.android.*
+import kotlin.reflect.KClass
+import kotlin.reflect.full.isSuperclassOf
+
 data class AttributeReplacement(
     val id: String,
-    var valueType: GeneralValueType = GeneralValueType.String,
-    var subtype: ValueType? = null,
+    var valueType: ValueType2 = ValueType2.Value,
     var element: String = "View",
     var rules: Map<String, SubRule> = mapOf(),
     var xib: Map<String, XibRuleType> = mapOf(),
     var code: Template? = null,
     var equalTo: String? = null,
     override val debug: Boolean = false
-): ReplacementRule {
+) : ReplacementRule {
 
     data class SubRule(
         var ifContains: Map<String, SubRule>? = null,
@@ -21,36 +24,52 @@ data class AttributeReplacement(
 
     enum class XibRuleType { SubNode, Attribute, UserDefined, StateSubNode, StateAttribute }
 
-    enum class GeneralValueType {
-        Font,
-        Color,
-        Drawable,
-        Layout,
-        Dimension,
-        Number,
-        String,
-        Style,
+    enum class ValueType2(val kotlinClass: KClass<*>) {
+        FontLiteral(AndroidFontLiteral::class),
+        FontSet(AndroidFontSet::class),
+        ColorLiteral(AndroidColorLiteral::class),
+        ColorResource(AndroidColorResource::class),
+        ColorStateResource(AndroidColorStateResource::class),
+        Vector(AndroidVector::class),
+        Bitmap(AndroidBitmap::class),
+        Shape(AndroidShape::class),
+        DrawableState(AndroidDrawableState::class),
+        Layer(AndroidLayer::class),
+        LayoutResource(AndroidLayoutResource::class),
+        DimensionLiteral(AndroidDimensionLiteral::class),
+        DimensionResource(AndroidDimensionResource::class),
+        Number(AndroidNumber::class),
+        StringLiteral(AndroidStringLiteral::class),
+        StringResource(AndroidStringResource::class),
+        Style(AndroidStyle::class),
+        Value(AndroidValue::class),
+        Dimension(AndroidDimension::class),
+        Drawable(AndroidDrawable::class),
+        NamedDrawable(AndroidNamedDrawable::class),
+        NamedDrawableWithSize(AndroidNamedDrawableWithSize::class),
+        XmlDrawable(AndroidXmlDrawable::class),
+        DrawableXml(AndroidDrawableXml::class),
+        Color(AndroidColor::class),
+        String(AndroidString::class),
+        Font(AndroidFont::class);
+
+        val parentTypes: Set<ValueType2> by lazy {
+            values()
+                .asSequence()
+                .filter { it.kotlinClass.isSuperclassOf(kotlinClass) }
+                .toSet()
+        }
+        val depth: Int by lazy {
+            generateSequence(kotlinClass.java) { it.superclass }.count()
+        }
+
+        operator fun contains(other: ValueType2): Boolean = this in other.parentTypes
+
+        companion object {
+            val map = values().associateBy { it.kotlinClass }
+            operator fun get(type: KClass<*>): ValueType2 = map[type]!!
+        }
     }
 
-    enum class ValueType(val general: GeneralValueType) {
-        Font(GeneralValueType.Font),
-        FontSet(GeneralValueType.Font),
-        Color(GeneralValueType.Color),
-        ColorResource(GeneralValueType.Color),
-        ColorStateResource(GeneralValueType.Color),
-        Vector(GeneralValueType.Drawable),
-        Bitmap(GeneralValueType.Drawable),
-        Shape(GeneralValueType.Drawable),
-        DrawableState(GeneralValueType.Drawable),
-        Layer(GeneralValueType.Drawable),
-        LayoutResource(GeneralValueType.Layout),
-        Dimension(GeneralValueType.Dimension),
-        DimensionResource(GeneralValueType.Dimension),
-        Number(GeneralValueType.Number),
-        String(GeneralValueType.String),
-        StringResource(GeneralValueType.String),
-        Style(GeneralValueType.Style),
-    }
-
-    override val priority: Int get() = (if(equalTo != null) 4 else 0) + (if(subtype != null) 1 else 0)
+    override val priority: Int get() = (if (equalTo != null) 20 else 0) + valueType.depth
 }

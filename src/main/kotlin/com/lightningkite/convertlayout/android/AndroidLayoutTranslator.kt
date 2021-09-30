@@ -3,7 +3,6 @@ package com.lightningkite.convertlayout.android
 import com.lightningkite.convertlayout.xml.*
 import com.lightningkite.convertlayout.rules.*
 import com.lightningkite.convertlayout.util.DeferMap
-import com.lightningkite.convertlayout.util.addLazy
 import org.w3c.dom.Element
 
 abstract class AndroidLayoutTranslator(val replacements: Replacements, val resources: AndroidResources) {
@@ -118,7 +117,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
     ) {
         val value = resources.read(raw)
         val attributeRule = rules.asSequence()
-            .mapNotNull { replacements.getAttribute(it.caseIdentifier ?: it.id, key, value.type, raw) }
+            .mapNotNull { replacements.getAttribute(it.caseIdentifier ?: it.id, key, AttributeReplacement.ValueType2[value::class], raw) }
             .firstOrNull() ?: return
         handleAttribute(attributeRule, destElement, value)
     }
@@ -148,7 +147,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
                 target.setAttribute(attKey, attTemplate.write { getProjectWide(it) ?: value.getPath(it) })
             }
             sub.ifContains?.let { ifContains ->
-                val raw = (value as AndroidStringValue).value
+                val raw = (value as AndroidString).value
                 for (entry in ifContains) {
                     if (entry.key in raw.split('|')) {
                         subrule(path, entry.value)

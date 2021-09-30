@@ -2,7 +2,7 @@ package com.lightningkite.convertlayout.util
 
 class DeferMap<K, V>(val from: List<Map<K, V>>): Map<K, V> {
     override val entries: Set<Map.Entry<K, V>>
-        get() = from.reduce { a, b -> a + b }.entries
+        get() = from.asReversed().reduce { a, b -> a + b }.entries
     override val keys: Set<K>
         get() = from.flatMap { it.keys }.toSet()
     override val size: Int

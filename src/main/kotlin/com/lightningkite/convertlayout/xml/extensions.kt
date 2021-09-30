@@ -172,6 +172,17 @@ fun Element.appendFragment(fragment: String): Element {
         throw Exception("Unable to inflate $fragment", e)
     }
 }
+fun Element.prependChild(node: Node): Node {
+    return if(this.childNodes != null && this.childNodes.length > 0)
+        insertBefore(node, this.childNodes.item(0))
+    else
+        appendChild(node)
+}
+fun Element.prependElement(name: String): Element {
+    val newElement = prependChild(ownerDocument.createElement(name)) as Element
+    assert(childElements.contains(newElement))
+    return newElement
+}
 fun Element.appendElement(name: String): Element {
     val newElement = appendChild(ownerDocument.createElement(name)) as Element
     assert(childElements.contains(newElement))
@@ -179,6 +190,7 @@ fun Element.appendElement(name: String): Element {
 }
 fun Element.appendText(text: String) = appendChild(ownerDocument.createTextNode(text))
 inline fun Element.appendElement(name: String, setup: Element.()->Unit): Element = appendElement(name).apply(setup)
+inline fun Element.prependElement(name: String, setup: Element.()->Unit): Element = prependElement(name).apply(setup)
 
 fun Element.cleanBlanks() {
     children.toList().forEach {
@@ -194,6 +206,10 @@ fun Element.cleanBlanks() {
 fun NodeList.fix(): NodeListList = NodeListList(this)
 inline fun XPathExpression.evaluateNodeSet(on: Any): NodeList? = evaluate(on, XPathConstants.NODESET) as? NodeList
 inline fun XPathExpression.evaluateNode(on: Any): Node? = evaluate(on, XPathConstants.NODE) as? Node
+fun Element.moveToFirst(child: Element) {
+    this.removeChild(child)
+    this.prependChild(child)
+}
 
 fun NodeList.firstOrNull(): Node? = if(length > 0) item(0) else null
 

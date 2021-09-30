@@ -1,11 +1,9 @@
 package com.lightningkite.convertlayout.android
 
-import com.lightningkite.convertlayout.rules.AttributeReplacement
 import com.lightningkite.convertlayout.util.DeferMap
 import com.lightningkite.convertlayout.util.camelCase
 import com.lightningkite.convertlayout.xml.get
 import com.lightningkite.convertlayout.xml.readXml
-import org.w3c.dom.Element
 import java.io.File
 import javax.imageio.ImageIO
 
@@ -14,6 +12,7 @@ data class Size(val width: Int, val height: Int) {
         width * amount,
         height * amount,
     )
+
     operator fun div(amount: Int): Size = Size(
         width / amount,
         height / amount,
@@ -40,10 +39,9 @@ interface HasGet {
 }
 
 sealed interface AndroidValue : HasGet {
-    val type: AttributeReplacement.ValueType
 }
 
-sealed interface AndroidDimensionValue : AndroidValue {
+sealed interface AndroidDimension : AndroidValue {
     val measurement: Measurement
     override fun get(key: String): Any? = measurement[key]
         ?: throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
@@ -61,6 +59,7 @@ sealed interface AndroidDrawable : AndroidValue {
 sealed interface AndroidNamedDrawable : AndroidDrawable {
     val name: String
 }
+
 sealed interface AndroidNamedDrawableWithSize : AndroidNamedDrawable {
     val size: Size
 }
@@ -73,15 +72,15 @@ sealed interface AndroidDrawableXml : HasGet {
     fun toResource(file: File): AndroidDrawable
 }
 
-sealed interface AndroidColorValue : AndroidDrawable {
+sealed interface AndroidColor : AndroidDrawable {
     val value: ColorInParts
     override fun get(key: String): Any? = value[key]
         ?: throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
 }
 
-sealed interface AndroidStringValue : AndroidValue {
+sealed interface AndroidString : AndroidValue {
     val value: String
-    override fun get(key: String): Any? = when(key){
+    override fun get(key: String): Any? = when (key) {
         "escaped" -> value
             .replace("\n", "&#xA;")
             .replace("<", "&lt;")
@@ -94,16 +93,14 @@ sealed interface AndroidStringValue : AndroidValue {
     }
 }
 
-sealed interface AndroidFontValue : AndroidValue {
+sealed interface AndroidFont : AndroidValue {
 }
 
-data class AndroidFont(
+data class AndroidFontLiteral(
     val family: String,
     val name: String,
     val file: File? = null
-) : AndroidFontValue {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.Font
+) : AndroidFont {
 
     override fun get(key: String): Any? = when (key) {
         "family" -> family
@@ -114,27 +111,21 @@ data class AndroidFont(
 }
 
 data class AndroidFontSet(
-    val subFonts: List<Lazy<AndroidFont>>
-) : AndroidFontValue {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.FontSet
+    val subFonts: List<Lazy<AndroidFontLiteral>>
+) : AndroidFont {
 
     override fun get(key: String): Any? = throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
 }
 
-data class AndroidColor(
+data class AndroidColorLiteral(
     override val value: ColorInParts
-) : AndroidColorValue {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.Color
+) : AndroidColor {
 }
 
 data class AndroidColorResource(
     val name: String,
     override val value: ColorInParts
-) : AndroidColorValue {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.ColorResource
+) : AndroidColor {
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -144,10 +135,8 @@ data class AndroidColorResource(
 
 data class AndroidColorStateResource(
     val name: String,
-    val colors: StateSelector<Lazy<AndroidColorValue>>
-) : AndroidColorValue {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.ColorStateResource
+    val colors: StateSelector<Lazy<AndroidColor>>
+) : AndroidColor {
     override val value: ColorInParts get() = colors.normal.value.value
 
     override fun get(key: String): Any? = when (key) {
@@ -165,8 +154,6 @@ data class AndroidVector(
     override val name: String,
     val file: File
 ) : AndroidNamedDrawableWithSize {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.Vector
 
     override val size: Size by lazy {
         file.readXml().documentElement.let {
@@ -189,8 +176,6 @@ data class AndroidBitmap(
 //    override val width: Int,
 //    override val height: Int,
 ) : AndroidNamedDrawableWithSize {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.Bitmap
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -214,7 +199,7 @@ data class AndroidBitmap(
             ?: Size(24, 24)
     }
 
-    data class Reference(val base: Lazy<AndroidBitmap>, val tint: Lazy<AndroidColorValue>? = null) :
+    data class Reference(val base: Lazy<AndroidBitmap>, val tint: Lazy<AndroidColor>? = null) :
         AndroidDrawableXml {
         override fun toResource(file: File): AndroidDrawable = TODO()
         override fun get(key: String): Any? = when (key) {
@@ -232,8 +217,6 @@ data class AndroidShape(
 ) : AndroidXmlDrawable {
     override val value: AndroidDrawableXml
         get() = shape
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.Shape
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -242,21 +225,21 @@ data class AndroidShape(
 
     data class Value(
         val shapeType: ShapeType,
-        val stroke: Lazy<AndroidColorValue>? = null,
-        val strokeWidth: Lazy<AndroidDimensionValue>? = null,
-        val fill: Lazy<AndroidColorValue>? = null,
+        val stroke: Lazy<AndroidColor>? = null,
+        val strokeWidth: Lazy<AndroidDimension>? = null,
+        val fill: Lazy<AndroidColor>? = null,
         val gradient: Gradient? = null,
-        val topLeftCorner: Lazy<AndroidDimensionValue>? = null,
-        val topRightCorner: Lazy<AndroidDimensionValue>? = null,
-        val bottomLeftCorner: Lazy<AndroidDimensionValue>? = null,
-        val bottomRightCorner: Lazy<AndroidDimensionValue>? = null
+        val topLeftCorner: Lazy<AndroidDimension>? = null,
+        val topRightCorner: Lazy<AndroidDimension>? = null,
+        val bottomLeftCorner: Lazy<AndroidDimension>? = null,
+        val bottomRightCorner: Lazy<AndroidDimension>? = null
     ) : AndroidDrawableXml {
         enum class ShapeType { Rectangle, Oval }
 
         data class Gradient(
-            val startColor: Lazy<AndroidColorValue>,
-            val centerColor: Lazy<AndroidColorValue>? = null,
-            val endColor: Lazy<AndroidColorValue>,
+            val startColor: Lazy<AndroidColor>,
+            val centerColor: Lazy<AndroidColor>? = null,
+            val endColor: Lazy<AndroidColor>,
             val angle: Double
         ) {
             operator fun get(key: String): Any? = when (key) {
@@ -290,8 +273,6 @@ data class AndroidDrawableState(
     val file: File,
     override val value: Value
 ) : AndroidXmlDrawable {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.DrawableState
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -311,8 +292,6 @@ data class AndroidLayer(
     val file: File,
     override val value: Value
 ) : AndroidXmlDrawable {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.Layer
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -328,12 +307,12 @@ data class AndroidLayer(
 
     data class Layer(
         val drawable: AndroidDrawableXml,
-        val width: Lazy<AndroidDimensionValue>? = null,
-        val height: Lazy<AndroidDimensionValue>? = null,
-        val top: Lazy<AndroidDimensionValue>? = null,
-        val left: Lazy<AndroidDimensionValue>? = null,
-        val right: Lazy<AndroidDimensionValue>? = null,
-        val bottom: Lazy<AndroidDimensionValue>? = null
+        val width: Lazy<AndroidDimension>? = null,
+        val height: Lazy<AndroidDimension>? = null,
+        val top: Lazy<AndroidDimension>? = null,
+        val left: Lazy<AndroidDimension>? = null,
+        val right: Lazy<AndroidDimension>? = null,
+        val bottom: Lazy<AndroidDimension>? = null
     )
 }
 
@@ -341,8 +320,6 @@ data class AndroidLayoutResource(
     val name: String,
     val layout: Lazy<AndroidLayoutFile>
 ) : AndroidValue {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.LayoutResource
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -351,19 +328,15 @@ data class AndroidLayoutResource(
     }
 }
 
-data class AndroidDimension(
+data class AndroidDimensionLiteral(
     override val measurement: Measurement
-) : AndroidDimensionValue {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.Dimension
+) : AndroidDimension {
 }
 
 data class AndroidDimensionResource(
     val name: String,
     override val measurement: Measurement
-) : AndroidDimensionValue {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.DimensionResource
+) : AndroidDimension {
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -374,8 +347,6 @@ data class AndroidDimensionResource(
 data class AndroidNumber(
     val value: Double
 ) : AndroidValue {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.Number
 
     override fun get(key: String): Any? = when (key) {
         "value" -> value.toString()
@@ -383,11 +354,9 @@ data class AndroidNumber(
     }
 }
 
-data class AndroidString(
+data class AndroidStringLiteral(
     override val value: String
-) : AndroidStringValue {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.String
+) : AndroidString {
 
     override fun get(key: String): Any? = when (key) {
         "value" -> value
@@ -399,9 +368,7 @@ data class AndroidStringResource(
     val name: String,
     override val value: String,
     val languages: Map<String, String>
-) : AndroidStringValue {
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.StringResource
+) : AndroidString {
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -417,8 +384,6 @@ data class AndroidStyle(
 ) : AndroidValue {
     val chainedMap: Map<String, String> get() = DeferMap(listOfNotNull(map, parent?.value?.chainedMap))
 
-    override val type: AttributeReplacement.ValueType
-        get() = AttributeReplacement.ValueType.Style
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -524,13 +489,14 @@ data class StateSelector<T>(
     val disabled: T? = null,
     val focused: T? = null
 ) : HasGet {
-    val asMap: Map<UiState, T?> get() = mapOf(
-        UiState.Normal to normal,
-        UiState.Selected to selected,
-        UiState.Highlighted to highlighted,
-        UiState.Disabled to disabled,
-        UiState.Focused to focused,
-    )
+    val asMap: Map<UiState, T?>
+        get() = mapOf(
+            UiState.Normal to normal,
+            UiState.Selected to selected,
+            UiState.Highlighted to highlighted,
+            UiState.Disabled to disabled,
+            UiState.Focused to focused,
+        )
     val isSet: Boolean get() = selected != null || highlighted != null || disabled != null || focused != null
     val variants: Map<String, T>
         get() = listOf(

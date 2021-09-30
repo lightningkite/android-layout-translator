@@ -87,16 +87,14 @@
 - id: "android:src"
   type: attribute
   element: ImageView
-  valueType: Drawable
-  subtype: Bitmap
+  valueType: Bitmap
   xib:
     image: attribute
 
 - id: "android:src"
   type: attribute
   element: ImageView
-  valueType: Drawable
-  subtype: Vector
+  valueType: Vector
   xib:
     image: attribute
 
@@ -400,7 +398,6 @@
   type: attribute
   element: Button
   valueType: Color
-  subtype: ColorStateResource
   xib:
     titleColor: StateSubnode
 
@@ -558,16 +555,14 @@
 - id: "android:src"
   type: attribute
   element: ImageButton
-  valueType: Drawable
-  subtype: Bitmap
+  valueType: Bitmap
   xib:
     image: StateAttribute
 
 - id: "android:src"
   type: attribute
   element: ImageButton
-  valueType: Drawable
-  subtype: Vector
+  valueType: Vector
   xib:
     image: StateAttribute
 
@@ -652,7 +647,7 @@
     - 'android:padding'
     - 'android:background'
   template: |
-    <view opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" customClass="CosmosView" customModule="Cosmos">
+    <view opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" placeholderIntrinsicWidth="75" placeholderIntrinsicHeight="30" customClass="CosmosView" customModule="Cosmos">
     </view>
 
 - id: "android:progressTint"
@@ -850,8 +845,7 @@
 - id: "android:textColor"
   type: attribute
   element: LabeledToggle
-  valueType: Color
-  subtype: ColorStateResource
+  valueType: ColorStateResource
   xib:
     subviews/label|textColor: Subnode
 
@@ -946,8 +940,7 @@
 
 - id: "android:buttonTint"
   type: attribute
-  valueType: Color
-  subtype: ColorStateResource
+  valueType: ColorStateResource
   element: M13LabeledToggle
   xib:
     subviews/view|secondaryTintColor: userDefined
@@ -1002,7 +995,7 @@
   template: |
     <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" customClass="LabeledToggle" customModule="XmlToXibRuntime">
       <subviews>
-          <view contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13Checkbox" customModule="M13Checkbox">
+          <view contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13Checkbox" customModule="M13Checkbox" >
             <color key="backgroundColor" systemColor="systemBackgroundColor"/>
             <constraints>
               <constraint firstAttribute="height" constant="20.5"/>
@@ -1526,7 +1519,7 @@
   type: element
   parent: null
   template: |
-    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" customClass="~layout.xmlClass~" customModule="~projectName~">
+    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" customClass="~layout.xmlClass~" customModule="~projectName~" placeholderIntrinsicWidth="50" placeholderIntrinsicHeight="50">
     </view>
 
 - id: com.lightningkite.butterfly.views.widget.ColorRatingBar

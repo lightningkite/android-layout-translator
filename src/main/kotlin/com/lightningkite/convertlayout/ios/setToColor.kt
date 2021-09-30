@@ -1,13 +1,11 @@
 package com.lightningkite.convertlayout.ios
 
 import com.lightningkite.convertlayout.android.*
-import com.lightningkite.convertlayout.xml.get
-import org.w3c.dom.Element
 
-fun Appendable.setToColor(color: AndroidColorValue?, controlView: String = "view", write: (color: String, state: String) -> Unit): Boolean {
+fun Appendable.setToColor(color: AndroidColor?, controlView: String = "view", write: (color: String, state: String) -> Unit): Boolean {
     if(color == null) return false
     when(color){
-        is AndroidColor -> write("UIColor(argb: 0x${color.value.android.drop(1)})", ".normal")
+        is AndroidColorLiteral -> write("UIColor(argb: 0x${color.value.android.drop(1)})", ".normal")
         is AndroidColorResource -> write("R.color.${color.name}", ".normal")
         is AndroidColorStateResource -> {
             appendLine("applyColor($controlView, R.color.${color.name}) { (c, s) in")
@@ -18,16 +16,16 @@ fun Appendable.setToColor(color: AndroidColorValue?, controlView: String = "view
     return true
 }
 
-val AndroidColorValue.swift: String get() = when(this) {
-    is AndroidColor -> "UIColor(red: ${value.redFloat}, green: ${value.greenFloat}, blue: ${value.blueFloat}, alpha: ${value.alphaFloat})"
+val AndroidColor.swift: String get() = when(this) {
+    is AndroidColorLiteral -> "UIColor(red: ${value.redFloat}, green: ${value.greenFloat}, blue: ${value.blueFloat}, alpha: ${value.alphaFloat})"
     is AndroidColorResource -> "R.color.${name}"
     is AndroidColorStateResource -> "R.color.${name}"
 }
 //val AndroidDrawableResource.swiftDrawable: String get() = "R.drawable.${name.safeSwiftIdentifier()}"
 //fun AndroidDrawableResource.swiftLayer(forView: String): String = "$swiftDrawable.makeLayer($forView)"
 //val AndroidDrawableResource.swiftImage: String get() = "UIImage(named: \"$name\") ?? ${swiftLayer("view")}.toImage()"
-val AndroidDimensionValue.swift: String get() = when(this) {
-    is AndroidDimension -> measurement.number.toString()
+val AndroidDimension.swift: String get() = when(this) {
+    is AndroidDimensionLiteral -> measurement.number.toString()
     is AndroidDimensionResource -> "R.dimen.$name"
 }
 

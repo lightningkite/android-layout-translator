@@ -40,18 +40,16 @@ class Replacements() {
     fun getAttribute(
         elementName: String,
         attributeName: String,
-        attributeType: AttributeReplacement.ValueType,
+        attributeType: AttributeReplacement.ValueType2,
         rawValue: String
     ): AttributeReplacement? = attributes[attributeName]?.firstOrNull {
-        val res = (it.valueType == attributeType.general)
+        val res = (attributeType in it.valueType)
                 && (it.element == elementName)
-                && (it.subtype == null || it.subtype == attributeType)
                 && (it.equalTo == null || it.equalTo == rawValue)
         if(it.debug) {
             println("Checking against rule $it")
-            println("    ${it.valueType} == ${attributeType.general}")
+            println("    ${attributeType} in ${it.valueType}")
             println("    ${it.element} == ${elementName}")
-            println("    ${it.subtype} == null or ${attributeType}")
             println("    ${it.equalTo} == null or ${rawValue}")
             println("    ${res}")
         }

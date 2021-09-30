@@ -24,11 +24,11 @@
         android:padding="8dp"/>
 
     <Button
-        style="@style/ButtonPrimary"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+        style="@style/ButtonPrimaryDarkText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:drawableRight="@drawable/ic_android_black_24dp"
-        android:text="@string/submit"
+        android:text="I have dark text"
         android:layout_margin="8dp"
         android:padding="8dp"/>
 

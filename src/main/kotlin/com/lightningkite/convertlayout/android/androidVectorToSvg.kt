@@ -17,7 +17,7 @@ private fun androidVectorToSvg(
     scale: Float,
     svgOut: Appendable
 ) {
-    val colorResolver = { it: String -> resource.read(it).let { it as? AndroidColorValue}?.value?.webNoAlpha ?: "black" }
+    val colorResolver = { it: String -> resource.read(it).let { it as? AndroidColor}?.value?.webNoAlpha ?: "black" }
     val viewportWidth = node["android:viewportWidth"]?.toDoubleOrNull() ?: 24.0
     val viewportHeight = node["android:viewportHeight"]?.toDoubleOrNull() ?: 24.0
     val width = (node["android:width"]?.toDoubleOrNull() ?: viewportWidth) * scale

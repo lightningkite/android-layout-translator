@@ -11,9 +11,9 @@ private val whitespaceRegex = Regex(whitespaceRegexContent)
 
 class AndroidResources {
     var styles: MutableMap<String, AndroidStyle> = HashMap()
-    val colors: MutableMap<String, AndroidColorValue> = HashMap()
+    val colors: MutableMap<String, AndroidColor> = HashMap()
     val drawables: MutableMap<String, AndroidDrawable> = HashMap()
-    val fonts: MutableMap<String, AndroidFontValue> = HashMap()
+    val fonts: MutableMap<String, AndroidFont> = HashMap()
     val strings: MutableMap<String, AndroidStringResource> = HashMap()
     val dimensions: MutableMap<String, AndroidDimensionResource> = HashMap()
     val layouts: MutableMap<String, AndroidLayoutResource> = HashMap()
@@ -23,48 +23,49 @@ class AndroidResources {
 
     fun read(value: String): AndroidValue {
         return when {
-            value.startsWith('#') -> AndroidColor(value.hashColorToParts())
+            value.startsWith('#') -> AndroidColorLiteral(value.hashColorToParts())
             value.startsWith("@style/") -> styles[value.substringAfter('/')] ?: AndroidStyle(value.substringAfter('/'), mapOf())
             value.startsWith("@layout/") -> layouts[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
             value.startsWith("@font/") -> fonts[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
             value.startsWith("@mipmap/") -> drawables[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
             value.startsWith("@drawable/") -> drawables[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
-            value.startsWith("@android:color/") -> AndroidColor(ColorInParts.basicColors[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found"))
+            value.startsWith("@android:color/") -> AndroidColorLiteral(ColorInParts.basicColors[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found"))
             value.startsWith("@color/") -> colors[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
             value.startsWith("@string/") -> strings[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
             value.startsWith("@dimen/") -> dimensions[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
-            value.endsWith("dp") -> AndroidDimension(
+            value.endsWith("dp") -> AndroidDimensionLiteral(
                 Measurement(
                     number = value.filter { it.isDigit() || it == '.' }.toDouble(),
                     unit = MeasurementUnit.DP
                 )
             )
-            value.endsWith("dip") -> AndroidDimension(
+            value.endsWith("dip") -> AndroidDimensionLiteral(
                 Measurement(
                     number = value.filter { it.isDigit() || it == '.' }.toDouble(),
                     unit = MeasurementUnit.DP
                 )
             )
-            value.endsWith("sp") -> AndroidDimension(
+            value.endsWith("sp") -> AndroidDimensionLiteral(
                 Measurement(
                     number = value.filter { it.isDigit() || it == '.' }.toDouble(),
                     unit = MeasurementUnit.SP
                 )
             )
-            value.endsWith("sip") -> AndroidDimension(
+            value.endsWith("sip") -> AndroidDimensionLiteral(
                 Measurement(
                     number = value.filter { it.isDigit() || it == '.' }.toDouble(),
                     unit = MeasurementUnit.SP
                 )
             )
-            value.endsWith("px") -> AndroidDimension(
+            value.endsWith("px") -> AndroidDimensionLiteral(
                 Measurement(
                     number = value.filter { it.isDigit() || it == '.' }.toDouble(),
                     unit = MeasurementUnit.PX
                 )
             )
             value.toDoubleOrNull() != null -> AndroidNumber(value.toDouble())
-            else -> AndroidString(value
+            else -> AndroidStringLiteral(value
+                .removePrefix("\\")
                 .replace("\\n", "\n")
                 .replace("\\t", "\t")
                 .replace("\\\"", "\"")
@@ -113,7 +114,7 @@ class AndroidResources {
                                 .joinToString { it.textContent }
                                 .trim()
                         },
-                    parent = it["parent"]?.let { Lazy(it) { read(it) as? AndroidStyle ?: AndroidStyle("x", mapOf()) } }
+                    parent = it["parent"]?.let { Lazy(it) { styles[it] ?: styles[it.removePrefix("@style/")] ?: AndroidStyle("x", mapOf()) } }
                 )
             }
     }
@@ -194,6 +195,7 @@ class AndroidResources {
         val solidElement = element.childElements.find { it.tagName == "solid" }
         val gradientElement = element.childElements.find { it.tagName == "gradient" }
         val cornersElement = element.childElements.find { it.tagName == "corners" }
+        val defaultRadius = cornersElement?.get("android:radius")?.readLazy<AndroidDimension>()
         return AndroidShape.Value(
             shapeType = if(element["android:shape"] == "oval") AndroidShape.Value.ShapeType.Oval else AndroidShape.Value.ShapeType.Rectangle,
             stroke = strokeElement?.get("android:color")?.readLazy(),
@@ -201,16 +203,16 @@ class AndroidResources {
             fill = solidElement?.get("android:color")?.readLazy(),
             gradient = gradientElement?.let {
                 AndroidShape.Value.Gradient(
-                    startColor = strokeElement?.get("startColor")?.readLazy() ?: Lazy(AndroidColor(ColorInParts.transparent)),
+                    startColor = strokeElement?.get("startColor")?.readLazy() ?: Lazy(AndroidColorLiteral(ColorInParts.transparent)),
                     centerColor = strokeElement?.get("centerColor")?.readLazy(),
-                    endColor = strokeElement?.get("endColor")?.readLazy() ?: Lazy(AndroidColor(ColorInParts.transparent)),
+                    endColor = strokeElement?.get("endColor")?.readLazy() ?: Lazy(AndroidColorLiteral(ColorInParts.transparent)),
                     angle = strokeElement?.get("angle")?.toDoubleOrNull() ?: 0.0,
                 )
             },
-            topLeftCorner = cornersElement?.get("android:topLeftRadius")?.readLazy(),
-            topRightCorner = cornersElement?.get("android:topRightRadius")?.readLazy(),
-            bottomLeftCorner = cornersElement?.get("android:bottomLeftRadius")?.readLazy(),
-            bottomRightCorner = cornersElement?.get("android:bottomRightRadius")?.readLazy(),
+            topLeftCorner = cornersElement?.get("android:topLeftRadius")?.readLazy() ?: defaultRadius,
+            topRightCorner = cornersElement?.get("android:topRightRadius")?.readLazy() ?: defaultRadius,
+            bottomLeftCorner = cornersElement?.get("android:bottomLeftRadius")?.readLazy() ?: defaultRadius,
+            bottomRightCorner = cornersElement?.get("android:bottomRightRadius")?.readLazy() ?: defaultRadius,
         )
     }
     private fun parseXmlLayerList(element: Element): AndroidLayer.Value {
@@ -284,7 +286,7 @@ class AndroidResources {
                     if (!font.isValid) {
                         font.normalize()
                     }
-                    val iosFont = AndroidFont(
+                    val iosFont = AndroidFontLiteral(
                         family = font.properties.family.filter { it in ' '..'~' },
                         name = font.name.filter { it in '!'..'~' },
                         file = file
@@ -293,7 +295,7 @@ class AndroidResources {
                 } catch (e: Exception) {
                     println("Font read failed for $file")
                     e.printStackTrace()
-                    fonts[file.nameWithoutExtension] = AndroidFont(
+                    fonts[file.nameWithoutExtension] = AndroidFontLiteral(
                         family = file.nameWithoutExtension,
                         name = file.nameWithoutExtension,
                         file = file
@@ -308,7 +310,7 @@ class AndroidResources {
                     xml.childElements
                         .filter { it.tagName == "font" }
                         .mapNotNull { it["android:font"] }
-                        .map { readLazy<AndroidFont>(it) }
+                        .map { readLazy<AndroidFontLiteral>(it) }
                         .toList()
                 )
             }
@@ -378,17 +380,17 @@ class AndroidResources {
 
     private fun getStateColor(file: File) {
         if (!file.exists()) return
-        var normal: Lazy<AndroidColorValue> = Lazy(AndroidColor(ColorInParts.transparent))
-        var selected: Lazy<AndroidColorValue>? = null
-        var highlighted: Lazy<AndroidColorValue>? = null
-        var disabled: Lazy<AndroidColorValue>? = null
-        var focused: Lazy<AndroidColorValue>? = null
+        var normal: Lazy<AndroidColor> = Lazy(AndroidColorLiteral(ColorInParts.transparent))
+        var selected: Lazy<AndroidColor>? = null
+        var highlighted: Lazy<AndroidColor>? = null
+        var disabled: Lazy<AndroidColor>? = null
+        var focused: Lazy<AndroidColor>? = null
         file.readXml().documentElement
             .childElements
             .filter { it.tagName == "item" }
             .forEach { subnode ->
                 val raw = subnode["android:color"] ?: ""
-                val c = readLazy<AndroidColorValue>(raw)
+                val c = readLazy<AndroidColor>(raw)
                 when {
                     subnode["android:state_enabled"] == "false" -> disabled = c
                     subnode["android:state_pressed"] == "true" -> highlighted = c
