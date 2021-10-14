@@ -6,3 +6,7 @@ pluginManagement {
         maven("https://plugins.gradle.org/m2/")
     }
 }
+
+include("plugin")
+include("safe-insets")
+include("test-project")
