@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <attr name="systemEdges">
+    <attr name="safeInsets">
         <flag name="none" value="0" />
         <flag name="top" value="1" />
         <flag name="right" value="2" />
@@ -13,7 +13,7 @@
         <flag name="all" value="15" />
         <flag name="center" value="15" />
     </attr>
-    <attr name="systemEdgesSizing">
+    <attr name="safeInsetsSizing">
         <flag name="none" value="0" />
         <flag name="top" value="1" />
         <flag name="right" value="2" />
@@ -26,7 +26,7 @@
         <flag name="all" value="15" />
         <flag name="center" value="15" />
     </attr>
-    <attr name="systemEdgesBoth">
+    <attr name="safeInsetsBoth">
         <flag name="none" value="0" />
         <flag name="top" value="1" />
         <flag name="right" value="2" />

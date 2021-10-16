@@ -92,6 +92,10 @@ fun View.resetWindowInsets() {
 }
 
 fun View.safeInsetsSizing(flags: Int) {
+    if(layoutParams == null) {
+        post { safeInsetsSizing(flags) }
+        return
+    }
     val defaultWidth = this.layoutParams.width
     val defaultHeight = this.layoutParams.height
     val useLeft = flags and SafePaddingFlags.LEFT != 0
@@ -142,6 +146,10 @@ fun View.safeInsetsSizing(flags: Int) {
 
 
 fun View.safeInsetsBoth(flags: Int) {
+    if(layoutParams == null) {
+        post { safeInsetsSizing(flags) }
+        return
+    }
     val defaultPaddingLeft = paddingLeft
     val defaultPaddingRight = paddingRight
     val defaultPaddingBottom = paddingBottom
