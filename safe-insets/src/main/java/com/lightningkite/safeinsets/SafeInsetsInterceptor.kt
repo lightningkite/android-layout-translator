@@ -7,12 +7,11 @@ object SafeInsetsInterceptor: Interceptor {
     override fun intercept(chain: Interceptor.Chain): InflateResult {
         val result = chain.proceed(chain.request())
         if(result.view == null) return result
-        val t = result.context.theme.obtainStyledAttributes(result.attrs, intArrayOf(R.attr.systemEdges), 0, 0)
-        val value = t.getInt(0, 0)
+        val t = result.context.theme.obtainStyledAttributes(result.attrs, intArrayOf(R.attr.systemEdges, R.attr.systemEdgesSizing, R.attr.systemEdgesBoth), 0, 0)
+        t.getInt(0, 0).takeIf { it != 0 }?.let { result.view!!.safeInsets(it) }
+        t.getInt(1, 0).takeIf { it != 0 }?.let { result.view!!.safeInsetsSizing(it) }
+        t.getInt(2, 0).takeIf { it != 0 }?.let { result.view!!.safeInsetsBoth(it) }
         t.recycle()
-        if(value != 0) {
-            result.view!!.safeInsets(value)
-        }
         return result
     }
 

@@ -9,7 +9,7 @@ plugins {
     `maven-publish`
 }
 
-group = "com.lightningkite.rx"
+group = "com.lightningkite.xmltoxib"
 version = "0.0.1"
 
 
