@@ -67,7 +67,7 @@ dependencies {
     androidTestImplementation("androidx.test:runner:1.4.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
     api("androidx.appcompat:appcompat:1.3.1")
-    api("io.github.inflationx:viewpump:2.0.3")
+    api("dev.b3nedikt.viewpump:viewpump:4.0.7")
     api("com.google.android.material:material:1.4.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
 }

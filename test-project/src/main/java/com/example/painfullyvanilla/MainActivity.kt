@@ -1,24 +1,28 @@
 package com.example.painfullyvanilla
 
-import android.content.Context
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.viewbinding.ViewBinding
-import com.example.painfullyvanilla.databinding.TestEditBinding
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.app.ViewPumpAppCompatDelegate
 import com.example.painfullyvanilla.databinding.TestSystemEdgesBinding
 import com.lightningkite.safeinsets.SafeInsetsInterceptor
-import io.github.inflationx.viewpump.ViewPump
-import io.github.inflationx.viewpump.ViewPumpContextWrapper
+import dev.b3nedikt.viewpump.ViewPump
 
 class MainActivity : AppCompatActivity() {
-
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(ViewPumpContextWrapper.wrap(newBase))
+    private var appCompatDelegate: AppCompatDelegate? = null
+    override fun getDelegate(): AppCompatDelegate {
+        if (appCompatDelegate == null) {
+            appCompatDelegate = ViewPumpAppCompatDelegate(
+                super.getDelegate(),
+                this
+            )
+        }
+        return appCompatDelegate!!
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ViewPump.init(ViewPump.builder().addInterceptor(SafeInsetsInterceptor).build())
+        ViewPump.init(SafeInsetsInterceptor)
         val xml = TestSystemEdgesBinding.inflate(layoutInflater)
         setContentView(xml.root)
     }

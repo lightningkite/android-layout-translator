@@ -1,8 +1,8 @@
 package com.lightningkite.safeinsets
 
 import android.annotation.SuppressLint
-import io.github.inflationx.viewpump.InflateResult
-import io.github.inflationx.viewpump.Interceptor
+import dev.b3nedikt.viewpump.InflateResult
+import dev.b3nedikt.viewpump.Interceptor
 
 object SafeInsetsInterceptor: Interceptor {
     @SuppressLint("ResourceType")
