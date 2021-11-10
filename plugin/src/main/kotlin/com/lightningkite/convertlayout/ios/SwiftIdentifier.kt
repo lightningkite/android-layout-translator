@@ -25,7 +25,7 @@ fun Element.swiftIdentifier(): SwiftIdentifier {
         "textField" -> SwiftIdentifier("UIKit", "UITextField")
         "textView" -> SwiftIdentifier("UIKit", "UITextView")
         "scrollView" -> SwiftIdentifier("UIKit", "UIScrollView")
-        "segmentedControl" -> SwiftIdentifier("UIKit", "UISegmentControl")
+        "segmentedControl" -> SwiftIdentifier("UIKit", "UISegmentedControl")
         "collectionView" -> SwiftIdentifier("UIKit", "UICollectionView")
         "pageControl" -> SwiftIdentifier("UIKit", "UIPageControl")
         "label" -> SwiftIdentifier("UIKit", "UILabel")

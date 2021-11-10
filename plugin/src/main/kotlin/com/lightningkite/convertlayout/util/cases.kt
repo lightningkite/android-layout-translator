@@ -40,6 +40,8 @@ fun String.camelCase(): String {
         for (c in this@camelCase) {
             if (c == '_') {
                 nextIsUppercase = true
+            } else if (c == '-') {
+                nextIsUppercase = true
             } else {
                 if (nextIsUppercase) {
                     append(c.toUpperCase())

@@ -7,7 +7,7 @@ plugins {
     `java-gradle-plugin`
     idea
     signing
-    id("org.jetbrains.dokka") version "1.4.20"
+    id("org.jetbrains.dokka") version "1.5.30"
     `maven-publish`
 }
 
@@ -46,15 +46,14 @@ val useDeployment = deploymentUser != null || deploymentPassword != null
 gradlePlugin {
     plugins {
         val khrysalisPlugin by creating() {
-            id = "com.lightningkite.khrysalis"
-            implementationClass = "com.lightningkite.khrysalis.gradle.KhrysalisPlugin"
+            id = "com.lightningkite.xmltoxib"
+            implementationClass = "com.lightningkite.convertlayout.gradle.XmlToXibPlugin"
         }
     }
 }
 
 repositories {
     mavenLocal()
-    jcenter()
     mavenCentral()
     google()
 }

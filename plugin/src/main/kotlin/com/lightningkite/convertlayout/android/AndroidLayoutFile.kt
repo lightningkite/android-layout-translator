@@ -16,7 +16,7 @@ data class AndroidLayoutFile(
     val bindings: Map<String, AndroidIdHook>,
     val sublayouts: Map<String, AndroidSubLayout>
 ) {
-    @get:JsonIgnore val className: String get() = name.capitalize().camelCase() + "Xml"
+    @get:JsonIgnore val className: String get() = name.capitalize().camelCase() + "Binding"
     companion object {
         fun combine(iter: Sequence<AndroidLayoutFile>): AndroidLayoutFile =
             AndroidLayoutFile(
