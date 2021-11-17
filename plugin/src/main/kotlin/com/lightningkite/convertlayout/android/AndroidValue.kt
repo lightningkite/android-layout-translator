@@ -60,9 +60,11 @@ sealed interface AndroidNamedDrawable : AndroidDrawable {
     val name: String
 }
 
-sealed interface AndroidNamedDrawableWithSize : AndroidNamedDrawable {
+sealed interface AndroidDrawableWithSize: AndroidDrawable {
     val size: Size
 }
+
+sealed interface AndroidNamedDrawableWithSize : AndroidNamedDrawable, AndroidDrawableWithSize
 
 sealed interface AndroidXmlDrawable : AndroidNamedDrawable {
     val value: AndroidDrawableXml
@@ -291,7 +293,12 @@ data class AndroidLayer(
     override val name: String,
     val file: File,
     override val value: Value
-) : AndroidXmlDrawable {
+) : AndroidXmlDrawable, AndroidDrawableWithSize {
+    override val size: Size
+        get() = Size(
+            width = value.states.map { it.width?.value?.measurement?.number?.toInt() ?: 16 }.maxOrNull() ?: 16,
+            height = value.states.map { it.height?.value?.measurement?.number?.toInt() ?: 16 }.maxOrNull() ?: 16
+        )
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -323,7 +330,7 @@ data class AndroidLayoutResource(
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
-        "xmlClass" -> name.camelCase().capitalize() + "Xml"
+        "xmlClass" -> name.camelCase().capitalize() + "Binding"
         else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
     }
 }
@@ -401,6 +408,8 @@ data class Measurement(
 ) {
     operator fun get(key: String): Any? = when (key) {
         "number" -> number.toString()
+        "half" -> (number / 2).toString()
+        "halfInteger" -> (number / 2).toInt().toString()
         "integer" -> number.toInt().toString()
         "unit" -> unit.name.toLowerCase()
         else -> null

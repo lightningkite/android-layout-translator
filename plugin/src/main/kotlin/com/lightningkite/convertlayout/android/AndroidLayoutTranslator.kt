@@ -28,7 +28,10 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
             }
             current = when (current) {
                 is HasGet -> current[part]
-                is Element -> current[part]?.let { resources.read(it) }
+                is Element -> when(part) {
+                    "halfSize" -> (current.findSize()!! / 2).toString()
+                    else -> current[part]?.let { resources.read(it) }
+                }
                 else -> return current.toString()
             }
         }
@@ -36,6 +39,33 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
             current = current.value
         }
         return current.toString()
+    }
+    private fun Element.findSize(): Double? {
+        return this["android:layout_width"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number
+            ?: this["android:layout_height"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number
+            ?: (this.parentNode as? Element)?.findSize()?.let {
+                it - (
+                        this["android:padding"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_margin"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingLeft"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginLeft"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingRight"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginRight"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingStart"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginStart"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingEnd"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginEnd"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingTop"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginTop"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingBottom"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginBottom"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingHorizontal"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginHorizontal"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingVertical"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginVertical"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: 0.0
+                        )
+            }
     }
 
     open fun convertElement(owner: Element, sourceElement: Element): Element {

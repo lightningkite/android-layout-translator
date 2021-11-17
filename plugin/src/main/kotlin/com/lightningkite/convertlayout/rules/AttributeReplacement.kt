@@ -60,7 +60,13 @@ data class AttributeReplacement(
                 .toSet()
         }
         val depth: Int by lazy {
-            generateSequence(kotlinClass.java) { it.superclass }.count()
+            val allInterfaces = HashSet<Class<*>>()
+            fun traverse(clazz: Class<*>) {
+                allInterfaces.add(clazz)
+                clazz.interfaces.forEach { traverse(it) }
+            }
+            traverse(kotlinClass.java)
+            allInterfaces.size
         }
 
         operator fun contains(other: ValueType2): Boolean = this in other.parentTypes

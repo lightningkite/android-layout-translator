@@ -4,7 +4,8 @@ import java.io.File
 
 data class IosProject(
     val folder: File,
-    val name: String
+    val name: String,
+    val moduleName: String,
 ) {
     val assetsFolder: File get() = folder.resolve("Assets.xcassets")
     val swiftResourcesFolder: File get() = folder.resolve("resources")

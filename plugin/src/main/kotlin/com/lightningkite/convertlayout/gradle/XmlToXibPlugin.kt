@@ -9,8 +9,9 @@ import java.io.File
 import java.util.*
 
 open class XmlToXibPluginExtension {
-    open var iosFolder: String? = null
+    open var iosFolder: File? = null
     open var iosProjectName: String? = null
+    open var iosModuleName: String? = null
 }
 
 fun Project.xmlToXib(configure: Action<XmlToXibPluginExtension>) {
@@ -24,7 +25,9 @@ class XmlToXibPlugin: Plugin<Project> {
             it.group = "ios"
             it.doLast {
                 val iosName = ext.iosProjectName ?: target.name.camelCase().capitalize()
-                val iosBase = ext.iosFolder?.let { File(target.projectDir, it) } ?: target.projectDir.resolve("../ios/$iosName")
+                val iosModuleName = ext.iosModuleName ?: iosName
+                val iosBase = ext.iosFolder ?: target.projectDir.resolve("../ios")
+                val iosFolder = iosBase.resolve(iosName)
                 val dependencies = run {
                     val localProperties = Properties().apply {
                         val f = target.rootProject.file("local.properties")
@@ -63,12 +66,19 @@ class XmlToXibPlugin: Plugin<Project> {
                     println("Checking for iOS view definitions at: ${allLocations.joinToString("\n")}")
                     allLocations
                 }
-                IosTranslator(
+                val translator = IosTranslator(
                     androidFolder = target.projectDir,
-                    iosFolder = iosBase,
+                    iosFolder = iosFolder,
+                    iosModuleName = iosModuleName,
                     iosName = iosName,
                     replacementFolders = dependencies.toList()
-                ).invoke()
+                )
+                translator.resources.all.forEach { s, androidValue -> println("$s: $androidValue") }
+                println("assetsFolder: ${translator.project.assetsFolder}")
+                println("layoutsFolder: ${translator.project.layoutsFolder}")
+                println("swiftResourcesFolder: ${translator.project.swiftResourcesFolder}")
+                println("baseFolderForLocalizations: ${translator.project.baseFolderForLocalizations}")
+                translator()
             }
         }
     }

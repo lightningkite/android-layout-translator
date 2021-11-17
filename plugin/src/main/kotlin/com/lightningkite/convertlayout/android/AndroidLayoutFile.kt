@@ -74,7 +74,7 @@ data class AndroidLayoutFile(
                             AndroidSubLayout(
                                 name = camelCasedId,
                                 resourceId = id,
-                                layoutXmlClass = layout.camelCase().capitalize() + "Xml"
+                                layoutXmlClass = layout.camelCase().capitalize() + "Binding"
                             )
                         )
                     } else {

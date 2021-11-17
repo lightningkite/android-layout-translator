@@ -35,8 +35,8 @@ val ConstraintAttribute.starting: Boolean get() = when(this) {
     ConstraintAttribute.bottom -> false
     ConstraintAttribute.left -> true
     ConstraintAttribute.leading -> true
-    ConstraintAttribute.width -> false
-    ConstraintAttribute.height -> false
+    ConstraintAttribute.width -> true
+    ConstraintAttribute.height -> true
     ConstraintAttribute.centerX -> false
     ConstraintAttribute.centerY -> false
 }
@@ -94,7 +94,8 @@ private fun Element.addConstraint(
     constant: Double,
     multiplier: Double,
     relation: ConstraintRelation = ConstraintRelation.equal,
-    priority: Int = 999
+    priority: Int = 1000,
+    identifier: String? = null
 ) {
     this.getOrAppendChild("constraints")
         .appendElement("constraint") {
@@ -102,6 +103,7 @@ private fun Element.addConstraint(
             this["firstAttribute"] = firstAttribute.toString()
             secondItem?.let { this["secondItem"] = it.id() }
             secondAttribute?.let { this["secondAttribute"] = it.toString() }
+            identifier?.let { this["identifier"] = it }
             this["constant"] = constant.toString()
             this["multiplier"] = multiplier.toString()
             this["relation"] = relation.toString()
@@ -146,25 +148,27 @@ fun ElementAnchor.constraint(
     relationship: ConstraintRelation = ConstraintRelation.equal,
     constant: Double = 0.0,
     multiplier: Double = 1.0,
-    priority: Int = 1000
+    priority: Int = 1000,
+    identifier: String? = null
 ) {
     val commonView = (this.element.commonAncestor(other.element) ?: throw IllegalStateException("No common ancestor between $element and ${other.element}")).let {
         if(it.tagName == "subviews") it.parentNode as Element
         else it
     }
     commonView.addConstraint(
-        firstItem = if(other.element == commonView) null else other.element,
-        firstAttribute = other.attribute,
-        secondItem = this.element,
-        secondAttribute = this.attribute,
-//        firstItem = if(this.element == commonView) null else this.element,
-//        firstAttribute = this.attribute,
-//        secondItem = other.element,
-//        secondAttribute = other.attribute,
+//        firstItem = if(other.element == commonView) null else other.element,
+//        firstAttribute = other.attribute,
+//        secondItem = this.element,
+//        secondAttribute = this.attribute,
+        firstItem = if(this.element == commonView) null else this.element,
+        firstAttribute = this.attribute,
+        secondItem = other.element,
+        secondAttribute = other.attribute,
         constant = constant,
         multiplier = multiplier,
         relation = relationship,
-        priority = priority
+        priority = priority,
+        identifier = identifier
     )
 }
 fun Element.constraintChildMatch(
@@ -175,6 +179,7 @@ fun Element.constraintChildMatch(
     multiplier: Double = 1.0,
     priority: Int = 1000
 ) {
+    if(child.parentNode?.parentNode != this) throw IllegalStateException()
     val parentAnchorElement = when {
         this.directSystemEdges?.get(attribute) == true -> this.safeAreaGuide
         else -> this
@@ -188,9 +193,9 @@ fun Element.constraintChildMatch(
         attribute
     )
     if(attribute.starting) {
-        parentAnchor.constraint(childAnchor, relationship, constant, multiplier, priority)
+        childAnchor.constraint(parentAnchor, relationship, constant, multiplier, priority, identifier = "constraintMatchParent-${attribute.name}-start")
     } else {
-        childAnchor.constraint(parentAnchor, relationship, constant, multiplier, priority)
+        parentAnchor.constraint(childAnchor, relationship, constant, multiplier, priority, identifier = "constraintMatchParent-${attribute.name}-end")
     }
 }
 fun Element.constraintChildMatchTop(child: Element, relationship: ConstraintRelation = ConstraintRelation.equal, constant: Double = 0.0, multiplier: Double = 1.0, priority: Int = 1000) = constraintChildMatch(child, ConstraintAttribute.top, relationship, constant, multiplier, priority)
@@ -204,7 +209,7 @@ fun Element.constraintChildMatchHeight(child: Element, relationship: ConstraintR
 fun Element.constraintChildMatchCenterX(child: Element, relationship: ConstraintRelation = ConstraintRelation.equal, constant: Double = 0.0, multiplier: Double = 1.0, priority: Int = 1000) = constraintChildMatch(child, ConstraintAttribute.centerX, relationship, constant, multiplier, priority)
 fun Element.constraintChildMatchCenterY(child: Element, relationship: ConstraintRelation = ConstraintRelation.equal, constant: Double = 0.0, multiplier: Double = 1.0, priority: Int = 1000) = constraintChildMatch(child, ConstraintAttribute.centerY, relationship, constant, multiplier, priority)
 infix fun ElementAnchor.matches(other: ElementAnchor) = this.constraint(other)
-fun ElementAnchor.setTo(constant: Double) {
+fun ElementAnchor.setTo(constant: Double, priority: Int = 1000) {
     this.element.addConstraint(
         firstItem = null,
         firstAttribute = this.attribute,
@@ -212,7 +217,8 @@ fun ElementAnchor.setTo(constant: Double) {
         secondAttribute = null,
         constant = constant,
         multiplier = 1.0,
-        relation = ConstraintRelation.equal
+        relation = ConstraintRelation.equal,
+        priority = priority
     )
 }
 
@@ -264,7 +270,8 @@ fun Element.constraintChildFrameAxis(
             )
             constraintChildMatch(
                 child,
-                attribute = ConstraintAttribute.center(vertical)
+                attribute = ConstraintAttribute.center(vertical),
+                constant = (insets[vertical, true, insets.localeDependent] - insets[vertical, false, insets.localeDependent])
             )
         }
         Align.END -> {

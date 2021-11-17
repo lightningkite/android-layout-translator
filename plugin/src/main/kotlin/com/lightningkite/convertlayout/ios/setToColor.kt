@@ -86,3 +86,7 @@ fun String.safeSwiftIdentifier(): String = when(this){
     "description" -> "myDescription"
     else -> this
 }
+fun String.safeSwiftViewIdentifier(): String = when(this){
+    "next" -> "nextView"
+    else -> this.safeSwiftIdentifier()
+}

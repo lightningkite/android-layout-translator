@@ -3,7 +3,6 @@ import java.util.Properties
 plugins {
     id("com.android.library")
     id("kotlin-android")
-    id("maven")
     id("signing")
     id("org.jetbrains.dokka") version "1.5.0"
     `maven-publish`
@@ -128,13 +127,13 @@ if (useDeployment) {
     }
 
     tasks.named<Upload>("uploadArchives") {
-        repositories.withConvention(MavenRepositoryHandlerConvention::class) {
-            mavenDeployer {
-                beforeDeployment {
-                    signing.signPom(this)
-                }
-            }
-        }
+//        repositories.withConvention(MavenRepositoryHandlerConvention::class) {
+//            mavenDeployer {
+//                beforeDeployment {
+//                    signing.signPom(this)
+//                }
+//            }
+//        }
 
         repositories.withGroovyBuilder {
             "mavenDeployer"{

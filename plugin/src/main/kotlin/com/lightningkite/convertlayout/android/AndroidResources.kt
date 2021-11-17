@@ -203,10 +203,10 @@ class AndroidResources {
             fill = solidElement?.get("android:color")?.readLazy(),
             gradient = gradientElement?.let {
                 AndroidShape.Value.Gradient(
-                    startColor = strokeElement?.get("startColor")?.readLazy() ?: Lazy(AndroidColorLiteral(ColorInParts.transparent)),
-                    centerColor = strokeElement?.get("centerColor")?.readLazy(),
-                    endColor = strokeElement?.get("endColor")?.readLazy() ?: Lazy(AndroidColorLiteral(ColorInParts.transparent)),
-                    angle = strokeElement?.get("angle")?.toDoubleOrNull() ?: 0.0,
+                    startColor = it.get("android:startColor")?.readLazy()!!,
+                    centerColor = it.get("android:centerColor")?.readLazy(),
+                    endColor = it.get("android:endColor")?.readLazy()!!,
+                    angle = it.get("android:angle")?.toDoubleOrNull() ?: 0.0,
                 )
             },
             topLeftCorner = cornersElement?.get("android:topLeftRadius")?.readLazy() ?: defaultRadius,
@@ -222,12 +222,12 @@ class AndroidResources {
                     ?.let { AndroidDrawable.Reference(readLazy(it)) }
                     ?: it.childElements.firstOrNull()
                         ?.let { parseXmlDrawable(it) } ?: throw IllegalStateException(),
-                width = element["android:width"]?.readLazy(),
-                height = element["android:height"]?.readLazy(),
-                top = element["android:top"]?.readLazy(),
-                left = element["android:left"]?.readLazy(),
-                right = element["android:right"]?.readLazy(),
-                bottom = element["android:bottom"]?.readLazy(),
+                width = it["android:width"]?.readLazy(),
+                height = it["android:height"]?.readLazy(),
+                top = it["android:top"]?.readLazy(),
+                left = it["android:left"]?.readLazy(),
+                right = it["android:right"]?.readLazy(),
+                bottom = it["android:bottom"]?.readLazy(),
             )
         }.toList())
     }

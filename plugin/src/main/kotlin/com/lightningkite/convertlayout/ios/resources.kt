@@ -75,7 +75,7 @@ fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawable
                     AndroidShape.Value.ShapeType.Rectangle -> {
                         appendLine("LayerMaker.rectGradient(")
                         appendLine("startColor: ${gradient.startColor.value.swift}, ")
-                        appendLine("midColor: ${gradient.centerColor?.value?.swift ?: ".clear"}, ")
+                        appendLine("midColor: ${gradient.centerColor?.value?.swift ?: "nil"}, ")
                         appendLine("endColor: ${gradient.endColor.value.swift}, ")
                         appendLine("gradientAngle: ${gradient.angle}, ")
                         appendLine("strokeColor: ${xml.stroke?.value?.swift ?: ".clear"}, ")
@@ -89,7 +89,7 @@ fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawable
                     AndroidShape.Value.ShapeType.Oval -> {
                         appendLine("LayerMaker.ovalGradient(")
                         appendLine("startColor: ${gradient.startColor.value.swift}, ")
-                        appendLine("midColor: ${gradient.centerColor?.value?.swift ?: ".clear"}, ")
+                        appendLine("midColor: ${gradient.centerColor?.value?.swift ?: "nil"}, ")
                         appendLine("endColor: ${gradient.endColor.value.swift}, ")
                         appendLine("gradientAngle: ${gradient.angle}, ")
                         appendLine("strokeColor: ${xml.stroke?.value?.swift ?: ".clear"}, ")

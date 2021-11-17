@@ -73,9 +73,9 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
-    api("com.fasterxml.jackson.core:jackson-databind:2.12.5")
-    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.12.5")
-    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.12.5")
+    api("com.fasterxml.jackson.core:jackson-databind:2.9.+")
+    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+")
+    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.+")
 
     // https://mvnrepository.com/artifact/org.apache.xmlgraphics/batik-transcoder
     implementation(group = "org.apache.xmlgraphics", name = "batik-transcoder", version = "1.13")
@@ -84,7 +84,7 @@ dependencies {
     // https://mvnrepository.com/artifact/net.mabboud.fontverter/FontVerter
     implementation(group = "net.mabboud.fontverter", name = "FontVerter", version = "1.2.22")
 
-    testImplementation("junit:junit:4.12")
+    testImplementation("junit:junit:4.13.2")
 }
 
 tasks {
@@ -111,7 +111,7 @@ afterEvaluate {
             val release by creating(MavenPublication::class) {
                 from(components["java"])
                 artifact(tasks["sourceJar"])
-                artifact(tasks["javadocJar"])
+//                artifact(tasks["javadocJar"])
                 groupId = project.group.toString()
                 artifactId = project.name
                 version = project.version.toString()

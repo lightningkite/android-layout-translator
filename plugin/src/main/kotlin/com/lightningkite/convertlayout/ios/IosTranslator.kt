@@ -17,9 +17,10 @@ data class IosTranslator(
         androidFolder: File,
         iosFolder: File,
         iosName: String,
+        iosModuleName: String = iosName,
         replacementFolders: Iterable<File>
     ):this(
-        project = IosProject(iosFolder, iosName),
+        project = IosProject(iosFolder, iosName, iosModuleName),
         replacements = Replacements().apply {
             replacementFolders
                 .asSequence()
@@ -47,6 +48,7 @@ data class IosTranslator(
     operator fun invoke() {
         importResources(resources)
         for(layout in resources.layouts.values) {
+            println("Translating ${layout.name}")
             translate(layout.layout.value)
         }
     }

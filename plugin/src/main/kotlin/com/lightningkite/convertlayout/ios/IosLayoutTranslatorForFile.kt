@@ -18,6 +18,17 @@ internal class IosLayoutTranslatorForFile(
     resources: AndroidResources
 ) : AndroidLayoutTranslator(replacements, resources) {
 
+    companion object {
+        val compoundDrawables: Set<String> = setOf(
+            "android:drawableLeft",
+            "android:drawableRight",
+            "android:drawableStart",
+            "android:drawableEnd",
+            "android:drawableTop",
+            "android:drawableBottom",
+        )
+    }
+
     private fun Element.childrenWhoWrap(isVertical: Boolean): Int {
         return childElements
             .filter { it.allAttributes["android:layout_${if(isVertical) "height" else "vertical"}"] == "wrap_content" }
@@ -40,6 +51,7 @@ internal class IosLayoutTranslatorForFile(
 
     override fun getProjectWide(key: String): String? = when (key) {
         "projectName" -> project.name
+        "moduleName" -> project.moduleName
         else -> null
     }
 
@@ -52,7 +64,7 @@ internal class IosLayoutTranslatorForFile(
         val autowrap = rules.asSequence()
             .flatMap { it.autoWrapFor?.asSequence() ?: sequenceOf() }
             .toSet()
-        val directSystemEdges = sourceElement.allAttributes["tools:systemEdges"]?.toSystemEdges()
+        val directSystemEdges = sourceElement.allAttributes["app:safeInsets"]?.toSystemEdges() ?: sourceElement.allAttributes["app:safeInsetsSizing"]?.toSystemEdges()
 
         if (allAttributes.keys.none { it in autowrap }) {
             val newElement =
@@ -70,10 +82,14 @@ internal class IosLayoutTranslatorForFile(
                 if (allAttributes["android:layout_width"] == "wrap_content") {
                     newElement["horizontalHuggingPriority"] = "1000"
                     newElement["horizontalCompressionResistancePriority"] = "1000"
+                } else if (newElement.tagName == "label") {
+                    newElement["numberOfLines"] = "0"
                 }
                 if (allAttributes["android:layout_height"] == "wrap_content") {
                     newElement["verticalHuggingPriority"] = "1000"
                     newElement["verticalCompressionResistancePriority"] = "1000"
+                } else if (newElement.tagName == "label") {
+                    newElement["numberOfLines"] = "0"
                 }
             }
 
@@ -104,6 +120,7 @@ internal class IosLayoutTranslatorForFile(
                 outerElement.getOrAppendChild("subviews")
                     .appendFragment(rules.asSequence().mapNotNull { it.template }.first()
                         .write { getProjectWide(it) ?: sourceElement.getPath(it) })
+            handleXibEntry(outerElement, AndroidStringLiteral("true"), "isSimpleContainer", AttributeReplacement.XibRuleType.UserDefined)
             directSystemEdges?.let { outerElement.directSystemEdges = it }
             assignIds(innerElement)
             allAttributes["android:id"]
@@ -117,16 +134,52 @@ internal class IosLayoutTranslatorForFile(
                 if (allAttributes["android:layout_width"] == "wrap_content") {
                     innerElement["horizontalHuggingPriority"] = "1000"
                     innerElement["horizontalCompressionResistancePriority"] = "1000"
+                } else if (innerElement.tagName == "label") {
+                    innerElement["numberOfLines"] = "0"
                 }
                 if (allAttributes["android:layout_height"] == "wrap_content") {
                     innerElement["verticalHuggingPriority"] = "1000"
                     innerElement["verticalCompressionResistancePriority"] = "1000"
+                } else if (innerElement.tagName == "label") {
+                    innerElement["numberOfLines"] = "0"
                 }
             }
 
-            // Set up constraints between outer/inner based on padding
+            val compounds = outerAttributes.keys.intersect(compoundDrawables)
+
             val padding = outerAttributes.insets("android:padding", resources)
-            outerElement.constraintChildMatchEdges(innerElement, padding)
+            if(compounds.isNotEmpty()) {
+                // Handle compound drawables
+                val drawablePadding = allAttributes["android:drawablePadding"]
+                    ?.let { resources.read(it) as? AndroidDimension }
+                    ?.measurement?.number
+                    ?: 8.0
+                val handlerInfo = CompoundHandlerInfo(
+                    outerAttributes = outerAttributes,
+                    destOwner = destOwner,
+                    innerElement = innerElement,
+                    outerElement = outerElement,
+                    padding = padding,
+                    drawablePadding = drawablePadding
+                )
+                if(!handleCompoundDrawable(handlerInfo, "Top", true, false, false)) {
+                    outerElement.constraintChildMatch(innerElement, ConstraintAttribute[true, false, false], constant = padding[true, false, false])
+                }
+                if(!handleCompoundDrawable(handlerInfo, "Bottom", true, true, false)) {
+                    outerElement.constraintChildMatch(innerElement, ConstraintAttribute[true, true, false], constant = padding[true, true, false])
+                }
+                if(!handleCompoundDrawable(handlerInfo, "Left", false, false, false) &&
+                !handleCompoundDrawable(handlerInfo, "Start", false, false, true)) {
+                    outerElement.constraintChildMatch(innerElement, ConstraintAttribute[false, false, false], constant = padding[false, false, true])
+                }
+                if(!handleCompoundDrawable(handlerInfo, "Right", false, true, false) &&
+                !handleCompoundDrawable(handlerInfo, "End", false, true, true)) {
+                    outerElement.constraintChildMatch(innerElement, ConstraintAttribute[false, true, false], constant = padding[false, true, true])
+                }
+            } else {
+                // Set up constraints between outer/inner based on padding
+                outerElement.constraintChildMatchEdges(innerElement, padding)
+            }
 
             // Handle children
             handleChildren(rules, innerElement, sourceElement)
@@ -148,6 +201,49 @@ internal class IosLayoutTranslatorForFile(
         }
     }
 
+    private data class CompoundHandlerInfo(
+        val outerAttributes: HashMap<String, String>,
+        val destOwner: Element,
+        val innerElement: Element,
+        val outerElement: Element,
+        val padding: Insets,
+        val drawablePadding: Double,
+    )
+    private fun handleCompoundDrawable(
+        compoundHandlerInfo: CompoundHandlerInfo,
+        textName: String,
+        vertical: Boolean,
+        end: Boolean,
+        locale: Boolean
+    ): Boolean = with(compoundHandlerInfo) {
+        return outerAttributes["android:drawable$textName"]?.let {
+            val src = resources.read(it) as AndroidDrawable
+            val drawableElement = outerElement.getOrAppendChild("subviews").appendElement("view")
+            drawableElement["translatesAutoresizingMaskIntoConstraints"] = "NO"
+            drawableElement.setAttribute("placeholderIntrinsicWidth", "25")
+            drawableElement.setAttribute("placeholderIntrinsicHeight", "25")
+            val drawableElementId = "${innerElement.id()}compoundDrawable$textName"
+            drawableElement["id"] = drawableElementId
+            if (src is AndroidNamedDrawable) {
+                handleXibEntry(drawableElement, src, "backgroundLayerName", AttributeReplacement.XibRuleType.UserDefined)
+            }
+            if(src is AndroidDrawableWithSize) {
+                drawableElement.anchorWidth.setTo(src.size.width.toDouble())
+                drawableElement.anchorHeight.setTo(src.size.height.toDouble())
+            } else {
+                drawableElement.anchorWidth.setTo(24.0)
+                drawableElement.anchorHeight.setTo(24.0)
+            }
+            outerElement.constraintChildMatch(drawableElement, ConstraintAttribute[vertical, end, locale], constant = padding[vertical, end, locale])
+            outerElement.constraintChildMatch(drawableElement, ConstraintAttribute.center(!vertical))
+            ElementAnchor(innerElement, ConstraintAttribute[vertical, end, locale]).constraint(
+                ElementAnchor(drawableElement, ConstraintAttribute[vertical, !end, locale]),
+                constant = drawablePadding
+            )
+            true
+        } ?: false
+    }
+
     override fun handleChildren(
         rules: List<ElementReplacement>,
         childAddRule: String?,
@@ -158,7 +254,8 @@ internal class IosLayoutTranslatorForFile(
         val myAttributes = sourceElement.allAttributes
         when (childAddRule) {
             "linear" -> {
-                if(myAttributes["tools:systemEdges"] == null) destElement["insetsLayoutMarginsFromSafeArea"] = "NO"
+                if(myAttributes["app:safeInsets"] == null) destElement["insetsLayoutMarginsFromSafeArea"] = "NO"
+                if(myAttributes["app:safeInsetsSizing"] == null) destElement["insetsLayoutMarginsFromSafeArea"] = "NO"
                 val isVertical = myAttributes["android:orientation"] == "vertical"
                 val myPadding = myAttributes.insets("android:padding", resources)
                 val wrappingPower = if(myAttributes["android:layout_${if(!isVertical) "height" else "width"}"] == "wrap_content")
@@ -242,6 +339,7 @@ internal class IosLayoutTranslatorForFile(
                     val (destChild, outerElement) = if (childAlign == commonAlign && childMargins == Insets.zero) {
                         // If matching common alignment and margins, be direct
                         val destChild = convertElement(target, child)
+                        //destChild.set("debug", "direct")
                         destElement.constraintChildBiggestOfChildrenAxis(
                             child = destChild,
                             vertical = !isVertical,
@@ -260,7 +358,7 @@ internal class IosLayoutTranslatorForFile(
                             spacer.id()
                             spacer["translatesAutoresizingMaskIntoConstraints"] = "NO"
                             spacer.anchorSize(isVertical).setTo(additionalStartPadding)
-                            spacer.anchorSize(!isVertical).setTo(1.0)
+                            if(commonAlign != AlignOrStretch.STRETCH) spacer.anchorSize(!isVertical).setTo(1.0)
                         }
                         val destChild = convertElement(target, child)
                         if (additionalEndPadding > 0.0) {
@@ -268,7 +366,7 @@ internal class IosLayoutTranslatorForFile(
                             spacer.id()
                             spacer["translatesAutoresizingMaskIntoConstraints"] = "NO"
                             spacer.anchorSize(isVertical).setTo(additionalEndPadding)
-                            spacer.anchorSize(!isVertical).setTo(1.0)
+                            if(commonAlign != AlignOrStretch.STRETCH) spacer.anchorSize(!isVertical).setTo(1.0)
                         }
                         destElement.constraintChildBiggestOfChildrenAxis(
                             child = destChild,
@@ -285,14 +383,14 @@ internal class IosLayoutTranslatorForFile(
 
                         // Stretch to fill
                         when (commonAlign) {
-                            AlignOrStretch.START -> outerElement.constraintChildMatch(
-                                destElement,
+                            AlignOrStretch.START -> destElement.constraintChildMatch(
+                                outerElement,
                                 attribute = ConstraintAttribute[!isVertical, true],
                                 constant = myMargins[!isVertical, true]
                             )
                             AlignOrStretch.CENTER,
-                            AlignOrStretch.END -> outerElement.constraintChildMatch(
-                                destElement,
+                            AlignOrStretch.END -> destElement.constraintChildMatch(
+                                outerElement,
                                 attribute = ConstraintAttribute[!isVertical, false],
                                 constant = myMargins[!isVertical, false]
                             )
@@ -303,9 +401,11 @@ internal class IosLayoutTranslatorForFile(
                         val innerElement = convertElement(outerElement.getOrAppendChild("subviews"), child)
                         outerElement.constraintChildMatchEdgesAxis(innerElement, isVertical, childMargins)
                         if(childAlign == AlignOrStretch.STRETCH) {
+                            //outerElement.set("debug", "stretch, $isVertical")
                             outerElement.constraintChildMatchEdgesAxis(innerElement, !isVertical, childMargins)
                         } else {
-                            destElement.constraintChildFrameAxis(
+                            //outerElement.set("debug", "not stretch, $isVertical")
+                            outerElement.constraintChildFrameAxis(
                                 child = innerElement,
                                 vertical = !isVertical,
                                 align = childAlign.align(),
@@ -322,6 +422,7 @@ internal class IosLayoutTranslatorForFile(
                             contentHuggingPriority = if(wrappingPower == -1) framingHugPriority else wrappingPower - 1,
                             contentCompressionResistancePriority = if(wrappingPower == -1) framingCompressionPriority else wrappingPower
                         )
+                        handleXibEntry(outerElement, AndroidStringLiteral("true"), "isSimpleContainer", AttributeReplacement.XibRuleType.UserDefined)
                         innerElement to outerElement
                     }
 
@@ -349,7 +450,7 @@ internal class IosLayoutTranslatorForFile(
                                 this["translatesAutoresizingMaskIntoConstraints"] = "NO"
                                 this["${if (isVertical) "vertical" else "horizontal"}HuggingPriority"] = "100"
                             }
-                            finalSpacer.anchorSize(!isVertical).setTo(1.0)
+                            if(commonAlign != AlignOrStretch.STRETCH) finalSpacer.anchorSize(!isVertical).setTo(1.0)
                         }
                         Align.CENTER -> {
                             val finalSpacer = target.appendElement("view") {
@@ -357,14 +458,14 @@ internal class IosLayoutTranslatorForFile(
                                 this["translatesAutoresizingMaskIntoConstraints"] = "NO"
                                 this["${if (isVertical) "vertical" else "horizontal"}HuggingPriority"] = "100"
                             }
-                            finalSpacer.anchorSize(!isVertical).setTo(1.0)
+                            if(commonAlign != AlignOrStretch.STRETCH) finalSpacer.anchorSize(!isVertical).setTo(1.0)
                             // Due to the ID generation process, we append then move its position
                             val firstSpacer = target.appendElement("view") {
                                 id()
                                 this["translatesAutoresizingMaskIntoConstraints"] = "NO"
                                 this["${if (isVertical) "vertical" else "horizontal"}HuggingPriority"] = "100"
                             }
-                            firstSpacer.anchorSize(!isVertical).setTo(1.0)
+                            if(commonAlign != AlignOrStretch.STRETCH) firstSpacer.anchorSize(!isVertical).setTo(1.0)
                             target.moveToFirst(firstSpacer)
                             firstSpacer.anchorSize(isVertical).constraint(finalSpacer.anchorSize(isVertical))
                         }
@@ -375,7 +476,7 @@ internal class IosLayoutTranslatorForFile(
                                 this["translatesAutoresizingMaskIntoConstraints"] = "NO"
                                 this["${if (isVertical) "vertical" else "horizontal"}HuggingPriority"] = "100"
                             }
-                            firstSpacer.anchorSize(!isVertical).setTo(1.0)
+                            if(commonAlign != AlignOrStretch.STRETCH) firstSpacer.anchorSize(!isVertical).setTo(1.0)
                             target.moveToFirst(firstSpacer)
                         }
                     }
@@ -418,8 +519,8 @@ internal class IosLayoutTranslatorForFile(
                     val innerElement = convertElement(target, child)
                     val paddingPlusMargins = padding + child.allAttributes.insets("android:layout_margin", resources)
                     destElement.constraintChildMatchEdges(innerElement, paddingPlusMargins)
-                    innerElement.anchorWidth.constraint(
-                        destElement.anchorWidth,
+                    destElement.anchorWidth.constraint(
+                        innerElement.anchorWidth,
                         constant = -paddingPlusMargins.left - paddingPlusMargins.right
                     )
                 }
@@ -430,8 +531,8 @@ internal class IosLayoutTranslatorForFile(
                     val innerElement = convertElement(target, child)
                     val paddingPlusMargins = padding + child.allAttributes.insets("android:layout_margin", resources)
                     destElement.constraintChildMatchEdges(innerElement, paddingPlusMargins)
-                    innerElement.anchorHeight.constraint(
-                        destElement.anchorHeight,
+                    destElement.anchorHeight.constraint(
+                        innerElement.anchorHeight,
                         constant = -paddingPlusMargins.top - paddingPlusMargins.bottom
                     )
                 }
@@ -608,7 +709,7 @@ internal class IosLayoutTranslatorForFile(
                     it.allAttributes["android:orientation"] == "horizontal"
                 } == true
             }?.let {
-                childElement.anchorWidth.setTo(it)
+                childElement.anchorWidth.setTo(it, priority = if(childAttributes["android:minWidth"] != null) 999 else 1000)
             }
         }
         childAttributes["android:layout_height"]?.let {
@@ -617,7 +718,7 @@ internal class IosLayoutTranslatorForFile(
                     it.allAttributes["android:orientation"] == "vertical"
                 } == true
             }?.let {
-                childElement.anchorHeight.setTo(it)
+                childElement.anchorHeight.setTo(it, priority = if(childAttributes["android:minHeight"] != null) 999 else 1000)
             }
         }
     }
@@ -631,12 +732,13 @@ internal class IosLayoutTranslatorForFile(
         val fileOwnerIdentifier = objectsNode.xpathElement("placeholder[@placeholderIdentifier=\"IBFilesOwner\"]")!!
         val view = convertElement(objectsNode, androidXml.documentElement)
         view.id()
-        fileOwnerIdentifier["customClass"] = layout.name + "Xml"
-        fileOwnerIdentifier["customModule"] = project.name
+        fileOwnerIdentifier["customClass"] = layout.className
+        fileOwnerIdentifier["customModule"] = project.moduleName
+        fileOwnerIdentifier["customModuleProvider"] = "target"
         fileOwnerIdentifier.getOrAppendChild("connections").apply {
             for (entry in outlets) {
                 appendElement("outlet") {
-                    this["property"] = entry.key
+                    this["property"] = "_".plus(entry.key).safeSwiftIdentifier()
                     this["destination"] = entry.key
                     id()
                 }
@@ -717,7 +819,10 @@ internal class IosLayoutTranslatorForFile(
     ): String {
 
         fun swiftDeclaration(outlet: Map.Entry<String, SwiftIdentifier>): String {
-            return "@IBOutlet weak public var ${outlet.key.camelCase()}: ${outlet.value.name}!"
+            return "@IBOutlet weak private var ${"_".plus(outlet.key.camelCase()).safeSwiftViewIdentifier()}: ${outlet.value.name}!"
+        }
+        fun swiftAccess(outlet: Map.Entry<String, SwiftIdentifier>): String {
+            return "public var ${outlet.key.camelCase().safeSwiftViewIdentifier()}: ${outlet.value.name} { return ${"_".plus(outlet.key.camelCase()).safeSwiftIdentifier()} }"
         }
 
         return """
@@ -729,11 +834,12 @@ internal class IosLayoutTranslatorForFile(
     |import XmlToXibRuntime
     |${outlets.values.map { it.module }.filter { it != project.name }.toSet().joinToString("\n|") { "import $it" }}
     |
-    |class ${layout.className}: XibView {
+    |public class ${layout.className}: XibView {
     |
     |    ${outlets.entries.joinToString("\n|    ") { swiftDeclaration(it) }}
+    |    ${outlets.entries.joinToString("\n|    ") { swiftAccess(it) }}
     |
-    |    override func awakeFromNib() {
+    |    override public func awakeFromNib() {
     |        super.awakeFromNib()
     |        ${iosCode.split('\n').joinToString("\n|    ")}
     |    }

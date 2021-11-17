@@ -20,7 +20,7 @@ class KlypTest {
 
         println("Reading...")
         val translator = IosTranslator(
-            androidFolder = File("/home/jivie/Projects/klyp-khrysalis/app"),
+            androidFolder = File("/home/jivie/Projects/klyp-android/app"),
             iosFolder = macLocation.file.also { it.mkdirs() },
             iosName = "XmlToXibRuntimeExample",
             replacementFolders = listOf(File("."))
