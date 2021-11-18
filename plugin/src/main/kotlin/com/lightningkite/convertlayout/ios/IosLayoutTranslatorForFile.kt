@@ -27,6 +27,9 @@ internal class IosLayoutTranslatorForFile(
             "android:drawableTop",
             "android:drawableBottom",
         )
+        val defaultWrappedAttributes: Set<String> = setOf(
+            "android:visibility"
+        )
     }
 
     private fun Element.childrenWhoWrap(isVertical: Boolean): Int {
@@ -106,7 +109,7 @@ internal class IosLayoutTranslatorForFile(
         } else {
             val wrappedAttributes = rules.asSequence()
                 .flatMap { it.wrappedAttributes?.asSequence() ?: sequenceOf() }
-                .toSet().plus(autowrap)
+                .toSet().plus(autowrap).plus(defaultWrappedAttributes)
             val innerAttributes = HashMap<String, String>()
             val outerAttributes = HashMap<String, String>()
             for ((key, value) in allAttributes) {
@@ -116,11 +119,12 @@ internal class IosLayoutTranslatorForFile(
 
             val outerElement = destOwner.appendElement("view")
             outerElement["translatesAutoresizingMaskIntoConstraints"] = "NO"
+            outerElement["customModule"] = "XmlToXibRuntime"
+            outerElement["customClass"] = "ContainerView"
             val innerElement =
                 outerElement.getOrAppendChild("subviews")
                     .appendFragment(rules.asSequence().mapNotNull { it.template }.first()
                         .write { getProjectWide(it) ?: sourceElement.getPath(it) })
-            handleXibEntry(outerElement, AndroidStringLiteral("true"), "isSimpleContainer", AttributeReplacement.XibRuleType.UserDefined)
             directSystemEdges?.let { outerElement.directSystemEdges = it }
             assignIds(innerElement)
             allAttributes["android:id"]
@@ -227,13 +231,9 @@ internal class IosLayoutTranslatorForFile(
             if (src is AndroidNamedDrawable) {
                 handleXibEntry(drawableElement, src, "backgroundLayerName", AttributeReplacement.XibRuleType.UserDefined)
             }
-            if(src is AndroidDrawableWithSize) {
-                drawableElement.anchorWidth.setTo(src.size.width.toDouble())
-                drawableElement.anchorHeight.setTo(src.size.height.toDouble())
-            } else {
-                drawableElement.anchorWidth.setTo(24.0)
-                drawableElement.anchorHeight.setTo(24.0)
-            }
+            println("Compound size is ${src.size} - ${src}")
+            drawableElement.anchorWidth.setTo(src.size.width.toDouble())
+            drawableElement.anchorHeight.setTo(src.size.height.toDouble())
             outerElement.constraintChildMatch(drawableElement, ConstraintAttribute[vertical, end, locale], constant = padding[vertical, end, locale])
             outerElement.constraintChildMatch(drawableElement, ConstraintAttribute.center(!vertical))
             ElementAnchor(innerElement, ConstraintAttribute[vertical, end, locale]).constraint(
@@ -254,8 +254,7 @@ internal class IosLayoutTranslatorForFile(
         val myAttributes = sourceElement.allAttributes
         when (childAddRule) {
             "linear" -> {
-                if(myAttributes["app:safeInsets"] == null) destElement["insetsLayoutMarginsFromSafeArea"] = "NO"
-                if(myAttributes["app:safeInsetsSizing"] == null) destElement["insetsLayoutMarginsFromSafeArea"] = "NO"
+                if(myAttributes["app:safeInsets"] == null && myAttributes["app:safeInsetsSizing"] == null) destElement["insetsLayoutMarginsFromSafeArea"] = "NO"
                 val isVertical = myAttributes["android:orientation"] == "vertical"
                 val myPadding = myAttributes.insets("android:padding", resources)
                 val wrappingPower = if(myAttributes["android:layout_${if(!isVertical) "height" else "width"}"] == "wrap_content")
@@ -380,6 +379,8 @@ internal class IosLayoutTranslatorForFile(
                         val outerElement = target.appendElement("view")
                         outerElement.id()
                         outerElement["translatesAutoresizingMaskIntoConstraints"] = "NO"
+                        outerElement["customModule"] = "XmlToXibRuntime"
+                        outerElement["customClass"] = "ContainerView"
 
                         // Stretch to fill
                         when (commonAlign) {
@@ -422,7 +423,6 @@ internal class IosLayoutTranslatorForFile(
                             contentHuggingPriority = if(wrappingPower == -1) framingHugPriority else wrappingPower - 1,
                             contentCompressionResistancePriority = if(wrappingPower == -1) framingCompressionPriority else wrappingPower
                         )
-                        handleXibEntry(outerElement, AndroidStringLiteral("true"), "isSimpleContainer", AttributeReplacement.XibRuleType.UserDefined)
                         innerElement to outerElement
                     }
 
@@ -432,7 +432,7 @@ internal class IosLayoutTranslatorForFile(
                         firstWeightedChild?.let {
                             outerElement.anchorSize(isVertical).constraint(
                                 it.anchorSize(isVertical),
-                                multiplier = firstWeightedChildWeight / childWeight
+                                multiplier = childWeight / firstWeightedChildWeight
                             )
                         } ?: run {
                             firstWeightedChild = outerElement
@@ -496,7 +496,7 @@ internal class IosLayoutTranslatorForFile(
                         if (childAttributes["android:layout_${if(vertical) "height" else "width"}"] == "match_parent") {
                             destElement.constraintChildMatchEdgesAxis(childElement, vertical, total)
                         } else {
-                            val wrappingPower = if(myAttributes["android:layout_${if(vertical) "height" else "width"}"] == "wrap_content")
+                            val wrappingPower = if(childAttributes["android:layout_${if(vertical) "height" else "width"}"] == "wrap_content")
                                 sourceElement.wrapPower(vertical)
                             else
                                 -1
@@ -511,6 +511,46 @@ internal class IosLayoutTranslatorForFile(
                             )
                         }
                     }
+                }
+            }
+            "frame-first-visible" -> {
+                val childElements = sourceElement.children.mapNotNull { it as? Element }
+
+                val firstChild = childElements.first()
+                val childAttributes = firstChild.allAttributes
+                val childElement = convertElement(target, firstChild)
+                val total = myAttributes.insets(
+                    "android:padding",
+                    resources
+                ) + childAttributes.insets("android:layout_margin", resources)
+                val gravity = childAttributes["android:layout_gravity"]?.toGravity() ?: Gravity()
+
+                for(vertical in listOf(true, false)) {
+                    if (childAttributes["android:layout_${if(vertical) "height" else "width"}"] == "match_parent") {
+                        destElement.constraintChildMatchEdgesAxis(childElement, vertical, total)
+                    } else {
+                        val wrappingPower = if(myAttributes["android:layout_${if(vertical) "height" else "width"}"] == "wrap_content")
+                            sourceElement.wrapPower(vertical)
+                        else
+                            -1
+                        destElement.constraintChildFrameAxis(
+                            child = childElement,
+                            vertical = vertical,
+                            align = gravity[vertical],
+                            alignLocaleDependent = gravity.localeDependent,
+                            insets = total,
+                            contentHuggingPriority = if(wrappingPower == -1) framingHugPriority else wrappingPower - 1,
+                            contentCompressionResistancePriority = if(wrappingPower == -1) framingCompressionPriority else wrappingPower
+                        )
+                    }
+                }
+
+                for (child in childElements.drop(1)) {
+                    val otherElement = convertElement(target, child)
+                    otherElement["hidden"] = "YES"
+
+                    otherElement.anchorCenterX.constraint(childElement.anchorCenterX, identifier = "joiner-x")
+                    otherElement.anchorCenterY.constraint(childElement.anchorCenterY, identifier = "joiner-y")
                 }
             }
             "scroll-vertical" -> {
@@ -706,7 +746,7 @@ internal class IosLayoutTranslatorForFile(
         childAttributes["android:layout_width"]?.let {
             (resources.read(it) as? AndroidDimension)?.measurement?.number?.takeUnless {
                 it == 0.0 && childAttributes["android:layout_weight"] != null && (sourceElement.parentNode as? Element)?.let {
-                    it.allAttributes["android:orientation"] == "horizontal"
+                    it.allAttributes["android:orientation"] != "vertical"
                 } == true
             }?.let {
                 childElement.anchorWidth.setTo(it, priority = if(childAttributes["android:minWidth"] != null) 999 else 1000)

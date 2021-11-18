@@ -17,6 +17,9 @@ data class Size(val width: Int, val height: Int) {
         width / amount,
         height / amount,
     )
+    companion object {
+        val default = Size(24, 24)
+    }
 }
 
 class Lazy<T>(val name: String, val getter: () -> T) {
@@ -48,9 +51,12 @@ sealed interface AndroidDimension : AndroidValue {
 }
 
 sealed interface AndroidDrawable : AndroidValue {
+    val size: Size
     data class Reference(
         val drawable: Lazy<AndroidDrawable>
     ) : AndroidDrawableXml {
+        override val size: Size
+            get() = drawable.value.size
         override fun toResource(file: File): AndroidDrawable = TODO()
         override fun get(key: String): Any? = drawable.value[key]
     }
@@ -60,17 +66,14 @@ sealed interface AndroidNamedDrawable : AndroidDrawable {
     val name: String
 }
 
-sealed interface AndroidDrawableWithSize: AndroidDrawable {
-    val size: Size
-}
-
-sealed interface AndroidNamedDrawableWithSize : AndroidNamedDrawable, AndroidDrawableWithSize
+sealed interface AndroidNamedDrawableWithSize : AndroidNamedDrawable
 
 sealed interface AndroidXmlDrawable : AndroidNamedDrawable {
     val value: AndroidDrawableXml
 }
 
 sealed interface AndroidDrawableXml : HasGet {
+    val size: Size
     fun toResource(file: File): AndroidDrawable
 }
 
@@ -122,13 +125,14 @@ data class AndroidFontSet(
 data class AndroidColorLiteral(
     override val value: ColorInParts
 ) : AndroidColor {
+    override val size: Size get() = Size.default
 }
 
 data class AndroidColorResource(
     val name: String,
     override val value: ColorInParts
 ) : AndroidColor {
-
+    override val size: Size get() = Size.default
     override fun get(key: String): Any? = when (key) {
         "name" -> name
         else -> super.get(key)
@@ -140,7 +144,7 @@ data class AndroidColorStateResource(
     val colors: StateSelector<Lazy<AndroidColor>>
 ) : AndroidColor {
     override val value: ColorInParts get() = colors.normal.value.value
-
+    override val size: Size get() = Size.default
     override fun get(key: String): Any? = when (key) {
         "name" -> name
         "normal" -> colors.normal
@@ -174,9 +178,7 @@ data class AndroidVector(
 
 data class AndroidBitmap(
     override val name: String,
-    val files: Map<String, File>,
-//    override val width: Int,
-//    override val height: Int,
+    val files: Map<String, File>
 ) : AndroidNamedDrawableWithSize {
 
     override fun get(key: String): Any? = when (key) {
@@ -198,11 +200,12 @@ data class AndroidBitmap(
             ?: sizes["xxhdpi"]?.div(3)
             ?: sizes["hdpi"]?.times(2)?.div(3)
             ?: sizes["ldpi"]?.times(3)?.div(2)
-            ?: Size(24, 24)
+            ?: throw IllegalStateException()
     }
 
     data class Reference(val base: Lazy<AndroidBitmap>, val tint: Lazy<AndroidColor>? = null) :
         AndroidDrawableXml {
+        override val size: Size get() = base.value.size
         override fun toResource(file: File): AndroidDrawable = TODO()
         override fun get(key: String): Any? = when (key) {
             "base" -> base
@@ -217,6 +220,7 @@ data class AndroidShape(
     val file: File,
     val shape: Value
 ) : AndroidXmlDrawable {
+    override val size: Size get() = Size.default
     override val value: AndroidDrawableXml
         get() = shape
 
@@ -236,6 +240,7 @@ data class AndroidShape(
         val bottomLeftCorner: Lazy<AndroidDimension>? = null,
         val bottomRightCorner: Lazy<AndroidDimension>? = null
     ) : AndroidDrawableXml {
+        override val size: Size get() = Size.default
         enum class ShapeType { Rectangle, Oval }
 
         data class Gradient(
@@ -275,6 +280,7 @@ data class AndroidDrawableState(
     val file: File,
     override val value: Value
 ) : AndroidXmlDrawable {
+    override val size: Size get() = value.size
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -284,6 +290,10 @@ data class AndroidDrawableState(
     data class Value(
         val states: StateSelector<AndroidDrawableXml>
     ) : AndroidDrawableXml {
+        override val size: Size get() = Size(
+            states.variants.values.map { it.size.width }.maxOrNull()!!,
+            states.variants.values.map { it.size.height }.maxOrNull()!!
+        )
         override fun toResource(file: File) = AndroidDrawableState(file.nameWithoutExtension, file, this)
         override fun get(key: String): Any? = states.get(key)
     }
@@ -293,12 +303,9 @@ data class AndroidLayer(
     override val name: String,
     val file: File,
     override val value: Value
-) : AndroidXmlDrawable, AndroidDrawableWithSize {
+) : AndroidXmlDrawable {
     override val size: Size
-        get() = Size(
-            width = value.states.map { it.width?.value?.measurement?.number?.toInt() ?: 16 }.maxOrNull() ?: 16,
-            height = value.states.map { it.height?.value?.measurement?.number?.toInt() ?: 16 }.maxOrNull() ?: 16
-        )
+        get() = value.size
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -308,6 +315,10 @@ data class AndroidLayer(
     data class Value(
         val states: List<Layer>
     ) : AndroidDrawableXml {
+        override val size: Size get() = Size(
+            states.map { it.size.width }.maxOrNull()!!,
+            states.map { it.size.height }.maxOrNull()!!
+        )
         override fun toResource(file: File) = AndroidLayer(file.nameWithoutExtension, file, this)
         override fun get(key: String): Any? = states[key.toInt()]
     }
@@ -320,7 +331,12 @@ data class AndroidLayer(
         val left: Lazy<AndroidDimension>? = null,
         val right: Lazy<AndroidDimension>? = null,
         val bottom: Lazy<AndroidDimension>? = null
-    )
+    ) {
+        val size: Size get() = Size(
+            (width?.value?.measurement?.number?.toInt() ?: drawable.size.width) + (left?.value?.measurement?.number?.toInt() ?: 0) + (right?.value?.measurement?.number?.toInt() ?: 0),
+            (height?.value?.measurement?.number?.toInt() ?: drawable.size.height) + (top?.value?.measurement?.number?.toInt() ?: 0) + (bottom?.value?.measurement?.number?.toInt() ?: 0),
+        )
+    }
 }
 
 data class AndroidLayoutResource(

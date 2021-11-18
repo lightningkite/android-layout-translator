@@ -20,8 +20,8 @@ private fun androidVectorToSvg(
     val colorResolver = { it: String -> resource.read(it).let { it as? AndroidColor}?.value?.webNoAlpha ?: "black" }
     val viewportWidth = node["android:viewportWidth"]?.toDoubleOrNull() ?: 24.0
     val viewportHeight = node["android:viewportHeight"]?.toDoubleOrNull() ?: 24.0
-    val width = (node["android:width"]?.toDoubleOrNull() ?: viewportWidth) * scale
-    val height = (node["android:height"]?.toDoubleOrNull() ?: viewportHeight) * scale
+    val width = (node["android:width"]?.takeWhile { it.isDigit() }?.toDoubleOrNull() ?: viewportWidth) * scale
+    val height = (node["android:height"]?.takeWhile { it.isDigit() }?.toDoubleOrNull() ?: viewportHeight) * scale
     svgOut.appendLine("<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' viewBox='0 0 $viewportWidth $viewportHeight'>")
     node.childElements
         .filter { it.tagName == "path" }
@@ -36,10 +36,10 @@ private fun androidVectorToSvg(
         ?.let {
             svgOut.appendLine("<defs>")
             it.forEach { (index, gradientNode) ->
-                val x1 = gradientNode["android:startX"]?.toDoubleOrNull()
-                val y1 = gradientNode["android:startY"]?.toDoubleOrNull()
-                val x2 = gradientNode["android:endX"]?.toDoubleOrNull()
-                val y2 = gradientNode["android:endY"]?.toDoubleOrNull()
+                val x1 = gradientNode["android:startX"]?.toDoubleOrNull()?.div(viewportWidth)
+                val y1 = gradientNode["android:startY"]?.toDoubleOrNull()?.div(viewportHeight)
+                val x2 = gradientNode["android:endX"]?.toDoubleOrNull()?.div(viewportWidth)
+                val y2 = gradientNode["android:endY"]?.toDoubleOrNull()?.div(viewportHeight)
                 svgOut.appendLine("<linearGradient id='grad$index' x1='$x1' y1='$y1' x2='$x2' y2='$y2'>")
                 gradientNode.childElements.filter { it.tagName == "item" }.forEach {
                     val color = it["android:color"]?.let(colorResolver)

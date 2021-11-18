@@ -27,11 +27,16 @@ class Replacements() {
         }
         it.attributes.entries.all { (key, value) ->
             val otherValue = attributes[key]
-            value.split("|").any { part ->
-                when(part) {
-                    "any", "set" -> otherValue != null
-                    "unset" -> otherValue == null
-                    else -> otherValue == value
+            value.split("&").all { part ->
+                when {
+                    part.startsWith("contains:") -> otherValue != null && otherValue.contains(part.substringAfter(':').trim())
+                    part.startsWith("doesNotContain:") -> otherValue == null || !otherValue.contains(part.substringAfter(':').trim())
+                    part.startsWith("not:") -> otherValue == null || otherValue != part.substringAfter(':').trim()
+                    else -> when(part) {
+                        "any", "set" -> otherValue != null
+                        "unset" -> otherValue == null
+                        else -> otherValue == value
+                    }
                 }
             }
         }
