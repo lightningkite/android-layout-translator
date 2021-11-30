@@ -1,18 +1,18 @@
 import java.util.Properties
 
-val kotlinVersion = "1.5.30"
+val kotlinVersion = "1.6.0"
 plugins {
     kotlin("jvm")
     java
     `java-gradle-plugin`
     idea
     signing
-    id("org.jetbrains.dokka") version "1.5.30"
+    id("org.jetbrains.dokka")
     `maven-publish`
 }
 
 group = "com.lightningkite.xmltoxib"
-version = "0.1.0"
+version = "0.7.0"
 
 val props = project.rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { stream ->
     Properties().apply { load(stream) }
@@ -73,9 +73,9 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
-    api("com.fasterxml.jackson.core:jackson-databind:2.9.+")
-    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.+")
-    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.+")
+    api("com.fasterxml.jackson.core:jackson-databind:2.9.10")
+    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.9.10")
+    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.9.10")
 
     // https://mvnrepository.com/artifact/org.apache.xmlgraphics/batik-transcoder
     implementation(group = "org.apache.xmlgraphics", name = "batik-transcoder", version = "1.13")
@@ -107,98 +107,63 @@ tasks {
 
 afterEvaluate {
     publishing {
-        publications {
-            val release by creating(MavenPublication::class) {
-                from(components["java"])
-                artifact(tasks["sourceJar"])
-//                artifact(tasks["javadocJar"])
-                groupId = project.group.toString()
-                artifactId = project.name
-                version = project.version.toString()
-            }
+        this.publications.forEach {
+            (it as MavenPublication).setPom()
         }
-    }
-    if(useSigning){
-        signing {
-            useInMemoryPgpKeys(signingKey, signingPassword)
-            sign(configurations.archives.get())
+        publications.getByName<MavenPublication>("pluginMaven") {
+            artifact(tasks.getByName("sourceJar"))
+            artifact(tasks.getByName("javadocJar"))
         }
-    }
-}
-
-if(useDeployment){
-    tasks.register("uploadSnapshot"){
-        group="upload"
-        finalizedBy("uploadArchives")
-        doLast{
-            project.version = project.version.toString() + "-SNAPSHOT"
-        }
-    }
-
-    tasks.named<Upload>("uploadArchives") {
-//        repositories.withConvention(MavenRepositoryHandlerConvention::class) {
-//            mavenDeployer {
-//                beforeDeployment {
-//                    signing.signPom(this)
-//                }
-//            }
-//        }
-
-        repositories.withGroovyBuilder {
-            "mavenDeployer"{
-                "repository"("url" to "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                    "authentication"(
-                        "userName" to deploymentUser,
-                        "password" to deploymentPassword
-                    )
-                }
-                "snapshotRepository"("url" to "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-                    "authentication"(
-                        "userName" to deploymentUser,
-                        "password" to deploymentPassword
-                    )
-                }
-                "pom" {
-                    "project" {
-                        setProperty("name", "Android XML to iOS Xib Converter")
-                        setProperty("packaging", "jar")
-                        setProperty(
-                            "description",
-                            "Convert from Android resources to iOS."
-                        )
-                        setProperty("url", "https://github.com/lightningkite/khrysalis")
-
-                        "scm" {
-                            setProperty("connection", "scm:git:https://github.com/lightningkite/khrysalis.git")
-                            setProperty(
-                                "developerConnection",
-                                "scm:git:https://github.com/lightningkite/khrysalis.git"
-                            )
-                            setProperty("url", "https://github.com/lightningkite/khrysalis")
-                        }
-
-                        "licenses" {
-                            "license"{
-                                setProperty("name", "GNU General Public License v3.0")
-                                setProperty("url", "https://www.gnu.org/licenses/gpl-3.0.en.html")
-                                setProperty("distribution", "repo")
-                            }
-                            "license"{
-                                setProperty("name", "Commercial License")
-                                setProperty("url", "https://www.lightningkite.com")
-                                setProperty("distribution", "repo")
-                            }
-                        }
-                        "developers"{
-                            "developer"{
-                                setProperty("id", "bjsvedin")
-                                setProperty("name", "Brady Svedin")
-                                setProperty("email", "brady@lightningkite.com")
-                            }
-                        }
+        repositories {
+            if (useSigning) {
+                maven {
+                    name = "MavenCentral"
+                    val releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+                    val snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                    url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
+                    credentials {
+                        this.username = deploymentUser
+                        this.password = deploymentPassword
                     }
                 }
             }
         }
+    }
+    if (useSigning) {
+        signing {
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign(publishing.publications)
+        }
+    }
+}
+
+fun MavenPublication.setPom() {
+    pom {
+        name.set("Android XML to iOS Xib Converter")
+        description.set("A Gradle plugin that automatically generates ViewGenerators from Android Layout XMLs")
+        url.set("https://github.com/lightningkite/android-xml-to-ios-xib")
+
+        scm {
+            connection.set("scm:git:https://github.com/lightningkite/android-xml-to-ios-xib.git")
+            developerConnection.set("scm:git:https://github.com/lightningkite/android-xml-to-ios-xib.git")
+            url.set("https://github.com/lightningkite/android-xml-to-ios-xib")
+        }
+
+        licenses {
+            license {
+                name.set("The MIT License (MIT)")
+                url.set("https://www.mit.edu/~amini/LICENSE.md")
+                distribution.set("repo")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("LightningKiteJoseph")
+                name.set("Joseph Ivie")
+                email.set("joseph@lightningkite.com")
+            }
+        }
+
     }
 }
