@@ -14,14 +14,14 @@ version = "0.7.1"
 
 val props = project.rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { stream ->
     Properties().apply { load(stream) }
-}
+} ?: Properties()
 val signingKey: String? = (System.getenv("SIGNING_KEY")?.takeUnless { it.isEmpty() }
-    ?: project.properties["signingKey"]?.toString())
+    ?: props["signingKey"]?.toString())
     ?.lineSequence()
     ?.filter { it.trim().firstOrNull()?.let { it.isLetterOrDigit() || it == '=' || it == '/' || it == '+' } == true }
     ?.joinToString("\n")
 val signingPassword: String? = System.getenv("SIGNING_PASSWORD")?.takeUnless { it.isEmpty() }
-    ?: project.properties["signingPassword"]?.toString()
+    ?: props["signingPassword"]?.toString()
 val useSigning = signingKey != null && signingPassword != null
 
 if (signingKey != null) {
@@ -34,10 +34,10 @@ if (signingKey != null) {
 }
 
 val deploymentUser = (System.getenv("OSSRH_USERNAME")?.takeUnless { it.isEmpty() }
-    ?: project.properties["ossrhUsername"]?.toString())
+    ?: props["ossrhUsername"]?.toString())
     ?.trim()
 val deploymentPassword = (System.getenv("OSSRH_PASSWORD")?.takeUnless { it.isEmpty() }
-    ?: project.properties["ossrhPassword"]?.toString())
+    ?: props["ossrhPassword"]?.toString())
     ?.trim()
 val useDeployment = deploymentUser != null || deploymentPassword != null
 
@@ -90,100 +90,73 @@ tasks {
 afterEvaluate {
     publishing {
         publications {
-            val release by creating(MavenPublication::class) {
+            create<MavenPublication>("release") {
                 from(components["release"])
                 artifact(tasks.getByName("sourceJar"))
-                //artifact(tasks.getByName("javadocJar"))
+                artifact(tasks.getByName("javadocJar"))
                 groupId = project.group.toString()
                 artifactId = project.name
                 version = project.version.toString()
+                setPom()
             }
-            val debug by creating(MavenPublication::class) {
+            create<MavenPublication>("debug") {
                 from(components["debug"])
                 artifact(tasks.getByName("sourceJar"))
-                //artifact(tasks.getByName("javadocJar"))
+                artifact(tasks.getByName("javadocJar"))
                 groupId = project.group.toString()
                 artifactId = project.name
                 version = project.version.toString()
+                setPom()
+            }
+        }
+        repositories {
+            if (useSigning) {
+                maven {
+                    name = "MavenCentral"
+                    val releasesRepoUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+                    val snapshotsRepoUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+                    url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
+                    credentials {
+                        this.username = deploymentUser
+                        this.password = deploymentPassword
+                    }
+                }
             }
         }
     }
     if (useSigning) {
         signing {
             useInMemoryPgpKeys(signingKey, signingPassword)
-            sign(configurations.archives.get())
+            sign(publishing.publications)
         }
     }
 }
 
-if (useDeployment) {
-    tasks.register("uploadSnapshot") {
-        group = "upload"
-        finalizedBy("uploadArchives")
-        doLast {
-            project.version = project.version.toString() + "-SNAPSHOT"
+fun MavenPublication.setPom() {
+    pom {
+        name.set("Android Safe Insets")
+        description.set("A tool for making safe insets work easily on Android.")
+        url.set("https://github.com/lightningkite/android-xml-to-ios-xib")
+
+        scm {
+            connection.set("scm:git:https://github.com/lightningkite/android-xml-to-ios-xib.git")
+            developerConnection.set("scm:git:https://github.com/lightningkite/android-xml-to-ios-xib.git")
+            url.set("https://github.com/lightningkite/android-xml-to-ios-xib")
         }
-    }
 
-    tasks.named<Upload>("uploadArchives") {
-//        repositories.withConvention(MavenRepositoryHandlerConvention::class) {
-//            mavenDeployer {
-//                beforeDeployment {
-//                    signing.signPom(this)
-//                }
-//            }
-//        }
+        licenses {
+            license {
+                name.set("The MIT License (MIT)")
+                url.set("https://www.mit.edu/~amini/LICENSE.md")
+                distribution.set("repo")
+            }
+        }
 
-        repositories.withGroovyBuilder {
-            "mavenDeployer"{
-                "repository"("url" to "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                    "authentication"(
-                        "userName" to deploymentUser,
-                        "password" to deploymentPassword
-                    )
-                }
-                "snapshotRepository"("url" to "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-                    "authentication"(
-                        "userName" to deploymentUser,
-                        "password" to deploymentPassword
-                    )
-                }
-                "pom" {
-                    "project" {
-                        setProperty("name", "RxKotlin-Property-View-Generators")
-                        setProperty("packaging", "aar")
-                        setProperty(
-                            "description",
-                            "A layout manager for Android."
-                        )
-                        setProperty("url", "https://github.com/lightningkite/rxkotlin-property")
-
-                        "scm" {
-                            setProperty("connection", "scm:git:https://github.com/lightningkite/rxkotlin-property.git")
-                            setProperty(
-                                "developerConnection",
-                                "scm:git:https://github.com/lightningkite/rxkotlin-property.git"
-                            )
-                            setProperty("url", "https://github.com/lightningkite/rxkotlin-property")
-                        }
-
-                        "licenses" {
-                            "license"{
-                                setProperty("name", "The MIT License (MIT)")
-                                setProperty("url", "https://www.mit.edu/~amini/LICENSE.md")
-                                setProperty("distribution", "repo")
-                            }
-
-                        }
-                        "developers"{
-                            "developer"{
-                                setProperty("id", "bjsvedin")
-                                setProperty("name", "Brady Svedin")
-                                setProperty("email", "brady@lightningkite.com")
-                            }
-                        }
-                    }
-                }
+        developers {
+            developer {
+                id.set("LightningKiteJoseph")
+                name.set("Joseph Ivie")
+                email.set("joseph@lightningkite.com")
             }
         }
     }
