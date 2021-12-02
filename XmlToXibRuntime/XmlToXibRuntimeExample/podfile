@@ -1,0 +1,11 @@
+
+platform :ios, '11.0'
+use_modular_headers!
+
+
+target 'XmlToXibRuntimeExample' do
+    pod 'XmlToXibRuntime', :path => '../XmlToXibRuntime.podspec'
+    pod 'M13Checkbox'
+    pod 'Cosmos'
+    pod 'SearchTextField'
+end

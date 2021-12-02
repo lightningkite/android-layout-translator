@@ -1,0 +1,32 @@
+PODS:
+  - Cosmos (23.0.0)
+  - M13Checkbox (3.4.0)
+  - SearchTextField (1.2.4)
+  - XmlToXibRuntime (0.1.0):
+    - M13Checkbox
+
+DEPENDENCIES:
+  - Cosmos
+  - M13Checkbox
+  - SearchTextField
+  - XmlToXibRuntime (from `../XmlToXibRuntime.podspec`)
+
+SPEC REPOS:
+  trunk:
+    - Cosmos
+    - M13Checkbox
+    - SearchTextField
+
+EXTERNAL SOURCES:
+  XmlToXibRuntime:
+    :path: "../XmlToXibRuntime.podspec"
+
+SPEC CHECKSUMS:
+  Cosmos: b5c6a9a637e28a061b54c8f8b1d8529d7d4db73f
+  M13Checkbox: 6f59404540ac98ba83a3d1afac335895a40c6a5d
+  SearchTextField: 40dc3cc57def5a211f263cac263622c163bbc25a
+  XmlToXibRuntime: 544458d25275c4cccc86bc3e959300b886ea3736
+
+PODFILE CHECKSUM: 83ba8e2a05014fe10ad18d8438a4fd6529c54f7a
+
+COCOAPODS: 1.11.2
