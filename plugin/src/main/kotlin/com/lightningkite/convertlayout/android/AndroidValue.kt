@@ -102,24 +102,39 @@ sealed interface AndroidFont : AndroidValue {
 }
 
 data class AndroidFontLiteral(
-    val family: String,
-    val name: String,
-    val file: File? = null
+    val fontSuperFamily: String,
+    val fontFamily: String,
+    val fontSubFamily: String,
+    val postScriptName: String,
+    val file: File
 ) : AndroidFont {
 
     override fun get(key: String): Any? = when (key) {
-        "family" -> family
-        "name" -> name
-        "file" -> file?.toString() ?: ""
+        "normal" -> this
+        "italic" -> this
+        "fontSuperFamily" -> fontSuperFamily
+        "fontFamily" -> fontFamily
+        "fontSubFamily" -> fontSubFamily
+        "postScriptName" -> postScriptName
+        "file" -> file.toString()
         else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
     }
 }
 
 data class AndroidFontSet(
-    val subFonts: List<Lazy<AndroidFontLiteral>>
+    val subFonts: List<SubFont>
 ) : AndroidFont {
+    data class SubFont(
+        val style: String,
+        val weight: Int,
+        val literal: Lazy<AndroidFontLiteral>
+    )
 
-    override fun get(key: String): Any? = throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
+    override fun get(key: String): Any? = when (key) {
+        "italic" -> subFonts.find { it.style == "italic" }?.literal?.value
+        "normal" -> subFonts.find { it.style == "normal" }?.literal?.value
+        else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
+    }
 }
 
 data class AndroidColorLiteral(

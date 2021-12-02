@@ -4,14 +4,14 @@ import com.lightningkite.convertlayout.xml.get
 import org.w3c.dom.Element
 
 data class SwiftIdentifier(
-    val module: String,
+    val module: String?,
     val name: String
 )
 
 fun Element.swiftIdentifier(): SwiftIdentifier {
     return this["customClass"]?.let {
         SwiftIdentifier(
-            this["customModule"]!!,
+            this["customModule"] ?: this["customModuleAlt"],
             it
         )
     } ?: when(this.tagName) {

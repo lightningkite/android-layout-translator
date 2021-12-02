@@ -1,7 +1,8 @@
 package com.lightningkite.convertlayout.android
 
 import com.lightningkite.convertlayout.xml.*
-import org.mabb.fontverter.FontVerter
+import org.apache.fontbox.ttf.OTFParser
+import org.apache.fontbox.ttf.TTFParser
 import org.w3c.dom.Element
 import org.w3c.dom.Text
 import java.io.File
@@ -18,21 +19,35 @@ class AndroidResources {
     val dimensions: MutableMap<String, AndroidDimensionResource> = HashMap()
     val layouts: MutableMap<String, AndroidLayoutResource> = HashMap()
 
-    val all: Map<String, AndroidValue> get() = listOf(styles, colors, drawables, fonts, strings, dimensions, layouts)
-        .reduce<Map<String, AndroidValue>, Map<String, AndroidValue>>{ a, b -> a + b}
+    val all: Map<String, AndroidValue>
+        get() = listOf(styles, colors, drawables, fonts, strings, dimensions, layouts)
+            .reduce<Map<String, AndroidValue>, Map<String, AndroidValue>> { a, b -> a + b }
 
     fun read(value: String): AndroidValue {
         return when {
             value.startsWith('#') -> AndroidColorLiteral(value.hashColorToParts())
-            value.startsWith("@style/") -> styles[value.substringAfter('/')] ?: AndroidStyle(value.substringAfter('/'), mapOf())
-            value.startsWith("@layout/") -> layouts[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
-            value.startsWith("@font/") -> fonts[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
-            value.startsWith("@mipmap/") -> drawables[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
-            value.startsWith("@drawable/") -> drawables[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
-            value.startsWith("@android:color/") -> AndroidColorLiteral(ColorInParts.basicColors[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found"))
-            value.startsWith("@color/") -> colors[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
-            value.startsWith("@string/") -> strings[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
-            value.startsWith("@dimen/") -> dimensions[value.substringAfter('/')] ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@style/") -> styles[value.substringAfter('/')] ?: AndroidStyle(
+                value.substringAfter('/'),
+                mapOf()
+            )
+            value.startsWith("@layout/") -> layouts[value.substringAfter('/')]
+                ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@font/") -> fonts[value.substringAfter('/')]
+                ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@mipmap/") -> drawables[value.substringAfter('/')]
+                ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@drawable/") -> drawables[value.substringAfter('/')]
+                ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@android:color/") -> AndroidColorLiteral(
+                ColorInParts.basicColors[value.substringAfter('/')]
+                    ?: throw IllegalStateException("Reference $value not found")
+            )
+            value.startsWith("@color/") -> colors[value.substringAfter('/')]
+                ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@string/") -> strings[value.substringAfter('/')]
+                ?: throw IllegalStateException("Reference $value not found")
+            value.startsWith("@dimen/") -> dimensions[value.substringAfter('/')]
+                ?: throw IllegalStateException("Reference $value not found")
             value.endsWith("dp") -> AndroidDimensionLiteral(
                 Measurement(
                     number = value.filter { it.isDigit() || it == '.' }.toDouble(),
@@ -64,24 +79,27 @@ class AndroidResources {
                 )
             )
             value.toDoubleOrNull() != null -> AndroidNumber(value.toDouble())
-            else -> AndroidStringLiteral(value
-                .removePrefix("\\")
-                .replace("\\n", "\n")
-                .replace("\\t", "\t")
-                .replace("\\\"", "\"")
-                .replace("\\'", "'"))
+            else -> AndroidStringLiteral(
+                value
+                    .removePrefix("\\")
+                    .replace("\\n", "\n")
+                    .replace("\\t", "\t")
+                    .replace("\\\"", "\"")
+                    .replace("\\'", "'")
+            )
         }
     }
-    
-    inline fun <reified T: AndroidValue> readLazy(value: String): Lazy<T> = Lazy(value) {
+
+    inline fun <reified T : AndroidValue> readLazy(value: String): Lazy<T> = Lazy(value) {
         val v = read(value)
-        if(v !is T) throw IllegalStateException("Read $value (a ${v::class.simpleName}) but expected a ${T::class.simpleName}")
+        if (v !is T) throw IllegalStateException("Read $value (a ${v::class.simpleName}) but expected a ${T::class.simpleName}")
         v
     }
+
     @JvmName("readLazy1")
-    inline fun <reified T: AndroidValue> String.readLazy(): Lazy<T> = Lazy(this) {
+    inline fun <reified T : AndroidValue> String.readLazy(): Lazy<T> = Lazy(this) {
         val v = read(this)
-        if(v !is T) throw IllegalStateException("Read $this (a ${v::class.simpleName}) but expected a ${T::class.simpleName}")
+        if (v !is T) throw IllegalStateException("Read $this (a ${v::class.simpleName}) but expected a ${T::class.simpleName}")
         v
     }
 
@@ -96,11 +114,13 @@ class AndroidResources {
         getDrawables(androidResourcesDirectory)
         getStyles(androidResourcesDirectory.resolve("values/styles.xml"))
         getStyles(androidResourcesDirectory.resolve("values/themes.xml"))
-        layouts.putAll(AndroidLayoutFile.parseAll(androidResourcesDirectory, this).mapValues { AndroidLayoutResource(it.key, Lazy(it.value)) })
+        layouts.putAll(
+            AndroidLayoutFile.parseAll(androidResourcesDirectory, this)
+                .mapValues { AndroidLayoutResource(it.key, Lazy(it.value)) })
     }
 
     private fun getStyles(file: File) {
-        if(!file.exists()) return
+        if (!file.exists()) return
         file.readXml().documentElement.childElements
             .filter { it.tagName == "style" }
             .forEach {
@@ -114,20 +134,24 @@ class AndroidResources {
                                 .joinToString { it.textContent }
                                 .trim()
                         },
-                    parent = it["parent"]?.let { Lazy(it) { styles[it] ?: styles[it.removePrefix("@style/")] ?: AndroidStyle("x", mapOf()) } }
+                    parent = it["parent"]?.let {
+                        Lazy(it) {
+                            styles[it] ?: styles[it.removePrefix("@style/")] ?: AndroidStyle("x", mapOf())
+                        }
+                    }
                 )
             }
     }
 
     private fun getDrawables(androidResourcesDirectory: File) {
-        if(!androidResourcesDirectory.exists()) return
+        if (!androidResourcesDirectory.exists()) return
         androidResourcesDirectory.listFiles()!!
             .filter { it.name.startsWith("drawable") }
             .forEach { base ->
                 val typeName = base.name.substringAfter("drawable-", "")
                 for (file in base.listFiles()!!) {
                     val name = file.nameWithoutExtension
-                    when(file.extension){
+                    when (file.extension) {
                         "png" -> {
                             drawables[name]?.let { it as? AndroidBitmap }?.let {
                                 drawables[name] = it.copy(files = it.files + (typeName to file))
@@ -137,7 +161,7 @@ class AndroidResources {
                         }
                         "xml" -> {
                             val element = file.readXml().documentElement
-                            if(element.tagName == "vector") {
+                            if (element.tagName == "vector") {
                                 drawables[name] = AndroidVector(name, file)
                             } else {
                                 val d = parseXmlDrawable(element) ?: continue
@@ -182,14 +206,17 @@ class AndroidResources {
                     c != null -> normal = c
                 }
             }
-        return AndroidDrawableState.Value(StateSelector(
-            normal = normal,
-            selected = selected,
-            highlighted = highlighted,
-            disabled = disabled,
-            focused = focused
-        ))
+        return AndroidDrawableState.Value(
+            StateSelector(
+                normal = normal,
+                selected = selected,
+                highlighted = highlighted,
+                disabled = disabled,
+                focused = focused
+            )
+        )
     }
+
     private fun parseXmlShape(element: Element): AndroidShape.Value {
         val strokeElement = element.childElements.find { it.tagName == "stroke" }
         val solidElement = element.childElements.find { it.tagName == "solid" }
@@ -197,7 +224,7 @@ class AndroidResources {
         val cornersElement = element.childElements.find { it.tagName == "corners" }
         val defaultRadius = cornersElement?.get("android:radius")?.readLazy<AndroidDimension>()
         return AndroidShape.Value(
-            shapeType = if(element["android:shape"] == "oval") AndroidShape.Value.ShapeType.Oval else AndroidShape.Value.ShapeType.Rectangle,
+            shapeType = if (element["android:shape"] == "oval") AndroidShape.Value.ShapeType.Oval else AndroidShape.Value.ShapeType.Rectangle,
             stroke = strokeElement?.get("android:color")?.readLazy(),
             strokeWidth = strokeElement?.get("android:width")?.readLazy(),
             fill = solidElement?.get("android:color")?.readLazy(),
@@ -215,6 +242,7 @@ class AndroidResources {
             bottomRightCorner = cornersElement?.get("android:bottomRightRadius")?.readLazy() ?: defaultRadius,
         )
     }
+
     private fun parseXmlLayerList(element: Element): AndroidLayer.Value {
         return AndroidLayer.Value(element.childElements.map {
             AndroidLayer.Layer(
@@ -231,6 +259,7 @@ class AndroidResources {
             )
         }.toList())
     }
+
     private fun parseXmlBitmap(element: Element): AndroidDrawableXml {
         return AndroidBitmap.Reference(
             base = element["android:src"]?.readLazy() ?: throw IllegalStateException(),
@@ -281,26 +310,23 @@ class AndroidResources {
         folder.listFiles()!!
             .filter { it.extension.toLowerCase() == "otf" || it.extension.toLowerCase() == "ttf" }
             .forEach { file ->
-                try {
-                    val font = FontVerter.readFont(file)
-                    if (!font.isValid) {
-                        font.normalize()
+                val font = when(file.extension.lowercase()) {
+                    "ttf" -> {
+                        TTFParser().parse(file)
                     }
-                    val iosFont = AndroidFontLiteral(
-                        family = font.properties.family.filter { it in ' '..'~' },
-                        name = font.name.filter { it in '!'..'~' },
-                        file = file
-                    )
-                    fonts[file.nameWithoutExtension] = iosFont
-                } catch (e: Exception) {
-                    println("Font read failed for $file")
-                    e.printStackTrace()
-                    fonts[file.nameWithoutExtension] = AndroidFontLiteral(
-                        family = file.nameWithoutExtension,
-                        name = file.nameWithoutExtension,
-                        file = file
-                    )
+                    "otf" -> {
+                        OTFParser().parse(file)
+                    }
+                    else -> throw NotImplementedError()
                 }
+                val iosFont = AndroidFontLiteral(
+                    fontSuperFamily = font.naming.getName(16, 1, 0, 0) ?: font.naming.nameRecords.find { it.nameId == 16 }?.string ?: "",
+                    fontFamily = font.naming.fontFamily,
+                    fontSubFamily = font.naming.fontSubFamily,
+                    postScriptName = font.naming.postScriptName,
+                    file = file
+                )
+                fonts[file.nameWithoutExtension] = iosFont
             }
         folder.listFiles()!!
             .filter { it.extension.toLowerCase() == "xml" }
@@ -309,8 +335,15 @@ class AndroidResources {
                 fonts[file.nameWithoutExtension] = AndroidFontSet(
                     xml.childElements
                         .filter { it.tagName == "font" }
-                        .mapNotNull { it["android:font"] }
-                        .map { readLazy<AndroidFontLiteral>(it) }
+                        .mapNotNull {
+                            AndroidFontSet.SubFont(
+                                style = it["android:fontStyle"] ?: "normal",
+                                weight = it["android:fontWeight"]?.toIntOrNull() ?: 700,
+                                literal = readLazy(
+                                    it["app:font"] ?: it["android:font"] ?: return@mapNotNull null,
+                                )
+                            )
+                        }
                         .toList()
                 )
             }

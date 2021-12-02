@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "com.lightningkite.xmltoxib"
-version = "0.7.0"
+version = "0.7.1"
 
 val props = project.rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { stream ->
     Properties().apply { load(stream) }
@@ -82,7 +82,8 @@ dependencies {
     implementation(group = "org.apache.xmlgraphics", name = "batik-codec", version = "1.13")
 
     // https://mvnrepository.com/artifact/net.mabboud.fontverter/FontVerter
-    implementation(group = "net.mabboud.fontverter", name = "FontVerter", version = "1.2.22")
+    implementation(group = "org.apache.pdfbox", name = "fontbox", version = "2.0.24")
+//    implementation(group = "net.mabboud.fontverter", name = "FontVerter", version = "1.2.22")
 
     testImplementation("junit:junit:4.13.2")
 }

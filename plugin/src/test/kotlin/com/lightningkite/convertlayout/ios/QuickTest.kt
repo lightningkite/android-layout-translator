@@ -16,6 +16,9 @@ class QuickTest {
             replacementFolders = listOf(File("/home/jivie/Projects/klyp-ios"), File("/home/jivie/Projects/android-xml-to-ios-xib/XmlToXibRuntime"), File("/home/jivie/Projects/RxSwiftPlus"))
         )
         println("Starting...")
+//        translator.resources.fonts.forEach { key, value ->
+//            println("$key: $value")
+//        }
         translator()
         println("Complete!")
     }

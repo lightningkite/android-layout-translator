@@ -281,13 +281,14 @@ internal class IosLayoutTranslatorForFile(
                     ?.key ?: defaultAlignInSource
                 val minMargins: Insets = sourceElement.childElements
                     .map { it.allAttributes.insets("android:layout_margin", resources) }
-                    .fold(Insets(999.0, 999.0, 999.0, 999.0)) { a, b ->
+                    .takeUnless { it.none() }
+                    ?.fold(Insets(999.0, 999.0, 999.0, 999.0)) { a, b ->
                         a.left = min(a.left, b.left)
                         a.top = min(a.top, b.top)
                         a.right = min(a.right, b.right)
                         a.bottom = min(a.bottom, b.bottom)
                         a
-                    }
+                    } ?: Insets.zero
 
                 // Set default alignment on stackView
                 if (isVertical)
@@ -432,7 +433,8 @@ internal class IosLayoutTranslatorForFile(
                         firstWeightedChild?.let {
                             outerElement.anchorSize(isVertical).constraint(
                                 it.anchorSize(isVertical),
-                                multiplier = childWeight / firstWeightedChildWeight
+                                multiplier = childWeight / firstWeightedChildWeight,
+                                priority = 900
                             )
                         } ?: run {
                             firstWeightedChild = outerElement
@@ -442,7 +444,7 @@ internal class IosLayoutTranslatorForFile(
                 }
 
                 // If no weights AND size isn't wrap content, add final spacer view
-                if (firstWeightedChild == null && myAttributes["android:layout_${if (isVertical) "height" else "width"}"] != "wrap_content") {
+                if (sourceElement.childElements.any() && firstWeightedChild == null && myAttributes["android:layout_${if (isVertical) "height" else "width"}"] != "wrap_content") {
                     when(myAttributes["android:gravity"]?.toGravity()?.get(isVertical) ?: Align.START) {
                         Align.START -> {
                             val finalSpacer = target.appendElement("view") {
@@ -496,7 +498,7 @@ internal class IosLayoutTranslatorForFile(
                         if (childAttributes["android:layout_${if(vertical) "height" else "width"}"] == "match_parent") {
                             destElement.constraintChildMatchEdgesAxis(childElement, vertical, total)
                         } else {
-                            val wrappingPower = if(childAttributes["android:layout_${if(vertical) "height" else "width"}"] == "wrap_content")
+                            val wrappingPower = if(myAttributes["android:layout_${if(vertical) "height" else "width"}"] == "wrap_content")
                                 sourceElement.wrapPower(vertical)
                             else
                                 -1
@@ -716,9 +718,28 @@ internal class IosLayoutTranslatorForFile(
         }
     }
 
-    override fun handleAttribute(attributeRule: AttributeReplacement, destElement: Element, value: AndroidValue) {
+    override fun handleAttribute(
+        rules: List<ElementReplacement>,
+        sourceElement: Element,
+        destElement: Element,
+        allAttributes: Map<String, String>,
+        key: String,
+        raw: String
+    ) {
+        super.handleAttribute(rules, sourceElement, destElement, allAttributes, key, raw)
+        if(key.substringAfterLast(':').startsWith("ios_")) {
+            destElement.setAttribute(key.substringAfter(":ios_"), raw)
+        }
+    }
+
+    override fun handleAttribute(
+        allAttributes: Map<String, String>,
+        attributeRule: AttributeReplacement,
+        destElement: Element,
+        value: AndroidValue
+    ) {
         usedResources.add(value)
-        super.handleAttribute(attributeRule, destElement, value)
+        super.handleAttribute(allAttributes, attributeRule, destElement, value)
         attributeRule.code?.let {
             outlets[destElement["id"]!!] = destElement.swiftIdentifier()
             this.iosCode.appendLine(it.write {
@@ -768,6 +789,7 @@ internal class IosLayoutTranslatorForFile(
 
         val xib = baseFile.clone()
         val resourceNode = xib.documentElement.xpathElement("resources")!!
+        val fontsNode = xib.documentElement.xpathElement("customFonts")!!
         val objectsNode = xib.documentElement.xpathElement("objects")!!
         val fileOwnerIdentifier = objectsNode.xpathElement("placeholder[@placeholderIdentifier=\"IBFilesOwner\"]")!!
         val view = convertElement(objectsNode, androidXml.documentElement)
@@ -796,6 +818,25 @@ internal class IosLayoutTranslatorForFile(
             .distinct()
             .forEach {
                 when (it) {
+                    is AndroidFontLiteral -> {
+                        val font = it
+                        fontsNode.appendElement("array") {
+                            this["key"] = font.file.name
+                            appendElement("string") {
+                                this.textContent = font.postScriptName
+                            }
+                        }
+                    }
+                    is AndroidFontSet -> {
+                        it.subFonts.map { it.literal.value }.forEach { font ->
+                            fontsNode.appendElement("array") {
+                                this["key"] = font.file.name
+                                appendElement("string") {
+                                    this.textContent = font.postScriptName
+                                }
+                            }
+                        }
+                    }
                     is AndroidColorResource -> {
                         resourceNode.appendElement("namedColor") {
                             this["name"] = "color_${it.name}"
@@ -845,6 +886,8 @@ internal class IosLayoutTranslatorForFile(
                 <capability name="System colors in document resources" minToolsVersion="11.0"/>
                 <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
             </dependencies>
+            <customFonts key="customFonts">
+            </customFonts>
             <objects>
                 <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
@@ -872,7 +915,7 @@ internal class IosLayoutTranslatorForFile(
     |//
     |
     |import XmlToXibRuntime
-    |${outlets.values.map { it.module }.filter { it != project.name }.toSet().joinToString("\n|") { "import $it" }}
+    |${outlets.values.mapNotNull { it.module }.filter { it != project.name }.toSet().joinToString("\n|") { "import $it" }}
     |
     |public class ${layout.className}: XibView {
     |

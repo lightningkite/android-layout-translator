@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.lightningkite.xmltoxib"
-version = "0.7.0"
+version = "0.7.1"
 
 
 val props = project.rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { stream ->

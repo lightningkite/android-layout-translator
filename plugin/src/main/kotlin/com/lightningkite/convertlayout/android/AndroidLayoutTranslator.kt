@@ -11,6 +11,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
             listOfNotNull(
                 attributeMap,
                 this["style"]?.let { resources.read(it) as? AndroidStyle }?.chainedMap,
+                (resources.read("@style/AppTheme") as? AndroidStyle)?.chainedMap,
                 this["layout"]?.let { resources.read(it) as? AndroidLayoutResource }?.let {
                     it.layout.value.files.first().readXml().documentElement.allAttributes
 //                        .also { println("Borrowed ${it.entries.joinToString() { it.key + ": " + it.value }} from source") }
@@ -32,6 +33,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
                     "halfSize" -> (current.findSize()!! / 2).toString()
                     else -> current[part]?.let { resources.read(it) }
                 }
+                is Map<*, *> -> current[part]
                 else -> return current.toString()
             }
         }
@@ -102,7 +104,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         destElement: Element,
         sourceElement: Element
     ) {
-        if (sourceElement.childElements.none()) return
+//        if (sourceElement.childElements.none()) return
         rules.mapNotNull { it.insertChildrenAt }.firstOrNull()?.let { path ->
             val target =
                 destElement.xpathElementOrCreate(path)
@@ -131,9 +133,9 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
     ) {
         for ((key, raw) in allAttributes) {
             if(key.startsWith("tools:") && !allAttributes.containsKey("android:" + key.substringAfter(':'))) {
-                handleAttribute(rules, sourceElement, destElement, "android:" + key.substringAfter(':'), raw)
+                handleAttribute(rules, sourceElement, destElement, allAttributes, "android:" + key.substringAfter(':'), raw)
             } else {
-                handleAttribute(rules, sourceElement, destElement, key, raw)
+                handleAttribute(rules, sourceElement, destElement, allAttributes, key, raw)
             }
         }
     }
@@ -142,6 +144,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         rules: List<ElementReplacement>,
         sourceElement: Element,
         destElement: Element,
+        allAttributes: Map<String, String>,
         key: String,
         raw: String
     ) {
@@ -149,10 +152,11 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         val attributeRule = rules.asSequence()
             .mapNotNull { replacements.getAttribute(it.caseIdentifier ?: it.id, key, AttributeReplacement.ValueType2[value::class], raw) }
             .firstOrNull() ?: return
-        handleAttribute(attributeRule, destElement, value)
+        handleAttribute(allAttributes, attributeRule, destElement, value)
     }
 
     open fun handleAttribute(
+        allAttributes: Map<String, String>,
         attributeRule: AttributeReplacement,
         destElement: Element,
         value: AndroidValue
@@ -163,7 +167,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
                 val broken = target.getAttribute("style").split(';')
                     .associate { it.substringBefore(':').trim() to it.substringAfter(':').trim() }
                 val resultCss =
-                    broken + sub.css.mapValues { it.value.write { getProjectWide(it) ?: value.getPath(it) } }
+                    broken + sub.css.mapValues { it.value?.write { getProjectWide(it) ?: value.getPath(it) } }
                 target.setAttribute("style", resultCss.entries.joinToString("; ") { "${it.key}: ${it.value}" })
             }
             for (toAppend in sub.append) {
@@ -174,15 +178,28 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
                     target.appendText(content)
             }
             for ((attKey, attTemplate) in sub.attribute) {
-                target.setAttribute(attKey, attTemplate.write { getProjectWide(it) ?: value.getPath(it) })
+                attTemplate?.write { getProjectWide(it) ?: value.getPath(it) }?.let {
+                    target.setAttribute(attKey, it)
+                } ?: target.removeAttribute(attKey)
             }
             sub.ifContains?.let { ifContains ->
-                val raw = (value as AndroidString).value
+                val raw = (value as? AndroidString)?.value ?: value.toString()
+                var hit = false
                 for (entry in ifContains) {
-                    if (entry.key in raw.split('|')) {
+                    if(entry.key.contains("=")) {
+                        val eqKey = entry.key.substringBefore("=")
+                        val eqValue = entry.key.substringAfter("=")
+                        val attrValue = allAttributes.getPath(eqKey)
+                        if(eqValue in attrValue.split('|')) {
+                            subrule(path, entry.value)
+                            hit = true
+                        }
+                    } else if (entry.key in raw.split('|')) {
                         subrule(path, entry.value)
+                        hit = true
                     }
                 }
+                if(!hit) ifContains["else"]?.let { subrule(path, it) }
             }
         }
         for ((path, sub) in attributeRule.rules) {

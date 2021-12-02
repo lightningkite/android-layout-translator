@@ -18,8 +18,8 @@ data class AttributeReplacement(
     data class SubRule(
         var ifContains: Map<String, SubRule>? = null,
         val append: List<Template> = listOf(),
-        val attribute: Map<String, Template> = mapOf(),
-        var css: Map<String, Template> = mapOf()
+        val attribute: Map<String, Template?> = mapOf(),
+        var css: Map<String, Template?> = mapOf()
     )
 
     enum class XibRuleType { SubNode, Attribute, UserDefined, StateSubNode, StateAttribute }
