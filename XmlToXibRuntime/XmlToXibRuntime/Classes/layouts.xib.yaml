@@ -156,8 +156,13 @@
 
 
 #TextView
+- id: HasDirectText
+  type: element
+  template: ""
+
 - id: TextView
   type: element
+  parent: HasDirectText
   autoWrapFor:
     - 'android:padding'
     - 'android:paddingStart'
@@ -181,7 +186,7 @@
 
 - id: android:text
   type: attribute
-  element: TextView
+  element: HasDirectText
   rules:
     "":
       attribute:
@@ -225,14 +230,14 @@
 
 - id: "android:textColor"
   type: attribute
-  element: TextView
+  element: HasDirectText
   valueType: Color
   xib:
     textColor: subnode
 
 - id: "android:textSize"
   type: attribute
-  element: TextView
+  element: HasDirectText
   valueType: Dimension
   rules:
     "fontDescription[@key='fontDescription']":
@@ -241,22 +246,37 @@
 
 - id: "android:fontFamily"
   type: attribute
-  element: TextView
-  valueType: Font  # TODO
+  element: HasDirectText
+  valueType: Font
+  rules:
+    "fontDescription[@key='fontDescription']":
+      ifContains:
+        "android:textStyle=italic":
+          attribute:
+            name: ~italic.postScriptName~
+            family: ~italic.fontSuperFamily~
+            type: null
+        else:
+          attribute:
+            name: ~normal.postScriptName~
+            family: ~normal.fontSuperFamily~
+            type: null
 
 - id: "android:textStyle"
   type: attribute
-  element: TextView
+  element: HasDirectText
   valueType: String
   rules:
     "fontDescription[@key='fontDescription']":
       ifContains:
-        italic:
-          attribute:
-            type: "italicSystem"
-        bold:
-          attribute:
-            type: "boldSystem"
+        "android:fontFamily=":
+          ifContains:
+            italic:
+              attribute:
+                type: "italicSystem"
+            bold:
+              attribute:
+                type: "boldSystem"
 
 - id: "android:maxLines"
   type: attribute
@@ -467,7 +487,20 @@
 - id: "android:fontFamily"
   type: attribute
   element: Button
-  valueType: Font  # TODO
+  valueType: Font
+  rules:
+    "fontDescription[@key='fontDescription']":
+      ifContains:
+        "android:textStyle=italic":
+          attribute:
+            name: ~italic.postScriptName~
+            family: ~italic.fontSuperFamily~
+            type: null
+        else:
+          attribute:
+            name: ~normal.postScriptName~
+            family: ~normal.fontSuperFamily~
+            type: null
 
 - id: "android:textStyle"
   type: attribute
@@ -476,12 +509,14 @@
   rules:
     "fontDescription[@key='fontDescription']":
       ifContains:
-        italic:
-          attribute:
-            type: "italicSystem"
-        bold:
-          attribute:
-            type: "boldSystem"
+        "android:fontFamily=":
+          ifContains:
+            italic:
+              attribute:
+                type: "italicSystem"
+            bold:
+              attribute:
+                type: "boldSystem"
 
 - id: "android:gravity"
   type: attribute
@@ -966,7 +1001,20 @@
 - id: "android:fontFamily"
   type: attribute
   element: LabeledToggle
-  valueType: Font  # TODO
+  valueType: Font
+  rules:
+    "subviews/label/fontDescription[@key='fontDescription']":
+      ifContains:
+        "android:textStyle=italic":
+          attribute:
+            name: ~italic.postScriptName~
+            family: ~italic.fontSuperFamily~
+            type: null
+        else:
+          attribute:
+            name: ~normal.postScriptName~
+            family: ~normal.fontSuperFamily~
+            type: null
 
 - id: "android:textStyle"
   type: attribute
@@ -975,12 +1023,14 @@
   rules:
     "subviews/label/fontDescription[@key='fontDescription']":
       ifContains:
-        italic:
-          attribute:
-            type: "italicSystem"
-        bold:
-          attribute:
-            type: "boldSystem"
+        "android:fontFamily=":
+          ifContains:
+            italic:
+              attribute:
+                type: "italicSystem"
+            bold:
+              attribute:
+                type: "boldSystem"
 
 #- id: "android:gravity"
 #  type: attribute
@@ -1138,6 +1188,7 @@
 
 - id: EditTextLike
   type: element
+  parent: HasDirectText
   template: ""
 
 - id: EditText
