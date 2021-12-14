@@ -1,0 +1,65 @@
+- [ ] importResources
+- [ ] importDrawables
+- [ ] importDrawable
+- [ ] importDrawableXml
+- [ ] writeAndroidXml
+- [ ] importVector
+- [ ] importBitmap
+- [ ] importStringsDimensionsColors
+- [ ] importColorAssets
+
+- [ ] element - LinearLayout
+- [ ] element - FrameLayout
+
+- [ ] attribute - android:id
+- [ ] attribute - tools:webCss
+- [ ] attribute - android:background
+- [ ] attribute - android:alpha
+- [ ] attribute - android:elevation
+- [ ] attribute - android:text
+- [ ] attribute - android:textStyle
+- [ ] attribute - android:hint
+- [ ] attribute - android:textOn
+- [ ] attribute - android:textOff
+- [ ] attribute - android:gravity
+- [ ] attribute - android:textColor
+- [ ] attribute - android:textSize
+- [ ] attribute - android:textAllCaps
+- [ ] attribute - android:drawableLeft
+- [ ] attribute - android:drawableTop
+- [ ] attribute - android:drawableRight
+- [ ] attribute - android:drawableBottom
+- [ ] attribute - android:minWidth
+- [ ] attribute - android:minHeight 
+- [ ] element - TextView
+- [ ] element - Button
+- [ ] element - CompoundButton
+- [ ] element - com.rd.PageIndicatorView
+- [ ] element - ImageView
+- [ ] element - ImageButton
+- [ ] element - com.google.android.material.tabs.TabLayout
+- [ ] attribute - android:src
+- [ ] element - EditText
+- [ ] element - SeekBar
+- [ ] element - Spinner
+- [ ] element - android.widget.RatingBar
+- [ ] element - AutoCompleteTextView
+- [ ] element - CheckBox
+- [ ] element - RadioButton
+- [ ] element - ToggleButton
+- [ ] element - Switch
+- [ ] element - ScrollView
+- [ ] element - HorizontalScrollView
+- [ ] element - ViewFlipper
+- [ ] element - androidx.viewpager.widget.ViewPager
+- [ ] element - RadioGroup
+- [ ] element - androidx.recyclerview.widget.RecyclerView
+- [ ] element - androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+- [ ] element - include
+- [ ] attribute - android:padding
+- [ ] attribute - android:paddingLeft
+- [ ] attribute - android:paddingRight
+- [ ] attribute - android:paddingStart
+- [ ] attribute - android:paddingEnd
+- [ ] attribute - android:paddingTop
+- [ ] attribute - android:paddingBottom

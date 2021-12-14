@@ -195,7 +195,7 @@
 - id: "android:letterSpacing"
   type: attribute
   element: TextView
-  valueType: Number
+  valueType: Dimension
   xib:
     letterSpacing: UserDefined
   rules:
@@ -390,7 +390,7 @@
 - id: "android:letterSpacing"
   type: attribute
   element: Button
-  valueType: Number
+  valueType: Dimension
   xib:
     letterSpacing: UserDefined
   rules:
@@ -426,7 +426,7 @@
 - id: "android:letterSpacing"
   type: attribute
   element: ToggleButton
-  valueType: Number
+  valueType: Dimension
   xib:
     letterSpacing: UserDefined
 
@@ -941,7 +941,7 @@
 - id: "android:letterSpacing"
   type: attribute
   element: LabeledToggle
-  valueType: Number
+  valueType: Dimension
   xib:
     subviews/label|letterSpacing: UserDefined
   rules:

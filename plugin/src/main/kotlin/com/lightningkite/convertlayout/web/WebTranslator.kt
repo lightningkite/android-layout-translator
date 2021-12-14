@@ -1,4 +1,4 @@
-package com.lightningkite.convertlayout.ios
+package com.lightningkite.convertlayout.web
 
 import com.lightningkite.convertlayout.android.AndroidLayoutFile
 import com.lightningkite.convertlayout.android.AndroidResources
@@ -8,8 +8,8 @@ import com.lightningkite.convertlayout.xml.readXml
 import com.lightningkite.convertlayout.xml.writeXml
 import java.io.File
 
-data class IosTranslator(
-    val project: IosProject,
+data class WebTranslator(
+    val project: WebProject,
     val replacements: Replacements,
     val resources: AndroidResources
 ) {
@@ -17,15 +17,14 @@ data class IosTranslator(
         androidFolder: File,
         iosFolder: File,
         iosName: String,
-        iosModuleName: String = iosName,
         replacementFolders: Iterable<File>
     ):this(
-        project = IosProject(iosFolder, iosName, iosModuleName),
+        project = WebProject(iosFolder, iosName),
         replacements = Replacements().apply {
             replacementFolders
                 .asSequence()
                 .flatMap { it.walkTopDown() }
-                .filter { it.name.endsWith(".xib.yaml") }
+                .filter { it.name.endsWith(".html.yaml") }
                 .forEach { this += it }
         },
         resources = AndroidResources().apply {
@@ -33,7 +32,7 @@ data class IosTranslator(
         }
     )
 
-    private fun make() = IosLayoutTranslatorForFile(project, replacements, resources)
+    private fun make() = WebLayoutTranslatorForFile(project, replacements, resources)
     fun translate(layout: AndroidLayoutFile) {
         val instance = make()
         project.layoutsFolder
@@ -43,7 +42,7 @@ data class IosTranslator(
         project.layoutsFolder
             .also { it.mkdirs() }
             .resolve(layout.className + ".swift")
-            .writeText(instance.swiftFile(layout))
+            .writeText(instance.tsFile(layout))
     }
     operator fun invoke() {
         importResources()

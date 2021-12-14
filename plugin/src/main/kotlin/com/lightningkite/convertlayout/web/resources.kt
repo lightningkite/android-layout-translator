@@ -1,22 +1,22 @@
-package com.lightningkite.convertlayout.ios
+package com.lightningkite.convertlayout.web
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lightningkite.convertlayout.android.*
 import com.lightningkite.convertlayout.util.*
 
-fun IosTranslator.importResources() {
+fun WebTranslator.importResources() {
     importDrawables()
     importStringsDimensionsColors()
     importColorAssets()
 }
 
-fun IosTranslator.importDrawables() {
+fun WebTranslator.importDrawables() {
     for (it in resources.drawables.values) {
         importDrawable(it)
     }
 }
 
-fun IosTranslator.importDrawable(drawableResource: AndroidDrawable) {
+fun WebTranslator.importDrawable(drawableResource: AndroidDrawable) {
     try {
         when (drawableResource) {
             is AndroidBitmap -> importBitmap(drawableResource)
@@ -28,9 +28,8 @@ fun IosTranslator.importDrawable(drawableResource: AndroidDrawable) {
     }
 }
 
-fun IosTranslator.importDrawableXml(drawableResource: AndroidXmlDrawable) {
-    project.swiftResourcesFolder
-        .resolve("drawables")
+fun WebTranslator.importDrawableXml(drawableResource: AndroidXmlDrawable) {
+    project.drawablesFolder
         .also { it.mkdirs() }
         .resolve(drawableResource.name + ".swift")
         .writeText(buildSmartTabbedString {
@@ -170,7 +169,7 @@ fun Appendable.writeAndroidXml(xml: AndroidDrawableXml) {
     }
 }
 
-fun IosTranslator.importVector(drawableResource: AndroidVector) {
+fun WebTranslator.importVector(drawableResource: AndroidVector) {
     val iosFolder = project.assetsFolder.resolve(drawableResource.name + ".imageset").apply { mkdirs() }
 
     val one =
@@ -188,7 +187,7 @@ fun IosTranslator.importVector(drawableResource: AndroidVector) {
     )
 }
 
-fun IosTranslator.importBitmap(drawableResource: AndroidBitmap) {
+fun WebTranslator.importBitmap(drawableResource: AndroidBitmap) {
     val one = drawableResource.files["ldpi"] ?: drawableResource.files["drawble-mdpi"]
     val two = drawableResource.files["hdpi"] ?: drawableResource.files["xhdpi"] ?: drawableResource.files[""]
     val three = drawableResource.files["xxhdpi"] ?: drawableResource.files["xxxhdpi"]
@@ -218,45 +217,40 @@ private data class PngJsonContents(
     data class Image(val filename: String, val scale: String = "1x", val idiom: String = "universal")
 }
 
-fun IosTranslator.importStringsDimensionsColors() {
+fun WebTranslator.importStringsDimensionsColors() {
     val locales = resources.strings.values.flatMap { it.languages.keys }.filter { it.isNotEmpty() }.toSet()
-    locales.forEach { locale ->
-        project.baseFolderForLocalizations
-            .resolve("${locale}.lproj")
-            .resolve("Localizable.strings")
-            .apply { parentFile.mkdirs() }
-            .printWriter().use {
-                with(it) {
-                    appendLine("/*")
-                    appendLine("Translation to locale $locale")
-                    appendLine("Automatically written by Khrysalis")
-                    appendLine("*/")
-                    appendLine("")
-                    for (entry in resources.strings.values) {
-                        val baseString = entry.value
-                            .replace("\\'", "'")
-                            .replace("\\$", "$")
-                            .replace(Regex("\n *"), " ")
-                        val fixedString = (entry.languages[locale] ?: continue)
-                            .replace("\\'", "'")
-                            .replace("\\$", "$")
-                            .replace(Regex("\n *"), " ")
-                        appendLine("\"$baseString\" = \"$fixedString\";")
-                    }
-                }
-            }
-    }
-    project.swiftResourcesFolder.mkdirs()
-    project.swiftResourcesFolder.resolve("R.swift").writeText(buildSmartTabbedString {
-        appendLine("//")
-        appendLine("// R.swift")
-        appendLine("// Created by Khrysalis")
-        appendLine("//")
-        appendLine("")
-        appendLine("import Foundation")
-        appendLine("import UIKit")
-        appendLine("import XmlToXibRuntime")
-        appendLine("")
+//    locales.forEach { locale ->
+//        project.baseFolderForLocalizations
+//            .resolve("${locale}.lproj")
+//            .resolve("Localizable.strings")
+//            .apply { parentFile.mkdirs() }
+//            .printWriter().use {
+//                with(it) {
+//                    appendLine("/*")
+//                    appendLine("Translation to locale $locale")
+//                    appendLine("Automatically written by Khrysalis")
+//                    appendLine("*/")
+//                    appendLine("")
+//                    for (entry in resources.strings.values) {
+//                        val baseString = entry.value
+//                            .replace("\\'", "'")
+//                            .replace("\\$", "$")
+//                            .replace(Regex("\n *"), " ")
+//                        val fixedString = (entry.languages[locale] ?: continue)
+//                            .replace("\\'", "'")
+//                            .replace("\\$", "$")
+//                            .replace(Regex("\n *"), " ")
+//                        appendLine("\"$baseString\" = \"$fixedString\";")
+//                    }
+//                }
+//            }
+//    }
+    project.resourcesFolder.mkdirs()
+    project.resourcesFolder.resolve("R.css").writeText(buildSmartTabbedString {
+        appendLine("/*")
+        appendLine("R.css")
+        appendLine("Created by Khrysalis")
+        appendLine("*/")
         appendLine("")
         appendLine("public enum R {")
 
@@ -264,14 +258,14 @@ fun IosTranslator.importStringsDimensionsColors() {
         for (entry in resources.drawables) {
             when (val value = entry.value) {
                 is AndroidBitmap, is AndroidVector ->
-                    appendLine("public static func ${entry.key.safeSwiftIdentifier()}() -> CALayer { return CAImageLayer(UIImage(named: \"${entry.key}.png\")) }")
+                    appendLine("public static func ${entry.key.safeJsIdentifier()}() -> CALayer { return CAImageLayer(UIImage(named: \"${entry.key}.png\")) }")
             }
         }
         appendLine("public static let allEntries: Dictionary<String, ()->CALayer> = [")
         var firstDrawable = true
         resources.drawables.keys.forEachBetween(
             forItem = { entry ->
-                append("\"$entry\": ${entry.safeSwiftIdentifier()}")
+                append("\"$entry\": ${entry.safeJsIdentifier()}")
             },
             between = { appendLine(",") }
         )
@@ -286,16 +280,16 @@ fun IosTranslator.importStringsDimensionsColors() {
                 .replace("\"", "\\\"")
                 .replace("\n", "\\n")
                 .replace("\t", "\\t")
-            appendLine("public static let ${key.safeSwiftIdentifier()} = NSLocalizedString(\"$fixedString\", comment: \"$key\")")
+            appendLine("public static let ${key.safeJsIdentifier()} = NSLocalizedString(\"$fixedString\", comment: \"$key\")")
         }
         appendLine("}")
 
         appendLine("public enum dimen {")
         for ((key, value) in resources.dimensions.entries) {
             if (key.contains("programmatic", true)) {
-                appendLine("public static var ${key.safeSwiftIdentifier()}: CGFloat = ${value.measurement.number}")
+                appendLine("public static var ${key.safeJsIdentifier()}: CGFloat = ${value.measurement.number}")
             } else {
-                appendLine("public static let ${key.safeSwiftIdentifier()}: CGFloat = ${value.measurement.number}")
+                appendLine("public static let ${key.safeJsIdentifier()}: CGFloat = ${value.measurement.number}")
             }
         }
         appendLine("}")
@@ -317,7 +311,7 @@ fun IosTranslator.importStringsDimensionsColors() {
     })
 }
 
-fun IosTranslator.importColorAssets() {
+fun WebTranslator.importColorAssets() {
     project.assetsFolder.mkdirs()
     val mapper = jacksonObjectMapper()
     for ((k, v) in resources.colors) {
