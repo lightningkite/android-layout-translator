@@ -130,7 +130,7 @@
   rules:
     "":
       attribute:
-        "contentMode": center
+        "contentMode": scaleAspectFit
 
 - id: "android:scaleType"
   type: attribute
