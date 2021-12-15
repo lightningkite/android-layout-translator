@@ -12,7 +12,7 @@ plugins {
 }
 
 group = "com.lightningkite.xmltoxib"
-version = "0.7.2"
+version = "0.7.3"
 
 gradlePlugin {
     plugins {
