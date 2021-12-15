@@ -35,6 +35,12 @@ data class IosTranslator(
 
     private fun make() = IosLayoutTranslatorForFile(project, replacements, resources)
     fun translate(layout: AndroidLayoutFile) {
+        val existingLayout = project.layoutsFolder
+            .also { it.mkdirs() }
+            .resolve(layout.className + ".xib")
+        if(existingLayout.exists() && existingLayout.readText().let { !it.contains("Generated with XmlToXib, will be overwritten") && it.contains("userComments") }) {
+            return
+        }
         val instance = make()
         project.layoutsFolder
             .also { it.mkdirs() }

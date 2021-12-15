@@ -35,8 +35,8 @@ val ConstraintAttribute.starting: Boolean get() = when(this) {
     ConstraintAttribute.bottom -> false
     ConstraintAttribute.left -> true
     ConstraintAttribute.leading -> true
-    ConstraintAttribute.width -> true
-    ConstraintAttribute.height -> true
+    ConstraintAttribute.width -> false
+    ConstraintAttribute.height -> false
     ConstraintAttribute.centerX -> false
     ConstraintAttribute.centerY -> false
 }
@@ -223,7 +223,7 @@ fun ElementAnchor.setTo(constant: Double, priority: Int = 1000) {
 }
 
 const val framingHugPriority = 300
-const val framingCompressionPriority = 700
+const val framingCompressionPriority = 1000
 fun Element.constraintChildFrameAxis(
     child: Element,
     vertical: Boolean,

@@ -195,7 +195,7 @@
 - id: "android:letterSpacing"
   type: attribute
   element: TextView
-  valueType: Number
+  valueType: Dimension
   xib:
     letterSpacing: UserDefined
   rules:
@@ -390,7 +390,7 @@
 - id: "android:letterSpacing"
   type: attribute
   element: Button
-  valueType: Number
+  valueType: Dimension
   xib:
     letterSpacing: UserDefined
   rules:
@@ -426,7 +426,7 @@
 - id: "android:letterSpacing"
   type: attribute
   element: ToggleButton
-  valueType: Number
+  valueType: Dimension
   xib:
     letterSpacing: UserDefined
 
@@ -884,7 +884,7 @@
   template: |
     <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" customClass="LabeledToggle" customModule="XmlToXibRuntime">
         <subviews>
-            <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO">
+            <switch opaque="NO" contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO">
             </switch>
             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO">
                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
@@ -892,6 +892,27 @@
         </subviews>
         <edgeInsets key="layoutMargins" top="16" left="16" bottom="16" right="16"/>
     </stackView>
+
+- id: UnlabeledToggle
+  type: element
+  autoWrapFor:
+    - "android:background"
+    - 'android:padding'
+    - 'android:paddingStart'
+    - 'android:paddingEnd'
+    - 'android:paddingLeft'
+    - 'android:paddingRight'
+    - 'android:paddingTop'
+    - 'android:paddingBottom'
+    - 'android:drawableLeft'
+    - 'android:drawableRight'
+    - 'android:drawableStart'
+    - 'android:drawableEnd'
+    - 'android:drawableTop'
+    - 'android:drawableBottom'
+  template: |
+    <switch opaque="NO" contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="YES" translatesAutoresizingMaskIntoConstraints="NO">
+    </switch>
 
 - id: "android:padding"
   type: attribute
@@ -941,7 +962,7 @@
 - id: "android:letterSpacing"
   type: attribute
   element: LabeledToggle
-  valueType: Number
+  valueType: Dimension
   xib:
     subviews/label|letterSpacing: UserDefined
   rules:
@@ -1075,14 +1096,28 @@
         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO">
           <fontDescription key="fontDescription" type="system" pointSize="17"/>
         </label>
-        <switch opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="NO" translatesAutoresizingMaskIntoConstraints="NO">
+        <switch opaque="NO" contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="NO" translatesAutoresizingMaskIntoConstraints="NO">
         </switch>
       </subviews>
     </stackView>
 
+- id: Switch
+  caseIdentifier: UnlabeledSwitch
+  attributes:
+    android:text: 'unset'
+  parent: UnlabeledToggle
+  type: element
+  template: |
+    <switch opaque="NO" contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="NO" translatesAutoresizingMaskIntoConstraints="NO">
+    </switch>
+
 - id: M13LabeledToggle
   type: element
   parent: LabeledToggle
+
+- id: M13UnlabeledToggle
+  type: element
+  parent: UnlabeledToggle
 
 - id: "android:buttonTint"
   type: attribute
@@ -1109,6 +1144,31 @@
         alpha: ~selected.alphaFloat~
         colorSpace: calibratedRGB
 
+- id: "android:buttonTint"
+  type: attribute
+  valueType: Color
+  element: M13UnlabeledToggle
+  xib:
+    secondaryTintColor: userDefined
+    secondaryCheckmarkTintColor: userDefined
+    tintColor: subnode
+
+- id: "android:buttonTint"
+  type: attribute
+  valueType: ColorStateResource
+  element: M13UnlabeledToggle
+  xib:
+    secondaryTintColor: userDefined
+    secondaryCheckmarkTintColor: userDefined
+  rules:
+    "color[@key='tintColor']":
+      attribute:
+        red: ~selected.redFloat~
+        green: ~selected.greenFloat~
+        blue: ~selected.blueFloat~
+        alpha: ~selected.alphaFloat~
+        colorSpace: calibratedRGB
+
 #CheckBox
 - id: CheckBox
   parent: M13LabeledToggle
@@ -1116,7 +1176,7 @@
   template: |
     <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" customClass="LabeledToggle" customModule="XmlToXibRuntime">
       <subviews>
-          <view contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13Checkbox" customModule="M13Checkbox">
+          <view contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13Checkbox" customModule="M13Checkbox">
             <color key="backgroundColor" systemColor="systemBackgroundColor"/>
             <constraints>
               <constraint firstAttribute="height" constant="20.5"/>
@@ -1143,6 +1203,35 @@
       </subviews>
     </stackView>
 
+- id: CheckBox
+  caseIdentifier: UnlabeledCheckBox
+  attributes:
+    android:text: 'unset'
+  parent: M13UnlabeledToggle
+  type: element
+  template: |
+    <view contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13Checkbox" customModule="M13Checkbox">
+      <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+      <constraints>
+        <constraint firstAttribute="height" constant="20.5"/>
+        <constraint firstAttribute="width" constant="20.5"/>
+      </constraints>
+      <userDefinedRuntimeAttributes>
+        <userDefinedRuntimeAttribute type="string" keyPath="_IBMarkType" value="Checkmark"/>
+        <userDefinedRuntimeAttribute type="string" keyPath="_IBBoxType" value="Square"/>
+        <userDefinedRuntimeAttribute type="number" keyPath="cornerRadius">
+            <real key="value" value="2"/>
+        </userDefinedRuntimeAttribute>
+        <userDefinedRuntimeAttribute type="string" keyPath="_IBCheckState" value="Unchecked"/>
+        <userDefinedRuntimeAttribute type="number" keyPath="checkmarkLineWidth">
+            <real key="value" value="1"/>
+        </userDefinedRuntimeAttribute>
+        <userDefinedRuntimeAttribute type="number" keyPath="boxLineWidth">
+            <real key="value" value="1"/>
+        </userDefinedRuntimeAttribute>
+      </userDefinedRuntimeAttributes>
+    </view>
+
 #RadioButton
 - id: RadioButton
   parent: M13LabeledToggle
@@ -1150,7 +1239,7 @@
   template: |
     <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" customClass="LabeledToggle" customModule="XmlToXibRuntime">
       <subviews>
-          <view contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13RadioButton" customModule="XmlToXibRuntime" >
+          <view contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13RadioButton" customModule="XmlToXibRuntime" >
             <color key="backgroundColor" systemColor="systemBackgroundColor"/>
             <constraints>
               <constraint firstAttribute="height" constant="20.5"/>
@@ -1173,6 +1262,32 @@
           </label>
       </subviews>
     </stackView>
+
+- id: RadioButton
+  caseIdentifier: UnlabeledRadioButton
+  attributes:
+    android:text: 'unset'
+  parent: M13UnlabeledToggle
+  type: element
+  template: |
+    <view contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13RadioButton" customModule="XmlToXibRuntime" >
+      <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+      <constraints>
+        <constraint firstAttribute="height" constant="20.5"/>
+        <constraint firstAttribute="width" constant="20.5"/>
+      </constraints>
+      <userDefinedRuntimeAttributes>
+        <userDefinedRuntimeAttribute type="string" keyPath="_IBMarkType" value="Radio"/>
+        <userDefinedRuntimeAttribute type="string" keyPath="_IBBoxType" value="Circle"/>
+        <userDefinedRuntimeAttribute type="string" keyPath="_IBCheckState" value="Unchecked"/>
+        <userDefinedRuntimeAttribute type="number" keyPath="checkmarkLineWidth">
+            <real key="value" value="1"/>
+        </userDefinedRuntimeAttribute>
+        <userDefinedRuntimeAttribute type="number" keyPath="boxLineWidth">
+            <real key="value" value="1"/>
+        </userDefinedRuntimeAttribute>
+      </userDefinedRuntimeAttributes>
+    </view>
 
 #RadioGroup
 - id: RadioGroup
@@ -1219,10 +1334,10 @@
   type: element
   parent: EditText
   template: |
-    <textView opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" customClass="SearchTextField" customModule="SearchTextField" >
+    <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" >
         <fontDescription key="fontDescription" type="system" pointSize="14"/>
         <textInputTraits key="textInputTraits"/>
-    </textView>
+    </textField>
 
 - id: EditText
   caseIdentifier: MultilineEditText
@@ -1346,20 +1461,20 @@
         addressState:
           attribute:
             textContentType: address-level2
-#        birthday:
-#        birthdayDay:
-#        birthdayMonth:
-#        birthdayYear:
+        #        birthday:
+        #        birthdayDay:
+        #        birthdayMonth:
+        #        birthdayYear:
         countryCode:
           attribute:
             textContentType: country-name
         countryName:
           attribute:
             textContentType: country-name
-#        creditCardExpirationDate:
-#        creditCardExpirationDay:
-#        creditCardExpirationMonth:
-#        creditCardExpirationYear:
+        #        creditCardExpirationDate:
+        #        creditCardExpirationDay:
+        #        creditCardExpirationMonth:
+        #        creditCardExpirationYear:
         creditCardFamilyName:
           attribute:
             textContentType: family-name
@@ -1369,10 +1484,10 @@
         creditCardMiddleName:
           attribute:
             textContentType: additional-name
-#        creditCardName:
-#        creditCardNumber:
-#        creditCardSecurityCode:
-#        creditCardType:
+        #        creditCardName:
+        #        creditCardNumber:
+        #        creditCardSecurityCode:
+        #        creditCardType:
         email:
           attribute:
             textContentType: email
@@ -1382,15 +1497,15 @@
         fullStreetAddress:
           attribute:
             textContentType: street-address
-#        gender:
+        #        gender:
         givenName:
           attribute:
             textContentType: given-name
-#        impp:
-#        jobTitle:
-#        language:
-#        location:
-#        middleInitial:
+        #        impp:
+        #        jobTitle:
+        #        language:
+        #        location:
+        #        middleInitial:
         middleName:
           attribute:
             textContentType: additional-name
@@ -1409,13 +1524,13 @@
         nickname:
           attribute:
             textContentType: nickname
-#        oneTimeCode:
+        #        oneTimeCode:
         organizationName:
           attribute:
             textContentType: name
-#        photo:
-#        postalAddressExtended:
-#        postalAddressExtendedPostalCode:
+        #        photo:
+        #        postalAddressExtended:
+        #        postalAddressExtendedPostalCode:
         postalCode:
           attribute:
             textContentType: postal-code
@@ -1428,14 +1543,14 @@
         streetAddressLevel3:
           attribute:
             textContentType: address-level3
-#        streetAddressLevel4:
+        #        streetAddressLevel4:
         streetAddressLine1:
           attribute:
             textContentType: address-line1
         streetAddressLine2:
           attribute:
             textContentType: address-line2
-#        streetAddressLine3:
+        #        streetAddressLine3:
         sublocality:
           attribute:
             textContentType: city
@@ -1460,7 +1575,7 @@
         smartDashesType: "no"
         smartQuotesType: "no"
       ifContains:
-#        text:
+        #        text:
         textCapCharacters:
           attribute:
             autocapitalizationType: allCharacters
@@ -1473,7 +1588,7 @@
         textAutoCorrect:
           attribute:
             autocorrectionType: "yes"
-#        textAutoComplete:
+        #        textAutoComplete:
         textNoSuggestions:
           attribute:
             spellCheckingType: "no"
@@ -1485,9 +1600,9 @@
           attribute:
             keyboardType: emailAddress
             textContentType: email
-#        textEmailSubject:
-#        textShortMessage:
-#        textLongMessage:
+        #        textEmailSubject:
+        #        textShortMessage:
+        #        textLongMessage:
         textPersonName:
           attribute:
             textContentType: name
@@ -1501,9 +1616,9 @@
         textVisiblePassword:
           attribute:
             textContentType: password
-#        textWebEditText:
-#        textFilter:
-#        textPhonetic:
+        #        textWebEditText:
+        #        textFilter:
+        #        textPhonetic:
         textWebEmailAddress:
           attribute:
             keyboardType: emailAddress
@@ -1623,7 +1738,7 @@
 - id: android:background
   type: attribute
   valueType: Color
-#  debug: true
+  #  debug: true
   xib:
     backgroundColor: SubNode
 
