@@ -19,6 +19,7 @@ fun Element.swiftIdentifier(): SwiftIdentifier {
         "progressView" -> SwiftIdentifier("UIKit", "UIProgressView")
         "imageView" -> SwiftIdentifier("UIKit", "UIImageView")
         "view" -> SwiftIdentifier("UIKit", "UIView")
+        "switch" -> SwiftIdentifier("UIKit", "UISwitch")
         "slider" -> SwiftIdentifier("UIKit", "UISlider")
         "button" -> SwiftIdentifier("UIKit", "UIButton")
         "stackView" -> SwiftIdentifier("UIKit", "UIStackView")

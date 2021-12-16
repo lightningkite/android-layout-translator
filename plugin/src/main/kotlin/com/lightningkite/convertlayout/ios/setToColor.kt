@@ -25,6 +25,7 @@ val AndroidColor.swift: String get() = when(this) {
 //fun AndroidDrawableResource.swiftLayer(forView: String): String = "$swiftDrawable.makeLayer($forView)"
 //val AndroidDrawableResource.swiftImage: String get() = "UIImage(named: \"$name\") ?? ${swiftLayer("view")}.toImage()"
 val AndroidDimension.swift: String get() = when(this) {
+    is AndroidNumber -> value.toString()
     is AndroidDimensionLiteral -> measurement.number.toString()
     is AndroidDimensionResource -> "R.dimen.$name"
 }

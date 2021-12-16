@@ -42,8 +42,8 @@ internal class IosLayoutTranslatorForFile(
     }
     fun Element.wrapPower(isVertical: Boolean): Int = 998 - childrenWhoWrap(isVertical) * 2
 
-    var outlets: MutableMap<String, SwiftIdentifier> = HashMap()
-    val usedResources: MutableSet<AndroidValue> = HashSet()
+    var outlets: MutableMap<String, SwiftIdentifier> = LinkedHashMap()
+    val usedResources: MutableSet<AndroidValue> = LinkedHashSet()
     val iosCode = StringBuilder()
 
     fun assignIds(destElement: Element) {
@@ -87,12 +87,16 @@ internal class IosLayoutTranslatorForFile(
                     newElement["horizontalCompressionResistancePriority"] = "1000"
                 } else if (newElement.tagName == "label") {
                     newElement["numberOfLines"] = "0"
+                } else if (rules.any { it.id == "LabeledToggle" }) {
+                    newElement.childElements
+                        .find { it.tagName == "subviews" }
+                        ?.childElements
+                        ?.find { it.tagName == "label" }
+                        ?.set("numberOfLines", "0")
                 }
                 if (allAttributes["android:layout_height"] == "wrap_content") {
                     newElement["verticalHuggingPriority"] = "1000"
                     newElement["verticalCompressionResistancePriority"] = "1000"
-                } else if (newElement.tagName == "label") {
-                    newElement["numberOfLines"] = "0"
                 }
             }
 
@@ -140,12 +144,16 @@ internal class IosLayoutTranslatorForFile(
                     innerElement["horizontalCompressionResistancePriority"] = "1000"
                 } else if (innerElement.tagName == "label") {
                     innerElement["numberOfLines"] = "0"
+                } else if (rules.any { it.id == "LabeledToggle" }) {
+                    innerElement.childElements
+                        .find { it.tagName == "subviews" }
+                        ?.childElements
+                        ?.find { it.tagName == "label" }
+                        ?.set("numberOfLines", "0")
                 }
                 if (allAttributes["android:layout_height"] == "wrap_content") {
                     innerElement["verticalHuggingPriority"] = "1000"
                     innerElement["verticalCompressionResistancePriority"] = "1000"
-                } else if (innerElement.tagName == "label") {
-                    innerElement["numberOfLines"] = "0"
                 }
             }
 
@@ -254,7 +262,8 @@ internal class IosLayoutTranslatorForFile(
         val myAttributes = sourceElement.allAttributes
         when (childAddRule) {
             "linear" -> {
-                if(myAttributes["app:safeInsets"] == null && myAttributes["app:safeInsetsSizing"] == null) destElement["insetsLayoutMarginsFromSafeArea"] = "NO"
+                destElement["insetsLayoutMarginsFromSafeArea"] = "NO"
+//                if(myAttributes["app:safeInsets"] == null && myAttributes["app:safeInsetsSizing"] == null) destElement["insetsLayoutMarginsFromSafeArea"] = "NO"
                 val isVertical = myAttributes["android:orientation"] == "vertical"
                 val myPadding = myAttributes.insets("android:padding", resources)
                 val wrappingPower = if(myAttributes["android:layout_${if(!isVertical) "height" else "width"}"] == "wrap_content")
@@ -630,13 +639,13 @@ internal class IosLayoutTranslatorForFile(
                 destElement.getOrAppendChild("userDefinedRuntimeAttributes").apply {
                     getOrAppendChildWithKey("userDefinedRuntimeAttribute", key, "keyPath").apply {
                         when (value) {
-                            is AndroidNumber -> {
+                            is AndroidDimension -> {
                                 this["type"] = "number"
                                 this.getOrAppendChildWithKey("real", "value").apply {
                                     if (key.contains("rotation")) {
-                                        this["value"] = value.value.times(Math.PI).div(180).toString()
+                                        this["value"] = value.measurement.number.times(Math.PI).div(180).toString()
                                     } else {
-                                        this["value"] = value.value.toString()
+                                        this["value"] = value.measurement.number.toString()
                                     }
                                 }
                             }
@@ -749,7 +758,7 @@ internal class IosLayoutTranslatorForFile(
                 }
             })
         }
-        attributeRule.xib.entries.forEach {
+        attributeRule.xib.entries.sortedBy { it.key }.forEach {
             handleXibEntry(
                 destElement.xpathElementOrCreate(it.key.substringBefore("|", "")),
                 value,
@@ -889,7 +898,11 @@ internal class IosLayoutTranslatorForFile(
             <customFonts key="customFonts">
             </customFonts>
             <objects>
-                <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner"/>
+                <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner">
+                    <attributedString key="userComments">
+                        <fragment content="Generated with XmlToXib, will be overwritten"/>
+                    </attributedString>
+                </placeholder>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
             </objects>
             <resources>

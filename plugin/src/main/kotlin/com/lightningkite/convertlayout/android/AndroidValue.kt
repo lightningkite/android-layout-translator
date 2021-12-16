@@ -384,7 +384,9 @@ data class AndroidDimensionResource(
 
 data class AndroidNumber(
     val value: Double
-) : AndroidValue {
+) : AndroidValue, AndroidDimension {
+    override val measurement: Measurement
+        get() = Measurement(value, MeasurementUnit.DP)
 
     override fun get(key: String): Any? = when (key) {
         "value" -> value.toString()
