@@ -2,354 +2,259 @@ package com.lightningkite.convertlayout.web
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lightningkite.convertlayout.android.*
+import com.lightningkite.convertlayout.rules.AttributeReplacement
 import com.lightningkite.convertlayout.util.*
+import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.sourceElementsConfigurationName
 
 fun WebTranslator.importResources() {
-    importDrawables()
-    importStringsDimensionsColors()
-    importColorAssets()
+    val sass = StringBuilder()
+    importDimensionsColors(sass)
+    importDrawables(sass)
+    importStyles(sass)
+    importStrings()
+    project.resourcesFolder.resolve("resources.scss").writeText(sass.toString())
 }
 
-fun WebTranslator.importDrawables() {
+fun WebTranslator.importDrawables(sass: StringBuilder) {
     for (it in resources.drawables.values) {
-        importDrawable(it)
+        importDrawable(it, sass)
     }
 }
 
-fun WebTranslator.importDrawable(drawableResource: AndroidDrawable) {
+fun WebTranslator.importDrawable(drawableResource: AndroidDrawable, sass: StringBuilder) {
     try {
         when (drawableResource) {
-            is AndroidBitmap -> importBitmap(drawableResource)
-            is AndroidXmlDrawable -> importDrawableXml(drawableResource)
-            is AndroidVector -> importVector(drawableResource)
+            is AndroidBitmap -> importBitmap(drawableResource, sass)
+            is AndroidXmlDrawable -> {
+                sass.appendLine(".drawable-${drawableResource.name} {")
+                sass.writeSass(drawableResource.value)
+                sass.appendLine("}")
+            }
+            is AndroidVector -> importVector(drawableResource, sass)
         }
     } catch (e: Exception) {
         throw Exception("Failed to read ${drawableResource}", e)
     }
 }
 
-fun WebTranslator.importDrawableXml(drawableResource: AndroidXmlDrawable) {
-    project.drawablesFolder
-        .also { it.mkdirs() }
-        .resolve(drawableResource.name + ".swift")
-        .writeText(buildSmartTabbedString {
-            appendLine("import XmlToXibRuntime")
-            appendLine("public extension R.drawable {")
-            appendLine("static func ${drawableResource.name}() -> CALayer {")
-            writeAndroidXml(drawableResource.value)
-            appendLine("}")
-            appendLine("}")
-        })
-}
-
-val AndroidDrawableXml.scaleOverResize: Boolean
-    get() = when (this) {
-        is AndroidDrawable.Reference -> when (this.drawable.value) {
-            is AndroidBitmap -> true
-            is AndroidColorLiteral -> false
-            is AndroidColorResource -> false
-            is AndroidColorStateResource -> false
-            is AndroidDrawableState -> false
-            is AndroidLayer -> false
-            is AndroidShape -> false
-            is AndroidVector -> true
-        }
-        is AndroidBitmap.Reference -> true
-        is AndroidShape.Value -> false
-        is AndroidDrawableState.Value -> false
-        is AndroidLayer.Value -> false
-    }
-
-fun Appendable.writeAndroidXml(xml: AndroidDrawableXml) {
+fun Appendable.writeSass(xml: AndroidDrawableXml) {
     when (xml) {
-        is AndroidDrawable.Reference -> when(val sub = xml.drawable.value){
-            is AndroidNamedDrawable -> appendLine("R.drawable.${sub.name}()")
-            is AndroidColorResource -> writeAndroidXml(AndroidShape.Value(AndroidShape.Value.ShapeType.Rectangle, fill = Lazy(sub)))
-            is AndroidColorStateResource -> writeAndroidXml(AndroidShape.Value(AndroidShape.Value.ShapeType.Rectangle, fill = Lazy(sub)))
+        is AndroidDrawable.Reference -> when (val sub = xml.drawable.value) {
+            is AndroidNamedDrawable -> appendLine("@extend drawable-${sub.name};")
+            is AndroidColor -> appendLine("background-color: ${sub.value.web};")
         }
-        is AndroidBitmap.Reference -> appendLine("R.drawable.${xml.base.value.name}()")
+        is AndroidBitmap.Reference -> {
+            appendLine("@extend drawable-${xml.base.value.name};")
+            appendLine("width: ${xml.size.width};")
+            appendLine("height: ${xml.size.height};")
+        }
         is AndroidShape.Value -> {
             xml.gradient?.let { gradient ->
-                when (xml.shapeType) {
-                    AndroidShape.Value.ShapeType.Rectangle -> {
-                        appendLine("LayerMaker.rectGradient(")
-                        appendLine("startColor: ${gradient.startColor.value.swift}, ")
-                        appendLine("midColor: ${gradient.centerColor?.value?.swift ?: "nil"}, ")
-                        appendLine("endColor: ${gradient.endColor.value.swift}, ")
-                        appendLine("gradientAngle: ${gradient.angle}, ")
-                        appendLine("strokeColor: ${xml.stroke?.value?.swift ?: ".clear"}, ")
-                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift ?: "0"}, ")
-                        appendLine("topLeftRadius: ${xml.topLeftCorner?.value?.swift ?: "0"}, ")
-                        appendLine("topRightRadius: ${xml.topRightCorner?.value?.swift ?: "0"}, ")
-                        appendLine("bottomLeftRadius: ${xml.bottomLeftCorner?.value?.swift ?: "0"}, ")
-                        appendLine("bottomRightRadius: ${xml.bottomRightCorner?.value?.swift ?: "0"}")
-                        appendLine(")")
+                listOfNotNull(gradient.startColor.value, gradient.centerColor?.value, gradient.endColor.value)
+                    .map { it.sass }
+                    .joinToString()
+                    .let { appendLine("background-image: linear-gradient(${gradient.angle - 90}deg, $it);") }
+            } ?: xml.fill?.value?.let { appendLine("background-color: ${it.sass};") }
+            xml.stroke?.value?.let { color ->
+                appendLine("border-color: ${color.sass};")
+            }
+            xml.strokeWidth?.value?.measurement?.web?.let {
+                appendLine("border-width: $it;")
+                appendLine("border-style: solid;")
+            }
+            when (xml.shapeType) {
+                AndroidShape.Value.ShapeType.Rectangle -> {
+                    xml.topLeftCorner?.value?.measurement?.web?.let {
+                        appendLine("border-top-left-radius: $it;")
                     }
-                    AndroidShape.Value.ShapeType.Oval -> {
-                        appendLine("LayerMaker.ovalGradient(")
-                        appendLine("startColor: ${gradient.startColor.value.swift}, ")
-                        appendLine("midColor: ${gradient.centerColor?.value?.swift ?: "nil"}, ")
-                        appendLine("endColor: ${gradient.endColor.value.swift}, ")
-                        appendLine("gradientAngle: ${gradient.angle}, ")
-                        appendLine("strokeColor: ${xml.stroke?.value?.swift ?: ".clear"}, ")
-                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift ?: "0"}")
-                        appendLine(")")
+                    xml.topRightCorner?.value?.measurement?.web?.let {
+                        appendLine("border-top-right-radius: $it;")
+                    }
+                    xml.bottomLeftCorner?.value?.measurement?.web?.let {
+                        appendLine("border-bottom-right-radius: $it;")
+                    }
+                    xml.bottomRightCorner?.value?.measurement?.web?.let {
+                        appendLine("border-bottom-left-radius: $it;")
                     }
                 }
-            } ?: run {
-                when (xml.shapeType) {
-                    AndroidShape.Value.ShapeType.Rectangle -> {
-                        appendLine("LayerMaker.rect(")
-                        appendLine("fillColor: ${xml.fill?.value?.swift ?: ".clear"}, ")
-                        appendLine("strokeColor: ${xml.stroke?.value?.swift ?: ".clear"}, ")
-                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift ?: "0"}, ")
-                        appendLine("topLeftRadius: ${xml.topLeftCorner?.value?.swift ?: "0"}, ")
-                        appendLine("topRightRadius: ${xml.topRightCorner?.value?.swift ?: "0"}, ")
-                        appendLine("bottomLeftRadius: ${xml.bottomLeftCorner?.value?.swift ?: "0"}, ")
-                        appendLine("bottomRightRadius: ${xml.bottomRightCorner?.value?.swift ?: "0"}")
-                        appendLine(")")
-                    }
-                    AndroidShape.Value.ShapeType.Oval -> {
-                        appendLine("LayerMaker.oval(")
-                        appendLine("fillColor: ${xml.fill?.value?.swift ?: ".clear"}, ")
-                        appendLine("strokeColor: ${xml.stroke?.value?.swift ?: ".clear"}, ")
-                        appendLine("strokeWidth: ${xml.strokeWidth?.value?.swift ?: "0"}")
-                        appendLine(")")
-                    }
+                AndroidShape.Value.ShapeType.Oval -> {
+                    appendLine("border-radius: 50%;")
                 }
             }
         }
         is AndroidDrawableState.Value -> {
-            appendLine("LayerMaker.state(.init(")
-
-            append("normal: ")
-            writeAndroidXml(xml.states.normal)
-            appendLine(",")
-
-            append("selected: ")
-            xml.states.selected?.let { writeAndroidXml(it) } ?: append("nil")
-            appendLine(",")
-
-            append("highlighted: ")
-            xml.states.highlighted?.let { writeAndroidXml(it) } ?: append("nil")
-            appendLine(",")
-
-            append("disabled: ")
-            xml.states.disabled?.let { writeAndroidXml(it) } ?: append("nil")
-            appendLine(",")
-
-            append("focused: ")
-            xml.states.focused?.let { writeAndroidXml(it) } ?: append("nil")
-            appendLine("))")
+            writeSass(xml.states.normal)
+            xml.states.focused?.let {
+                appendLine("&:focus {")
+                writeSass(it)
+                appendLine("}")
+            }
+            xml.states.selected?.let {
+                appendLine("&:checked {")
+                writeSass(it)
+                appendLine("}")
+            }
+            xml.states.highlighted?.let {
+                appendLine("&:active:hover {")
+                writeSass(it)
+                appendLine("}")
+            }
+            xml.states.disabled?.let {
+                appendLine("&:disabled {")
+                writeSass(it)
+                appendLine("}")
+            }
         }
         is AndroidLayer.Value -> {
-            appendLine("LayerMaker.autosize(")
-            xml.states.forEachBetween(
-                forItem = { sub ->
-                    append(".init(layer: ")
-                    writeAndroidXml(sub.drawable)
-                    append(", insets: .init(top: ")
-                    append(sub.top?.value?.swift ?: "0")
-                    append(", left: ")
-                    append(sub.left?.value?.swift ?: "0")
-                    append(", bottom: ")
-                    append(sub.bottom?.value?.swift ?: "0")
-                    append(", right: ")
-                    append(sub.right?.value?.swift ?: "0")
-                    append("), scaleOverResize: ")
-                    append(sub.drawable.scaleOverResize.toString())
-                    append(")")
-                },
-                between = {
-                    appendLine(", ")
-                }
-            )
-            appendLine(")")
+            appendLine("// WARNING: You can't do that - it would require multiple views inside of this one.")
+            for (layer in xml.states) {
+                writeSass(layer.drawable)
+            }
         }
     }
 }
 
-fun WebTranslator.importVector(drawableResource: AndroidVector) {
-    val iosFolder = project.assetsFolder.resolve(drawableResource.name + ".imageset").apply { mkdirs() }
-
-    val one =
-        drawableResource.toSvg(resources, 1f).convertSvgToPng(iosFolder.resolve("${drawableResource.name}-one.png"))
-    val two =
-        drawableResource.toSvg(resources, 2f).convertSvgToPng(iosFolder.resolve("${drawableResource.name}-two.png"))
-    val three =
-        drawableResource.toSvg(resources, 3f).convertSvgToPng(iosFolder.resolve("${drawableResource.name}-three.png"))
-
-    jacksonObjectMapper().writeValue(
-        iosFolder.resolve("Contents.json"),
-        PngJsonContents(images = listOf(one, two, three).mapIndexed { index, file ->
-            PngJsonContents.Image(filename = file.name, scale = "${index + 1}x")
-        })
-    )
+fun WebTranslator.importVector(drawableResource: AndroidVector, sass: StringBuilder) {
+    val svgFile = project.resourcesFolder.resolve(drawableResource.name + ".svg")
+    drawableResource.toSvg(resources, 1f, svgFile)
+    sass.appendLine(".drawable-${drawableResource.name} {")
+    sass.appendLine("""background-image: url("${svgFile.name}");""")
+    sass.appendLine("background-size: contain;")
+    sass.appendLine("}")
 }
 
-fun WebTranslator.importBitmap(drawableResource: AndroidBitmap) {
-    val one = drawableResource.files["ldpi"] ?: drawableResource.files["drawble-mdpi"]
-    val two = drawableResource.files["hdpi"] ?: drawableResource.files["xhdpi"] ?: drawableResource.files[""]
-    val three = drawableResource.files["xxhdpi"] ?: drawableResource.files["xxxhdpi"]
-
-    if (one == null && two == null && three == null) throw IllegalArgumentException("No PNGs found!")
-
-    val iosFolder = project.assetsFolder.resolve(drawableResource.name + ".imageset").apply { mkdirs() }
-    jacksonObjectMapper().writeValue(
-        iosFolder.resolve("Contents.json"),
-        PngJsonContents(images = listOf(one, two, three).mapIndexed { index, file ->
-            if (file == null) return@mapIndexed null
-            PngJsonContents.Image(filename = file.name, scale = "${index + 1}x")
-        }.filterNotNull())
-    )
-    listOf(one, two, three).filterNotNull().forEach {
-        if (it.checksum() != iosFolder.resolve(it.name).checksum()) {
-            it.copyTo(iosFolder.resolve(it.name), overwrite = true)
-        }
-    }
+fun WebTranslator.importBitmap(drawableResource: AndroidBitmap, sass: StringBuilder) {
+    val sourceFile = drawableResource.files["ldpi"]
+        ?: drawableResource.files["mdpi"]
+        ?: drawableResource.files["hdpi"]
+        ?: drawableResource.files["xhdpi"]
+        ?: drawableResource.files["xxhdpi"]
+        ?: drawableResource.files["xxxhdpi"]!!
+    val destFile = project.resourcesFolder.resolve(drawableResource.name + "." + sourceFile.extension)
+    sourceFile.copyTo(destFile, overwrite = true)
+    sass.appendLine(".drawable-${drawableResource.name} {")
+    sass.appendLine("""background-image: url("${destFile.name}");""")
+    sass.appendLine("background-size: contain;")
+    sass.appendLine("}")
 }
 
-private data class PngJsonContents(
-    val info: Info = Info(),
-    val images: List<Image> = listOf()
-) {
-    data class Info(val version: Int = 1, val author: String = "xcode")
-    data class Image(val filename: String, val scale: String = "1x", val idiom: String = "universal")
-}
-
-fun WebTranslator.importStringsDimensionsColors() {
-    val locales = resources.strings.values.flatMap { it.languages.keys }.filter { it.isNotEmpty() }.toSet()
-//    locales.forEach { locale ->
-//        project.baseFolderForLocalizations
-//            .resolve("${locale}.lproj")
-//            .resolve("Localizable.strings")
-//            .apply { parentFile.mkdirs() }
-//            .printWriter().use {
-//                with(it) {
-//                    appendLine("/*")
-//                    appendLine("Translation to locale $locale")
-//                    appendLine("Automatically written by Khrysalis")
-//                    appendLine("*/")
-//                    appendLine("")
-//                    for (entry in resources.strings.values) {
-//                        val baseString = entry.value
-//                            .replace("\\'", "'")
-//                            .replace("\\$", "$")
-//                            .replace(Regex("\n *"), " ")
-//                        val fixedString = (entry.languages[locale] ?: continue)
-//                            .replace("\\'", "'")
-//                            .replace("\\$", "$")
-//                            .replace(Regex("\n *"), " ")
-//                        appendLine("\"$baseString\" = \"$fixedString\";")
-//                    }
-//                }
-//            }
-//    }
-    project.resourcesFolder.mkdirs()
-    project.resourcesFolder.resolve("R.css").writeText(buildSmartTabbedString {
+fun WebTranslator.importStrings() {
+    project.resourcesFolder.resolve("R.ts").writeText(buildSmartTabbedString {
         appendLine("/*")
-        appendLine("R.css")
+        appendLine("R.ts")
         appendLine("Created by Khrysalis")
         appendLine("*/")
         appendLine("")
-        appendLine("public enum R {")
-
-        appendLine("public enum drawable {")
-        for (entry in resources.drawables) {
-            when (val value = entry.value) {
-                is AndroidBitmap, is AndroidVector ->
-                    appendLine("public static func ${entry.key.safeJsIdentifier()}() -> CALayer { return CAImageLayer(UIImage(named: \"${entry.key}.png\")) }")
-            }
+        appendLine("export interface Strings {")
+        for (key in resources.strings.keys) {
+            appendLine("${key.safeJsIdentifier()}: string")
         }
-        appendLine("public static let allEntries: Dictionary<String, ()->CALayer> = [")
-        var firstDrawable = true
-        resources.drawables.keys.forEachBetween(
-            forItem = { entry ->
-                append("\"$entry\": ${entry.safeJsIdentifier()}")
-            },
-            between = { appendLine(",") }
-        )
-        appendLine()
-        appendLine("]")
-        appendLine("}")
-
-        appendLine("public enum string {")
+        appendLine("export namespace DefaultStrings {")
         for ((key, value) in resources.strings.entries) {
             val fixedString = value.value
                 .replace("\\", "\\\\")
                 .replace("\"", "\\\"")
                 .replace("\n", "\\n")
                 .replace("\t", "\\t")
-            appendLine("public static let ${key.safeJsIdentifier()} = NSLocalizedString(\"$fixedString\", comment: \"$key\")")
+            appendLine("export const ${key.safeJsIdentifier()} = \"$fixedString\"")
         }
-        appendLine("}")
-
-        appendLine("public enum dimen {")
-        for ((key, value) in resources.dimensions.entries) {
-            if (key.contains("programmatic", true)) {
-                appendLine("public static var ${key.safeJsIdentifier()}: CGFloat = ${value.measurement.number}")
-            } else {
-                appendLine("public static let ${key.safeJsIdentifier()}: CGFloat = ${value.measurement.number}")
-            }
-        }
-        appendLine("}")
-
-        appendLine("public enum color {")
-
-        for (entry in resources.colors.entries) {
-            when (val value = entry.value) {
-                is AndroidColorResource -> appendLine("public static let ${entry.key}: UIColor = UIColor(named: \"color_${entry.key}\")!")
-                is AndroidColorStateResource -> {
-                    appendLine("public static let ${entry.key}: UIColor = UIColor(named: \"color_${entry.key}\")!")
-                    appendLine("public static let ${entry.key}State: StateSelector<UIColor> = StateSelector(normal: ${value.colors.normal.value.swift}, selected: ${value.colors.selected?.value?.swift ?: "nil"}, highlighted: ${value.colors.highlighted?.value?.swift ?: "nil"}, disabled: ${value.colors.disabled?.value?.swift ?: "nil"}, focused: ${value.colors.focused?.value?.swift ?: "nil"})")
-                }
-            }
-        }
-        appendLine("}")
-
+        appendLine("export const strings: Strings = Object.assign({}, DefaultStrings);")
         appendLine("}")
     })
 }
 
-fun WebTranslator.importColorAssets() {
-    project.assetsFolder.mkdirs()
-    val mapper = jacksonObjectMapper()
-    for ((k, v) in resources.colors) {
-        project.assetsFolder.resolve("color_$k.colorset").apply { mkdirs() }.resolve("Contents.json").writeText(
-            mapper.writeValueAsString(
-                mapOf<String, Any?>(
-                    "colors" to listOf(
-                        mapOf(
-                            "color" to mapOf(
-                                "color-space" to "srgb",
-                                "components" to mapOf(
-                                    "alpha" to v.value.alphaFloat.toString(),
-                                    "red" to "0x" + v.value.red.toString(16).toUpperCase()
-                                        .padStart(
-                                            2,
-                                            '0'
-                                        ),
-                                    "green" to "0x" + v.value.green.toString(16).toUpperCase()
-                                        .padStart(
-                                            2,
-                                            '0'
-                                        ),
-                                    "blue" to "0x" + v.value.blue.toString(16).toUpperCase()
-                                        .padStart(
-                                            2,
-                                            '0'
-                                        )
-                                )
-                            ),
-                            "idiom" to "universal"
-                        )
-                    ),
-                    "info" to mapOf(
-                        "author" to "xcode",
-                        "version" to 1
+fun WebTranslator.importDimensionsColors(sass: StringBuilder) {
+    resources.dimensions.values.forEach {
+        sass.appendLine("$${it.name}: ${it.measurement.web};")
+    }
+    resources.colors.values.mapNotNull { it as? AndroidColorResource }.forEach {
+        sass.appendLine("$${it.name}: ${it.value.web};")
+    }
+    sass.appendLine("* {")
+    resources.colors.values.mapNotNull { it as? AndroidColorStateResource }.forEach {
+        sass.appendLine("--color-${it.name}: ${it.colors.normal.value.sass};")
+    }
+    sass.appendLine("}")
+    sass.appendLine(":checked ~ * {")
+    resources.colors.values.mapNotNull { it as? AndroidColorStateResource }.forEach {
+        val color = it.colors.selected?.value ?: return@forEach
+        sass.appendLine("--color-${it.name}: ${color.sass};")
+    }
+    sass.appendLine("}")
+    sass.appendLine(":disabled ~ * {")
+    resources.colors.values.mapNotNull { it as? AndroidColorStateResource }.forEach {
+        val color = it.colors.disabled?.value ?: return@forEach
+        sass.appendLine("--color-${it.name}: ${color.sass};")
+    }
+    sass.appendLine("}")
+    sass.appendLine(":active:hover ~ * {")
+    resources.colors.values.mapNotNull { it as? AndroidColorStateResource }.forEach {
+        val color = it.colors.highlighted?.value ?: return@forEach
+        sass.appendLine("--color-${it.name}: ${color.sass};")
+    }
+    sass.appendLine("}")
+    sass.appendLine(":focus ~ * {")
+    resources.colors.values.mapNotNull { it as? AndroidColorStateResource }.forEach {
+        val color = it.colors.focused?.value ?: return@forEach
+        sass.appendLine("--color-${it.name}: ${color.sass};")
+    }
+    sass.appendLine("}")
+}
+
+fun WebTranslator.importStyles(sass: StringBuilder) {
+    for((name, style) in resources.styles) {
+        sass.appendLine(".style-${name} {")
+        for((key, rawValue) in style.map) {
+            val value = resources.read(rawValue)
+            if(!replacements.canBeInStyleSheet(key)) continue
+            val elementKinds = replacements.attributes[key]?.asSequence()
+                ?.mapNotNull { it.element.takeUnless { it == "View" } }
+                ?.toSet() ?: setOf()
+            for(element in elementKinds) {
+                val uniqueElementType = replacements.elements[element]?.singleOrNull()?.uniqueElementType
+                if(uniqueElementType != null) {
+                    sass.appendLine("&$uniqueElementType {")
+                } else {
+                    sass.appendLine("&.android-${element} {")
+                }
+                val rule = replacements.getAttribute(
+                    elementName = element,
+                    attributeName = key,
+                    attributeType = AttributeReplacement.ValueType2[value::class],
+                    rawValue = rawValue
+                ) ?: continue
+                for ((path, subrule) in rule.rules) {
+                    if(!path.isEmpty()) {
+                        sass.appendLine(path.replace('/', ' ') + " {")
+                    }
+                    subrule(
+                        allAttributes = style.chainedMap,
+                        value = value,
+                        resources = resources,
+                        action = { subrule ->
+                            for((ckey, cvalue) in subrule.css) {
+                                sass.appendLine("$ckey: $cvalue;")
+                            }
+                            subrule.classes
+                                .takeUnless { it.isEmpty() }
+                                ?.joinToString()
+                                ?.let { sass.appendLine("@extends $it;") }
+                        }
                     )
-                )
-            )
-        )
+                    if(!path.isEmpty()) {
+                        sass.appendLine("}")
+                    }
+                }
+                sass.appendLine("}")
+            }
+        }
+        sass.appendLine("}")
     }
 }
+
+val AndroidColor.sass: String
+    get() = when (this) {
+        is AndroidColorStateResource -> "var(--color-$name)"
+        is AndroidColorResource -> "$${name}"
+        is AndroidColorLiteral -> value.web
+    }

@@ -15,11 +15,11 @@ data class WebTranslator(
 ) {
     constructor(
         androidFolder: File,
-        iosFolder: File,
-        iosName: String,
+        webFolder: File,
+        webName: String,
         replacementFolders: Iterable<File>
     ):this(
-        project = WebProject(iosFolder, iosName),
+        project = WebProject(webFolder, webName),
         replacements = Replacements().apply {
             replacementFolders
                 .asSequence()

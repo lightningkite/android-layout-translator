@@ -61,6 +61,17 @@ class Replacements() {
         res
     }
 
+    private val canBeInStylesheetCache = HashMap<String, Boolean>()
+    fun canBeInStyleSheet(attributeName: String): Boolean = canBeInStylesheetCache.getOrPut(attributeName) {
+        val matching = attributes[attributeName] ?: return@getOrPut false
+
+        // all simple element accesses that can be reproduced in CSS
+        if(!matching.all { it.rules.keys.all { it.all { it.isLetterOrDigit() || it == '/' } } }) return@getOrPut false
+        // No ifContains rules that are dependent on knowing other values
+        if(!matching.all { it.rules.values.all { it.ifContains?.keys?.none { it.contains('=') } != false } }) return@getOrPut false
+
+        return@getOrPut true
+    }
 
     operator fun plusAssign(item: ReplacementRule) {
         if(item.debug){
@@ -76,13 +87,13 @@ class Replacements() {
     }
 
     operator fun plusAssign(yaml: String) {
-        mapper.readValue<List<ReplacementRule>>(yaml).forEach {
+        mapper.readValue<List<ReplacementRule>>(yaml).filterNotNull().forEach {
             this += it
         }
     }
 
     operator fun plusAssign(yaml: File) {
-        mapper.readValue<List<ReplacementRule>>(yaml).forEach {
+        mapper.readValue<List<ReplacementRule>>(yaml).filterNotNull().forEach {
             this += it
         }
     }

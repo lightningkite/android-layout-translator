@@ -19,57 +19,6 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
             )
         )
 
-    fun HasGet.getPath(path: String): String = (this as Any).getPath(path)
-    fun Element.getPath(path: String): String = (this as Any).getPath(path)
-    private fun Any.getPath(path: String): String {
-        var current: Any? = this
-        for (part in path.split('.')) {
-            while (current is Lazy<*>) {
-                current = current.value
-            }
-            current = when (current) {
-                is HasGet -> current[part]
-                is Element -> when(part) {
-                    "halfSize" -> (current.findSize()!! / 2).toString()
-                    else -> current[part]?.let { resources.read(it) }
-                }
-                is Map<*, *> -> current[part]
-                else -> return current.toString()
-            }
-        }
-        while (current is Lazy<*>) {
-            current = current.value
-        }
-        return current.toString()
-    }
-    private fun Element.findSize(): Double? {
-        return this["android:layout_width"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number
-            ?: this["android:layout_height"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number
-            ?: (this.parentNode as? Element)?.findSize()?.let {
-                it - (
-                        this["android:padding"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:layout_margin"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:paddingLeft"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:layout_marginLeft"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:paddingRight"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:layout_marginRight"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:paddingStart"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:layout_marginStart"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:paddingEnd"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:layout_marginEnd"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:paddingTop"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:layout_marginTop"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:paddingBottom"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:layout_marginBottom"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:paddingHorizontal"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:layout_marginHorizontal"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:paddingVertical"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: this["android:layout_marginVertical"]?.let { resources.read(it) as? AndroidDimension }?.measurement?.number?.times(2)
-                            ?: 0.0
-                        )
-            }
-    }
-
     open fun convertElement(owner: Element, sourceElement: Element): Element {
         val allAttributes = sourceElement.allAttributes
         val firstRule = replacements.getElement(sourceElement.tagName, allAttributes)
@@ -89,7 +38,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         allAttributes: Map<String, String>
     ): Element {
         val newElement = destOwner.appendFragment(rules.asSequence().mapNotNull { it.template }.first()
-            .write { getProjectWide(it) ?: sourceElement.getPath(it) })
+            .write { getProjectWide(it) ?: with(resources) { sourceElement.getPath(it) } })
 
         // Handle children
         handleChildren(rules, newElement, sourceElement)
@@ -160,50 +109,40 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         attributeRule: AttributeReplacement,
         destElement: Element,
         value: AndroidValue
-    ) {
-        fun subrule(path: String, sub: AttributeReplacement.SubRule) {
-            val target = destElement.xpathElementOrCreate(path)
-            if (sub.css.isNotEmpty()) {
-                val broken = target.getAttribute("style").split(';')
-                    .associate { it.substringBefore(':').trim() to it.substringAfter(':').trim() }
-                val resultCss =
-                    broken + sub.css.mapValues { it.value?.write { getProjectWide(it) ?: value.getPath(it) } }
-                target.setAttribute("style", resultCss.entries.joinToString("; ") { "${it.key}: ${it.value}" })
-            }
-            for (toAppend in sub.append) {
-                val content = toAppend.write { getProjectWide(it) ?: value.getPath(it) }
-                if (content.startsWith('<'))
-                    target.appendFragment(content)
-                else
-                    target.appendText(content)
-            }
-            for ((attKey, attTemplate) in sub.attribute) {
-                attTemplate?.write { getProjectWide(it) ?: value.getPath(it) }?.let {
-                    target.setAttribute(attKey, it)
-                } ?: target.removeAttribute(attKey)
-            }
-            sub.ifContains?.let { ifContains ->
-                val raw = (value as? AndroidString)?.value ?: value.toString()
-                var hit = false
-                for (entry in ifContains) {
-                    if(entry.key.contains("=")) {
-                        val eqKey = entry.key.substringBefore("=")
-                        val eqValue = entry.key.substringAfter("=")
-                        val attrValue = allAttributes.getPath(eqKey)
-                        if(eqValue in attrValue.split('|')) {
-                            subrule(path, entry.value)
-                            hit = true
+    ) = with(resources) {
+        for((path, sub) in attributeRule.rules) {
+            sub(
+                allAttributes = allAttributes,
+                value = value,
+                resources = resources,
+                action = {
+                    val target = destElement.xpathElementOrCreate(path)
+                    if(!replacements.canBeInStyleSheet(attributeRule.id)) {
+                        if (sub.css.isNotEmpty()) {
+                            val broken = target.getAttribute("style").split(';')
+                                .associate { it.substringBefore(':').trim() to it.substringAfter(':').trim() }
+                            val resultCss =
+                                broken + sub.css.mapValues { it.value?.write { getProjectWide(it) ?: value.getPath(it) } }
+                            target.setAttribute("style", resultCss.entries.joinToString("; ") { "${it.key}: ${it.value}" })
                         }
-                    } else if (entry.key in raw.split('|')) {
-                        subrule(path, entry.value)
-                        hit = true
+                        if(sub.classes.isNotEmpty()) {
+                            target["class"] = ((target["class"]?.split(' ') ?: listOf()) + sub.classes).joinToString(" ")
+                        }
+                    }
+                    for (toAppend in sub.append) {
+                        val content = toAppend.write { getProjectWide(it) ?: value.getPath(it) }
+                        if (content.startsWith('<'))
+                            target.appendFragment(content)
+                        else
+                            target.appendText(content)
+                    }
+                    for ((attKey, attTemplate) in sub.attribute) {
+                        attTemplate?.write { getProjectWide(it) ?: value.getPath(it) }?.let {
+                            target.setAttribute(attKey, it)
+                        } ?: target.removeAttribute(attKey)
                     }
                 }
-                if(!hit) ifContains["else"]?.let { subrule(path, it) }
-            }
-        }
-        for ((path, sub) in attributeRule.rules) {
-            subrule(path, sub)
+            )
         }
     }
 }

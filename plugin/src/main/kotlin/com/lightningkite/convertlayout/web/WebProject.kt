@@ -9,6 +9,12 @@ data class WebProject(
     val resourcesFolder: File get() = folder.resolve("src/resources")
     val layoutsFolder: File get() = resourcesFolder.resolve("layouts")
     val drawablesFolder: File get() = resourcesFolder.resolve("drawables")
+    init {
+        folder.mkdirs()
+        resourcesFolder.mkdirs()
+        layoutsFolder.mkdirs()
+        drawablesFolder.mkdirs()
+    }
 }
 
 

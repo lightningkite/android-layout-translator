@@ -54,6 +54,7 @@ val AndroidDrawableXml.scaleOverResize: Boolean
             is AndroidLayer -> false
             is AndroidShape -> false
             is AndroidVector -> true
+            is AndroidNamedColor -> false
         }
         is AndroidBitmap.Reference -> true
         is AndroidShape.Value -> false
@@ -189,7 +190,7 @@ fun IosTranslator.importVector(drawableResource: AndroidVector) {
 }
 
 fun IosTranslator.importBitmap(drawableResource: AndroidBitmap) {
-    val one = drawableResource.files["ldpi"] ?: drawableResource.files["drawble-mdpi"]
+    val one = drawableResource.files["ldpi"] ?: drawableResource.files["mdpi"]
     val two = drawableResource.files["hdpi"] ?: drawableResource.files["xhdpi"] ?: drawableResource.files[""]
     val three = drawableResource.files["xxhdpi"] ?: drawableResource.files["xxxhdpi"]
 
