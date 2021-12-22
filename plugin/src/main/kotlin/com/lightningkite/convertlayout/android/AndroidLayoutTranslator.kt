@@ -3,6 +3,7 @@ package com.lightningkite.convertlayout.android
 import com.lightningkite.convertlayout.xml.*
 import com.lightningkite.convertlayout.rules.*
 import com.lightningkite.convertlayout.util.DeferMap
+import com.lightningkite.convertlayout.web.css
 import org.w3c.dom.Element
 
 abstract class AndroidLayoutTranslator(val replacements: Replacements, val resources: AndroidResources) {
@@ -22,12 +23,14 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
     open fun convertElement(owner: Element, sourceElement: Element): Element {
         val allAttributes = sourceElement.allAttributes
         val firstRule = replacements.getElement(sourceElement.tagName, allAttributes)
-            ?: throw IllegalArgumentException("No rule ${sourceElement.tagName} found")
+            ?: unknownRule(sourceElement.tagName)
         val rules = generateSequence(firstRule) {
             it.parent?.let { replacements.elementsByIdentifier[it] }
         }.toList()
         return convertElement(owner, rules, sourceElement, allAttributes)
     }
+
+    open fun unknownRule(tagName: String): ElementReplacement = throw IllegalStateException("Rule for $tagName not found")
 
     abstract fun getProjectWide(key: String): String?
 
@@ -53,13 +56,10 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         destElement: Element,
         sourceElement: Element
     ) {
-//        if (sourceElement.childElements.none()) return
-        rules.mapNotNull { it.insertChildrenAt }.firstOrNull()?.let { path ->
-            val target =
-                destElement.xpathElementOrCreate(path)
-            val rule = rules.mapNotNull { it.childRule }.firstOrNull()
-            handleChildren(rules, rule, sourceElement, destElement, target)
-        }
+        val rule = rules.mapNotNull { it.childRule }.firstOrNull()
+        val target = rules.mapNotNull { it.insertChildrenAt }.firstOrNull()
+            ?.let { path -> destElement.xpathElementOrCreate(path) } ?: destElement
+        handleChildren(rules, rule, sourceElement, destElement, target)
     }
 
     open fun handleChildren(
@@ -81,8 +81,15 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         destElement: Element
     ) {
         for ((key, raw) in allAttributes) {
-            if(key.startsWith("tools:") && !allAttributes.containsKey("android:" + key.substringAfter(':'))) {
-                handleAttribute(rules, sourceElement, destElement, allAttributes, "android:" + key.substringAfter(':'), raw)
+            if (key.startsWith("tools:") && !allAttributes.containsKey("android:" + key.substringAfter(':'))) {
+                handleAttribute(
+                    rules,
+                    sourceElement,
+                    destElement,
+                    allAttributes,
+                    "android:" + key.substringAfter(':'),
+                    raw
+                )
             } else {
                 handleAttribute(rules, sourceElement, destElement, allAttributes, key, raw)
             }
@@ -99,34 +106,45 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
     ) {
         val value = resources.read(raw)
         val attributeRule = rules.asSequence()
-            .mapNotNull { replacements.getAttribute(it.caseIdentifier ?: it.id, key, AttributeReplacement.ValueType2[value::class], raw) }
+            .mapNotNull {
+                replacements.getAttribute(
+                    elementName = it.caseIdentifier ?: it.id,
+                    parentElementName = (sourceElement.parentNode as? Element)?.tagName ?: "",
+                    attributeName = key,
+                    attributeType = AttributeReplacement.ValueType2[value::class],
+                    rawValue = raw
+                )
+            }
             .firstOrNull() ?: return
-        handleAttribute(allAttributes, attributeRule, destElement, value)
+        handleAttribute(allAttributes, attributeRule, destElement, value, sourceElement[key] == null)
     }
 
     open fun handleAttribute(
         allAttributes: Map<String, String>,
         attributeRule: AttributeReplacement,
         destElement: Element,
-        value: AndroidValue
+        value: AndroidValue,
+        inStyle: Boolean
     ) = with(resources) {
-        for((path, sub) in attributeRule.rules) {
+        for ((path, sub) in attributeRule.rules) {
             sub(
-                allAttributes = allAttributes,
                 value = value,
-                resources = resources,
+                getter = { with(resources) { allAttributes.getPath(it) } },
                 action = {
                     val target = destElement.xpathElementOrCreate(path)
-                    if(!replacements.canBeInStyleSheet(attributeRule.id)) {
+                    if (!inStyle || !replacements.canBeInStyleSheet(attributeRule.id)) {
                         if (sub.css.isNotEmpty()) {
-                            val broken = target.getAttribute("style").split(';')
-                                .associate { it.substringBefore(':').trim() to it.substringAfter(':').trim() }
-                            val resultCss =
-                                broken + sub.css.mapValues { it.value?.write { getProjectWide(it) ?: value.getPath(it) } }
-                            target.setAttribute("style", resultCss.entries.joinToString("; ") { "${it.key}: ${it.value}" })
+                            target.css.multi {
+                                it.putAll(sub.css.mapValues {
+                                    it.value!!.write {
+                                        getProjectWide(it) ?: value.getPath(it)
+                                    }
+                                })
+                            }
                         }
-                        if(sub.classes.isNotEmpty()) {
-                            target["class"] = ((target["class"]?.split(' ') ?: listOf()) + sub.classes).joinToString(" ")
+                        if (sub.classes.isNotEmpty()) {
+                            target["class"] =
+                                ((target["class"]?.split(' ') ?: listOf()) + sub.classes).joinToString(" ")
                         }
                     }
                     for (toAppend in sub.append) {

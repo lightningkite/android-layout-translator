@@ -10,8 +10,7 @@
     "typescript": "^4.5.2"
   },
   "scripts": {
-    "build": "webpack --mode production",
-    "build-dev": "webpack --mode development",
+    "build": "tsc",
     "test": "jest --env=node --colors --coverage test"
   },
   "author": "Lightning Kite"

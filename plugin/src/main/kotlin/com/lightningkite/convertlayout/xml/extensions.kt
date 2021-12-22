@@ -246,7 +246,8 @@ fun String.readXml(): Document {
 fun File.readXml(): Document {
     return defaultBuilder.parse(this)
 }
-fun File.writeXml(document: Document) = this.bufferedWriter().use { writer ->
+fun File.writeXml(document: Document, prefix: String? = null) = this.bufferedWriter().use { writer ->
+    prefix?.let { writer.appendLine(it) }
     TransformerFactory
         .newInstance()
         .newTransformer()

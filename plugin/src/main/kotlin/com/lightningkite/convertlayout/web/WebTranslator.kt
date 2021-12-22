@@ -37,11 +37,11 @@ data class WebTranslator(
         val instance = make()
         project.layoutsFolder
             .also { it.mkdirs() }
-            .resolve(layout.className + ".xib")
+            .resolve(layout.name + ".html")
             .writeXml(instance.convertDocument(layout, layout.files.first().readXml()).also { it.documentElement.cleanBlanks() })
         project.layoutsFolder
             .also { it.mkdirs() }
-            .resolve(layout.className + ".swift")
+            .resolve(layout.className + ".ts")
             .writeText(instance.tsFile(layout))
     }
     operator fun invoke() {

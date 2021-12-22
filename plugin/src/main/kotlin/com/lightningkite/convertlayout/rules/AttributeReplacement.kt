@@ -12,6 +12,7 @@ data class AttributeReplacement(
     val id: String,
     var valueType: ValueType2 = ValueType2.Value,
     var element: String = "View",
+    var parentElement: String? = null,
     var rules: Map<String, SubRule> = mapOf(),
     var xib: Map<String, XibRuleType> = mapOf(),
     var code: Template? = null,
@@ -27,9 +28,8 @@ data class AttributeReplacement(
         val classes: List<Template> = listOf()
     ) {
         operator fun invoke(
-            allAttributes: Map<String, String>,
             value: AndroidValue,
-            resources: AndroidResources,
+            getter: (String) -> String,
             action: (SubRule)->Unit
         ) {
             action(this)
@@ -40,17 +40,17 @@ data class AttributeReplacement(
                     if(entry.key.contains("=")) {
                         val eqKey = entry.key.substringBefore("=")
                         val eqValue = entry.key.substringAfter("=")
-                        val attrValue = with(resources) { allAttributes.getPath(eqKey) }
+                        val attrValue = getter(eqKey)
                         if(eqValue in attrValue.split('|')) {
-                            entry.value(allAttributes, value, resources, action)
+                            entry.value(value, getter, action)
                             hit = true
                         }
                     } else if (entry.key in raw.split('|')) {
-                        entry.value(allAttributes, value, resources, action)
+                        entry.value(value, getter, action)
                         hit = true
                     }
                 }
-                if(!hit) ifContains["else"]?.let { it(allAttributes, value, resources, action) }
+                if(!hit) ifContains["else"]?.let { it(value, getter, action) }
             }
         }
     }

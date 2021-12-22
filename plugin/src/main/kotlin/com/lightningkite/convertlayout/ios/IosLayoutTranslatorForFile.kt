@@ -745,10 +745,11 @@ internal class IosLayoutTranslatorForFile(
         allAttributes: Map<String, String>,
         attributeRule: AttributeReplacement,
         destElement: Element,
-        value: AndroidValue
+        value: AndroidValue,
+        inStyle: Boolean
     ) {
         usedResources.add(value)
-        super.handleAttribute(allAttributes, attributeRule, destElement, value)
+        super.handleAttribute(allAttributes, attributeRule, destElement, value, inStyle)
         attributeRule.code?.let {
             outlets[destElement["id"]!!] = destElement.swiftIdentifier()
             this.iosCode.appendLine(it.write {

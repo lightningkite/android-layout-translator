@@ -130,7 +130,7 @@
         src: "../images/~name~"
 
 #-------------
--
+
 - id: EditTextLike
   type: element
   parent: HasDirectText
@@ -557,6 +557,15 @@
       css:
         height: "~web~"
 
+- id: "android:layout_weight"
+  type: attribute
+  rules:
+    "":
+      css:
+        flex-grow: "~value~"
+        flex-shrink: "~value~"
+        flex-basis: "0"
+
 - id: LinearLayout
   type: element
   template: '<div style="flex-direction: row;" />'
@@ -614,3 +623,42 @@
               css: { align-items: flex-end }
             center:
               css: { align-items: center, justify-content: center }
+
+# -------------------
+
+- id: LinearLayout
+  type: element
+  childRule: linear
+  template: <div/>
+
+- id: FrameLayout
+  type: element
+  childRule: frame
+  template: <div/>
+
+- id: ScrollView
+  type: element
+  template: <div/>
+
+- id: HorizontalScrollView
+  type: element
+  template: <div/>
+
+- id: ViewFlipper
+  type: element
+  childRule: frame
+  template: <div/>
+
+- id: androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+  type: element
+  childRule: frame
+  template: <div/>
+
+- id: RadioGroup
+  type: element
+  parent: LinearLayout
+
+- id: include
+  type: element
+  parent: null
+  template: <div/>

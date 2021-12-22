@@ -44,6 +44,7 @@ class Replacements() {
 
     fun getAttribute(
         elementName: String,
+        parentElementName: String,
         attributeName: String,
         attributeType: AttributeReplacement.ValueType2,
         rawValue: String
@@ -56,10 +57,27 @@ class Replacements() {
             println("    ${attributeType} in ${it.valueType}")
             println("    ${it.element} == ${elementName}")
             println("    ${it.equalTo} == null or ${rawValue}")
+            println("    ${it.parentElement} == null or ${parentElementName}")
             println("    ${res}")
         }
         res
     }
+
+    fun getAttributeOptionsForStyle(
+        attributeName: String,
+        attributeType: AttributeReplacement.ValueType2,
+        rawValue: String
+    ): Sequence<AttributeReplacement> = attributes[attributeName]?.asSequence()?.filter {
+        val res = (attributeType in it.valueType)
+                && (it.equalTo == null || it.equalTo == rawValue)
+        if(it.debug) {
+            println("Checking against rule $it")
+            println("    ${attributeType} in ${it.valueType}")
+            println("    ${it.equalTo} == null or ${rawValue}")
+            println("    ${res}")
+        }
+        res
+    } ?: sequenceOf()
 
     private val canBeInStylesheetCache = HashMap<String, Boolean>()
     fun canBeInStyleSheet(attributeName: String): Boolean = canBeInStylesheetCache.getOrPut(attributeName) {

@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.sourceElementsConfigurationNa
 
 fun WebTranslator.importResources() {
     val sass = StringBuilder()
+    sass.appendLine("""@import "~android-xml-runtime/index.scss";""")
     importDimensionsColors(sass)
     importDrawables(sass)
     importStyles(sass)
@@ -115,10 +116,10 @@ fun Appendable.writeSass(xml: AndroidDrawableXml) {
 }
 
 fun WebTranslator.importVector(drawableResource: AndroidVector, sass: StringBuilder) {
-    val svgFile = project.resourcesFolder.resolve(drawableResource.name + ".svg")
+    val svgFile = project.drawablesFolder.resolve(drawableResource.name + ".svg")
     drawableResource.toSvg(resources, 1f, svgFile)
     sass.appendLine(".drawable-${drawableResource.name} {")
-    sass.appendLine("""background-image: url("${svgFile.name}");""")
+    sass.appendLine("""background-image: url("drawables/${svgFile.name}");""")
     sass.appendLine("background-size: contain;")
     sass.appendLine("}")
 }
@@ -149,6 +150,7 @@ fun WebTranslator.importStrings() {
         for (key in resources.strings.keys) {
             appendLine("${key.safeJsIdentifier()}: string")
         }
+        appendLine("}")
         appendLine("export namespace DefaultStrings {")
         for ((key, value) in resources.strings.entries) {
             val fixedString = value.value
@@ -207,46 +209,47 @@ fun WebTranslator.importStyles(sass: StringBuilder) {
         for((key, rawValue) in style.map) {
             val value = resources.read(rawValue)
             if(!replacements.canBeInStyleSheet(key)) continue
-            val elementKinds = replacements.attributes[key]?.asSequence()
-                ?.mapNotNull { it.element.takeUnless { it == "View" } }
-                ?.toSet() ?: setOf()
-            for(element in elementKinds) {
-                val uniqueElementType = replacements.elements[element]?.singleOrNull()?.uniqueElementType
-                if(uniqueElementType != null) {
-                    sass.appendLine("&$uniqueElementType {")
-                } else {
-                    sass.appendLine("&.android-${element} {")
-                }
-                val rule = replacements.getAttribute(
-                    elementName = element,
-                    attributeName = key,
-                    attributeType = AttributeReplacement.ValueType2[value::class],
-                    rawValue = rawValue
-                ) ?: continue
-                for ((path, subrule) in rule.rules) {
-                    if(!path.isEmpty()) {
-                        sass.appendLine(path.replace('/', ' ') + " {")
+            replacements.getAttributeOptionsForStyle(key, AttributeReplacement.ValueType2[value::class], rawValue)
+                .forEach { rule ->
+                    // Potential upgrade: Support element and parentElement?
+                    var preAmpersand = ""
+                    var postAmpersand = ""
+                    rule.element.takeUnless { it == "View" }?.let { element ->
+                        val uniqueElementType = replacements.elements[element]?.singleOrNull()?.uniqueElementType
+                        if(uniqueElementType != null) postAmpersand += "$uniqueElementType"
+                        else postAmpersand += ".android-${element}"
+                    } ?: rule.parentElement?.let { parentElement ->
+                        val uniqueElementType = replacements.elements[parentElement]?.singleOrNull()?.uniqueElementType
+                        if(uniqueElementType != null) preAmpersand = "$uniqueElementType $preAmpersand"
+                        else preAmpersand = ".android-$parentElement $preAmpersand"
                     }
-                    subrule(
-                        allAttributes = style.chainedMap,
-                        value = value,
-                        resources = resources,
-                        action = { subrule ->
-                            for((ckey, cvalue) in subrule.css) {
-                                sass.appendLine("$ckey: $cvalue;")
-                            }
-                            subrule.classes
-                                .takeUnless { it.isEmpty() }
-                                ?.joinToString()
-                                ?.let { sass.appendLine("@extends $it;") }
+                    val sub = if(preAmpersand.isNotEmpty() || postAmpersand.isNotEmpty()) "$preAmpersand&$postAmpersand" else null
+                    if(sub != null) sass.appendLine("$sub {")
+                    for ((path, subrule) in rule.rules) {
+                        if(!path.isEmpty()) {
+                            sass.appendLine(path.replace('/', ' ') + " {")
                         }
-                    )
-                    if(!path.isEmpty()) {
-                        sass.appendLine("}")
+                        subrule(
+                            value = value,
+                            getter = { with(resources) { style.chainedMap.getPath(it) } },
+                            action = { subrule ->
+                                for((ckey, ctemplate) in subrule.css) {
+                                    val cvalue = ctemplate?.write { with(resources) { value.getPath(it) } }
+                                    sass.appendLine("$ckey: $cvalue;")
+                                }
+                                subrule.classes
+                                    .takeUnless { it.isEmpty() }
+                                    ?.map { "." + it.write { with(resources) { value.getPath(it) } } }
+                                    ?.joinToString()
+                                    ?.let { sass.appendLine("@extend $it;") }
+                            }
+                        )
+                        if(!path.isEmpty()) {
+                            sass.appendLine("}")
+                        }
                     }
+                    if(sub != null) sass.appendLine("}")
                 }
-                sass.appendLine("}")
-            }
         }
         sass.appendLine("}")
     }

@@ -1,7 +1,9 @@
 package com.lightningkite.convertlayout.web
 
 import com.lightningkite.convertlayout.android.*
+import com.lightningkite.convertlayout.ios.Gravity
 import com.lightningkite.convertlayout.ios.SwiftIdentifier
+import com.lightningkite.convertlayout.ios.toGravity
 import com.lightningkite.convertlayout.rules.AttributeReplacement
 import com.lightningkite.convertlayout.rules.ElementReplacement
 import com.lightningkite.convertlayout.rules.Replacements
@@ -26,22 +28,63 @@ internal class WebLayoutTranslatorForFile(
         else -> null
     }
 
-    val baseFile = """
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <link rel="stylesheet" href="../../main.css"/>
-          <link rel="stylesheet" href="../../resources.css"/>
-        </head>
-        <body></body>
-        </html>
-    """.trimIndent().readXml()
+    override fun unknownRule(tagName: String): ElementReplacement {
+        return replacements.getElement("View", mapOf())!!
+    }
+
+    override fun convertElement(owner: Element, sourceElement: Element): Element {
+        val result = super.convertElement(owner, sourceElement)
+        val tagNameClass = "android-${sourceElement.tagName.substringAfterLast('.')}"
+        result["class"] = result["class"]?.let { "$it $tagNameClass" } ?: tagNameClass
+        return result
+    }
+
+    override fun handleChildren(
+        rules: List<ElementReplacement>,
+        childAddRule: String?,
+        sourceElement: Element,
+        destElement: Element,
+        target: Element
+    ) {
+        val myAttributes = sourceElement.allAttributes
+        when(childAddRule) {
+            "linear" -> {
+                val isVertical = myAttributes["android:orientation"] == "vertical"
+                sourceElement.childElements.forEach { childSrc ->
+                    val childDest = this.convertElement(target, childSrc)
+                    if(childSrc["android:layout_${if(isVertical) "width" else "height"}"] == "match_parent") {
+                        childDest.css["align-self"] = "stretch"
+                    } else {
+                        childSrc["android:layout_gravity"]?.toGravity()?.let { grav ->
+                            childDest.css["align-self"] = grav[!isVertical].name.lowercase()
+                        }
+                    }
+                }
+            }
+            "frame" -> {
+                sourceElement.childElements.forEach { childSrc ->
+                    val childDest = this.convertElement(target, childSrc)
+                    val childGravity = childSrc["android:layout_gravity"]?.toGravity() ?: Gravity()
+                    if(childSrc["android:layout_width"] == "match_parent") {
+                        childDest.css["justify-self"] = "stretch"
+                    } else {
+                        childDest.css["justify-self"] = childGravity[false].name.lowercase()
+                    }
+                    if(childSrc["android:layout_height"] == "match_parent") {
+                        childDest.css["align-self"] = "stretch"
+                    } else {
+                        childDest.css["align-self"] = childGravity[true].name.lowercase()
+                    }
+                }
+            }
+            else -> super.handleChildren(rules, childAddRule, sourceElement, destElement, target)
+        }
+    }
 
     fun convertDocument(layout: AndroidLayoutFile, androidXml: Document): Document {
-        val html = baseFile.clone()
-        val bodyNode = html.documentElement.xpathElement("body")!!
+        val html = """<div/>""".readXml()
+        val bodyNode = html.documentElement
         val view = convertElement(bodyNode, androidXml.documentElement)
-
         return html
     }
 

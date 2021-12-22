@@ -3,7 +3,8 @@ export function inflateHtmlFile(html: string, ...identifiers: Array<string>): Re
     const result: Record<string, HTMLElement> = {}
     const holder = document.createElement("div")
     holder.innerHTML = html
-    const root = holder.firstElementChild!
+    console.log(holder)
+    const root = holder.firstElementChild!.firstElementChild!
     result._root = root as HTMLElement
     for(const key of identifiers) {
         result[key] = root.getElementsByClassName(`id-${key}`)[0] as HTMLElement
