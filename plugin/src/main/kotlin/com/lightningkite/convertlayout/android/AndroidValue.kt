@@ -87,12 +87,18 @@ sealed interface AndroidString : AndroidValue {
     val value: String
     override fun get(key: String): Any? = when (key) {
         "escaped" -> value
+            .replace("&", "&amp;")
+            .replace("\n", "&#xA;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\t", "&#x9;")
+        "escapedAttribute" -> value
+            .replace("&", "&amp;")
             .replace("\n", "&#xA;")
             .replace("<", "&lt;")
             .replace(">", "&gt;")
             .replace("\"", "&quot;")
             .replace("'", "&apos;")
-            .replace("&", "&amp;")
             .replace("\t", "&#x9;")
         else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
     }

@@ -30,27 +30,29 @@ data class AttributeReplacement(
         operator fun invoke(
             value: AndroidValue,
             getter: (String) -> String,
-            action: (SubRule)->Unit
+            action: (SubRule) -> Unit
         ) {
             action(this)
             ifContains?.let { ifContains ->
                 val raw = (value as? AndroidString)?.value ?: value.toString()
                 var hit = false
                 for (entry in ifContains) {
-                    if(entry.key.contains("=")) {
+                    if (entry.key.contains("=")) {
                         val eqKey = entry.key.substringBefore("=")
                         val eqValue = entry.key.substringAfter("=")
                         val attrValue = getter(eqKey)
-                        if(eqValue in attrValue.split('|')) {
+                        if (eqValue in attrValue.split('|')) {
                             entry.value(value, getter, action)
                             hit = true
                         }
-                    } else if (entry.key in raw.split('|')) {
-                        entry.value(value, getter, action)
-                        hit = true
+                    } else {
+                        if (entry.key in raw.split('|')) {
+                            entry.value(value, getter, action)
+                            hit = true
+                        }
                     }
                 }
-                if(!hit) ifContains["else"]?.let { it(value, getter, action) }
+                if (!hit) ifContains["else"]?.let { it(value, getter, action) }
             }
         }
     }
@@ -110,5 +112,6 @@ data class AttributeReplacement(
             operator fun get(type: KClass<*>): ValueType2 = map[type]!!
         }
     }
+
     override val priority: Int get() = (if (equalTo != null) 20 else 0) + valueType.depth
 }

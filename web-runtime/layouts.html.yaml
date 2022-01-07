@@ -133,7 +133,6 @@
 
 - id: EditTextLike
   type: element
-  parent: HasDirectText
   template: ""
 
 - id: EditText
@@ -214,7 +213,7 @@
   caseIdentifier: UnlabeledSwitch
   attributes:
     android:text: 'unset'
-  template: <input type="checkbox" class="switch"/>
+  template: <input type="checkbox"/>
 
 - id: CheckBox
   type: element
@@ -229,7 +228,7 @@
 - id: Switch
   type: element
   parent: LabeledCheckOrRadio
-  template: <label><input type="checkbox"/></label>
+  template: <label><input type="checkbox"/><span class="back"><span class="slider"></span></span></label>
 
 - id: "android:checked"
   type: attribute
@@ -335,7 +334,7 @@
   rules:
     "":
       attribute:
-        value: ~escaped~
+        value: ~escapedAttribute~
 
 - id: "android:textStyle"
   type: attribute
@@ -565,10 +564,6 @@
         flex-grow: "~value~"
         flex-shrink: "~value~"
         flex-basis: "0"
-
-- id: LinearLayout
-  type: element
-  template: '<div style="flex-direction: row;" />'
 
 - id: "android:orientation"
   type: attribute

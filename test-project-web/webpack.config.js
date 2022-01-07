@@ -71,12 +71,11 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
   },
   devServer: {
-    contentBase: './dist',
-    publicPath: process.env.DEV_PUBLIC_PATH || '/',
-    public: process.env.DEV_PUBLIC,// || 'dirs.localhost',
-    disableHostCheck: process.env.DEV_HOST_CHECK || true,
+    static: {
+      directory: './dist',
+      publicPath: process.env.DEV_PUBLIC_PATH || '/',
+    },
     host: process.env.DEV_HOST || '127.0.0.1',
     port: process.env.DEV_PORT || '8080',
-    historyApiFallback: true,
   }
 };

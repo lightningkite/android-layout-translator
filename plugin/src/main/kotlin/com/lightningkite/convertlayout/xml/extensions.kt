@@ -253,6 +253,7 @@ fun File.writeXml(document: Document, prefix: String? = null) = this.bufferedWri
         .newTransformer()
         .apply {
             setOutputProperty(OutputKeys.INDENT, "yes")
+            setOutputProperty(OutputKeys.METHOD, "html");
             setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
         }
         .transform(DOMSource(document), StreamResult(writer))

@@ -129,8 +129,8 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         for ((path, sub) in attributeRule.rules) {
             sub(
                 value = value,
-                getter = { with(resources) { allAttributes.getPath(it) } },
-                action = {
+                getter = { allAttributes.getPath(it) },
+                action = { sub ->
                     val target = destElement.xpathElementOrCreate(path)
                     if (!inStyle || !replacements.canBeInStyleSheet(attributeRule.id)) {
                         if (sub.css.isNotEmpty()) {
@@ -144,7 +144,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
                         }
                         if (sub.classes.isNotEmpty()) {
                             target["class"] =
-                                ((target["class"]?.split(' ') ?: listOf()) + sub.classes).joinToString(" ")
+                                ((target["class"]?.split(' ') ?: listOf()) + sub.classes.map { it.write { getProjectWide(it) ?: value.getPath(it) } }).joinToString(" ")
                         }
                     }
                     for (toAppend in sub.append) {

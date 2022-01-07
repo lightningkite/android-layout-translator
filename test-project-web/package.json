@@ -28,6 +28,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "build-dev": "webpack --mode development",
+    "start": "webpack-dev-server --open",
     "test": "jest --env=node --colors --coverage test"
   },
   "author": "Lightning Kite"

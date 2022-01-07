@@ -36,6 +36,9 @@ internal class WebLayoutTranslatorForFile(
         val result = super.convertElement(owner, sourceElement)
         val tagNameClass = "android-${sourceElement.tagName.substringAfterLast('.')}"
         result["class"] = result["class"]?.let { "$it $tagNameClass" } ?: tagNameClass
+        sourceElement["style"]?.let { resources.read(it) as? AndroidStyle }?.name?.let { styleClass ->
+            result["class"] = result["class"]?.let { "$it style-$styleClass" } ?: "style-$styleClass"
+        }
         return result
     }
 
@@ -52,10 +55,10 @@ internal class WebLayoutTranslatorForFile(
                 val isVertical = myAttributes["android:orientation"] == "vertical"
                 sourceElement.childElements.forEach { childSrc ->
                     val childDest = this.convertElement(target, childSrc)
-                    if(childSrc["android:layout_${if(isVertical) "width" else "height"}"] == "match_parent") {
+                    if(childSrc.allAttributes["android:layout_${if(isVertical) "width" else "height"}"] == "match_parent") {
                         childDest.css["align-self"] = "stretch"
                     } else {
-                        childSrc["android:layout_gravity"]?.toGravity()?.let { grav ->
+                        childSrc.allAttributes["android:layout_gravity"]?.toGravity()?.let { grav ->
                             childDest.css["align-self"] = grav[!isVertical].name.lowercase()
                         }
                     }
@@ -65,12 +68,12 @@ internal class WebLayoutTranslatorForFile(
                 sourceElement.childElements.forEach { childSrc ->
                     val childDest = this.convertElement(target, childSrc)
                     val childGravity = childSrc["android:layout_gravity"]?.toGravity() ?: Gravity()
-                    if(childSrc["android:layout_width"] == "match_parent") {
+                    if(childSrc.allAttributes["android:layout_width"] == "match_parent") {
                         childDest.css["justify-self"] = "stretch"
                     } else {
                         childDest.css["justify-self"] = childGravity[false].name.lowercase()
                     }
-                    if(childSrc["android:layout_height"] == "match_parent") {
+                    if(childSrc.allAttributes["android:layout_height"] == "match_parent") {
                         childDest.css["align-self"] = "stretch"
                     } else {
                         childDest.css["align-self"] = childGravity[true].name.lowercase()
