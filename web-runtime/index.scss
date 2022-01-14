@@ -1,30 +1,68 @@
 * {
   box-sizing: border-box;
+  font-family: "Roboto", "Open Sans", sans-serif;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  flex-shrink: 0;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+body > * {
+  height: 100%;
+  width: 100%;
+}
+
+button {
+  border: none
+}
+
+button input {
+  background: none;
+  border: none;
+  color: unset;
+  font: unset;
 }
 
 .android-LinearLayout {
   display: flex;
   flex-direction: row;
-  justify-items: start;
+  justify-content: start;
   align-items: start;
 }
+
+.android-RecyclerView {
+  overflow-y: scroll;
+}
+
 .bold-text {
   font-weight: bold;
 }
+
 .italic-text {
   font-style: italic;
 }
+
 .android-FrameLayout {
   display: grid;
   grid-template-columns: auto;
   z-index: 0;
 }
+
 .android-FrameLayout > * {
   grid-column-start: 1;
   grid-column-end: 1;
   grid-row-start: 1;
   grid-row-end: 1;
 }
+
 .android-Switch {
   /* The switch - the box around the slider */
   .back {
@@ -84,6 +122,7 @@
     transform: translateX(13px);
   }
 }
+
 .android-RatingBar {
   --dir: right;
   --fill: gold;
@@ -104,17 +143,20 @@
   [dir="rtl"] & {
     --dir: left;
   }
+
   &::-moz-range-track {
     background: var(--fillbg);
     //background: linear-gradient(to var(--dir), var(--fill) 0 var(--x), var(--fillbg) 0 var(--x));
     block-size: 100%;
     mask: repeat left center/var(--starsize) var(--symbol);
   }
+
   &::-moz-range-progress {
     background: var(--fill);
     block-size: 100%;
     mask: repeat left center/var(--starsize) var(--star);
   }
+
   &::-webkit-slider-runnable-track {
     background: var(--fillbg);
     //background: linear-gradient(to var(--dir), var(--fill) 0 var(--x), var(--fillbg) 0 var(--x));
@@ -122,11 +164,13 @@
     mask: repeat left center/var(--starsize) var(--symbol);
     -webkit-mask: repeat left center/var(--starsize) var(--symbol);
   }
+
   &::-moz-range-thumb {
     height: var(--starsize);
     opacity: 0;
     width: var(--starsize);
   }
+
   &::-webkit-slider-thumb {
     background-color: var(--fill);
     box-shadow: calc(0rem - var(--w)) 0 0 var(--w) var(--fill);
@@ -134,8 +178,234 @@
     width: 1px;
     height: var(--starsize);
     -webkit-appearance: none;
+
     [dir="rtl"] & {
       box-shadow: var(--w) 0 0 var(--w) var(--fill);
+    }
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb:vertical {
+  margin: 5px;
+  background-color: #999;
+  -webkit-border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+  margin: 5px;
+  background-color: #999;
+  -webkit-border-radius: 5px;
+}
+
+::-webkit-scrollbar-button:start:decrement,
+::-webkit-scrollbar-button:end:increment {
+  height: 5px;
+  display: block;
+}
+
+::-webkit-scrollbar-thumb {
+  visibility: hidden;
+}
+
+:hover::-webkit-scrollbar-thumb {
+  visibility: visible;
+}
+
+@keyframes stack-push-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes stack-push-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes stack-pop-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes stack-pop-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes stack-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes stack-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.android-SwapView {
+  display: block;
+  position: relative;
+}
+
+.android-SwapView > * {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+}
+
+.android-ViewPager {
+  position: relative;
+}
+
+.pager-prev {
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  padding: 4px;
+  background: #CCCCCC;
+  color: black;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  font-size: 24px;
+
+  &:hover {
+    background: #DDDDDD;
+
+    &:active {
+      background: #AAAAAA;
+    }
+  }
+}
+
+.pager-next {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  padding: 4px;
+  background: #CCCCCC;
+  color: black;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  font-size: 24px;
+
+  &:hover {
+    background: #DDDDDD;
+
+    &:active {
+      background: #AAAAAA;
+    }
+  }
+}
+
+.pager-content {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.pager-content > * {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+}
+
+.android-ImageView {
+  object-fit: contain;
+}
+
+.resp-sharing-dialog-back {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  justify-items: center;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  left: 0;
+  top: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+}
+
+.rxjs-plus-dialog-front {
+  display: flex;
+  flex-direction: column;
+  justify-items: center;
+  align-items: center;
+  background-color: #F0F0F0;
+  padding: 0.5em;
+  max-height: 90%;
+  max-width: 90%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  border-radius: 8px;
+}
+
+.rxjs-plus-dialog-message {
+  color: #000000
+}
+
+.rxjs-plus-dialog-buttons {
+  display: flex;
+  flex-direction: row;
+}
+
+.rxjs-plus-dialog-cancel {
+  min-height: 32px;
+  min-width: 42px;
+  color: #000000;
+  border-radius: 4px;
+  &:hover {
+    background: #DDDDDD;
+
+    &:active {
+      background: #AAAAAA;
+    }
+  }
+}
+
+.rxjs-plus-dialog-ok {
+  min-height: 32px;
+  min-width: 42px;
+  color: #000000;
+  border-radius: 4px;
+  &:hover {
+    background: #DDDDDD;
+
+    &:active {
+      background: #AAAAAA;
     }
   }
 }

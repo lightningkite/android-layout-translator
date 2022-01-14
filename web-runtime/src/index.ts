@@ -6,7 +6,6 @@ export function inflateHtmlFile(
     const result: Record<string, HTMLElement | Record<string, HTMLElement>> = {}
     const holder = document.createElement("div")
     holder.innerHTML = html
-    console.log(holder)
     const root = holder.firstElementChild!.firstElementChild!
     result.root = root as HTMLElement
     for (const key of identifiers) {

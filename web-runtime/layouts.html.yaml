@@ -118,20 +118,20 @@
 - id: "android:src"
   type: attribute
   element: ImageView
-  valueType: NamedDrawableWithSize
+  valueType: Bitmap
   rules:
     "":
       attribute:
-        src: "../images/~name~"
+        src: "../drawables/~name~.png"
 
 - id: "android:src"
   type: attribute
   element: ImageButton
-  valueType: NamedDrawableWithSize
+  valueType: Vector
   rules:
     "img":
       attribute:
-        src: "../images/~name~"
+        src: "../drawables/~name~.svg"
 
 #-------------
 
@@ -238,11 +238,11 @@
 
 - id: SeekBar
   type: element
-  template: <input type="range" min="1" value="50" max="100"/>
+  template: <input type="range" min="0" value="50" max="100"/>
 
 - id: RatingBar
   type: element
-  template: <input type="range" min="1" value="4" max="5"/>
+  template: <input type="range" min="0" value="4" max="5"/>
 
 - id: Spinner
   type: element
@@ -332,7 +332,7 @@
 
 - id: "android:background"
   type: attribute
-  valueType: NamedColor
+  valueType: ColorStateResource
   rules:
     "":
       css:
@@ -414,6 +414,7 @@
 
 - id: "android:gravity"
   type: attribute
+  element: TextView
   valueType: String
   rules:
     "":
@@ -712,7 +713,16 @@
 
 - id: androidx.viewpager.widget.ViewPager
   type: element
-  template: <div> <div id="container" class="pager-content"/> <button id="previous" class="pager-prev"/> <button id="next" class="pager-next"/> </div>
+  template: |
+    <div>
+      <div id="container" class="pager-content"/> 
+      <button id="previous" class="pager-prev">
+        <span class="material-icons">arrow_back</span>
+      </button> 
+      <button id="next" class="pager-next">
+        <span class="material-icons">arrow_forward</span>
+      </button> 
+    </div>
 
 - id: include
   type: element

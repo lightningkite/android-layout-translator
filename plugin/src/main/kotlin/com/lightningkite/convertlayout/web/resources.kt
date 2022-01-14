@@ -131,10 +131,10 @@ fun WebTranslator.importBitmap(drawableResource: AndroidBitmap, sass: StringBuil
         ?: drawableResource.files["xhdpi"]
         ?: drawableResource.files["xxhdpi"]
         ?: drawableResource.files["xxxhdpi"]!!
-    val destFile = project.resourcesFolder.resolve(drawableResource.name + "." + sourceFile.extension)
+    val destFile = project.drawablesFolder.resolve(drawableResource.name + "." + sourceFile.extension)
     sourceFile.copyTo(destFile, overwrite = true)
     sass.appendLine(".drawable-${drawableResource.name} {")
-    sass.appendLine("""background-image: url("${destFile.name}");""")
+    sass.appendLine("""background-image: url("./drawables/${destFile.name}");""")
     sass.appendLine("background-size: contain;")
     sass.appendLine("}")
 }
