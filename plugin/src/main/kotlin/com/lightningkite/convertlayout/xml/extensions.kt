@@ -298,3 +298,5 @@ fun Element.getOrAppendChild(name: String): Element {
 fun Element.getOrAppendChildWithKey(name: String, key: String, keyPropertyName: String = "key"): Element {
     return this.childElements.find { it.tagName == name && it[keyPropertyName] == key } ?: this.appendElement(name) { this[keyPropertyName] = key }
 }
+
+fun Element.walkElements(): Sequence<Element> = sequenceOf(this) + childElements.flatMap { it.walkElements() }

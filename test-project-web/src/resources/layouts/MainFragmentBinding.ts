@@ -1,13 +1,16 @@
 import {inflateHtmlFile} from "android-xml-runtime";
 import html from './main_fragment.html'
 
+//! Declares com.example.painfullyvanilla.databinding.MainFragmentBinding
 export interface MainFragmentBinding {
-    _root: HTMLElement
+    root: HTMLElement
+    focusTest: HTMLInputElement
+    scrollView: HTMLDivElement
     
 }
 
 export namespace MainFragmentBinding {
    export function inflate() {
-       return inflateHtmlFile(html, ) as MainFragmentBinding
+       return inflateHtmlFile(html, ["focusTest", "scrollView"], {}) as MainFragmentBinding
    }
 }

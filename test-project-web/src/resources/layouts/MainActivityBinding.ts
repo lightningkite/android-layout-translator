@@ -1,13 +1,15 @@
 import {inflateHtmlFile} from "android-xml-runtime";
 import html from './main_activity.html'
 
+//! Declares com.example.painfullyvanilla.databinding.MainActivityBinding
 export interface MainActivityBinding {
-    _root: HTMLElement
+    root: HTMLElement
+    container: HTMLDivElement
     
 }
 
 export namespace MainActivityBinding {
    export function inflate() {
-       return inflateHtmlFile(html, ) as MainActivityBinding
+       return inflateHtmlFile(html, ["container"], {}) as MainActivityBinding
    }
 }

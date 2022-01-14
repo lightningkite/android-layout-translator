@@ -3,9 +3,8 @@ package com.lightningkite.convertlayout.web
 import com.lightningkite.convertlayout.android.AndroidLayoutFile
 import com.lightningkite.convertlayout.android.AndroidResources
 import com.lightningkite.convertlayout.rules.Replacements
-import com.lightningkite.convertlayout.xml.cleanBlanks
-import com.lightningkite.convertlayout.xml.readXml
-import com.lightningkite.convertlayout.xml.writeXml
+import com.lightningkite.convertlayout.util.forEachBetween
+import com.lightningkite.convertlayout.xml.*
 import java.io.File
 
 data class WebTranslator(
@@ -22,10 +21,11 @@ data class WebTranslator(
         project = WebProject(webFolder, webName),
         replacements = Replacements().apply {
             replacementFolders
+                .also { println("Searching $it for replacements...") }
                 .asSequence()
                 .flatMap { it.walkTopDown() }
                 .filter { it.name.endsWith(".html.yaml") }
-                .forEach { this += it }
+                .forEach { println("Loaded replacement file $it"); this += it }
         },
         resources = AndroidResources().apply {
             this.parse(androidFolder.resolve("src/main/res"))
@@ -49,6 +49,44 @@ data class WebTranslator(
         for(layout in resources.layouts.values) {
             println("Translating ${layout.name}")
             translate(layout.layout.value)
+        }
+    }
+
+    internal fun swaml() {
+        println("---")
+        for(k in replacements.elements.keys) {
+            val e = replacements.getElement(k, mapOf()) ?: continue
+            val template = (e.template ?: continue).toString()
+                .trim()
+            val element = try { template.readXml().documentElement } catch(e:Exception) {
+                println("Failed to read $template")
+                continue
+            }
+            val type = element.walkElements()
+                .filter { it.hasAttribute("id") }
+                .toList()
+                .takeUnless { it.isEmpty() }
+                ?.let {
+                    buildString {
+                        append('{')
+                        it.forEachBetween(
+                            forItem = { i ->
+                                append(i["id"])
+                                append(": ")
+                                append(WebLayoutTranslatorForFile.elementMap[i.tagName])
+                            },
+                            between = { append(", ") }
+                        )
+                        append('}')
+                    }
+                } ?: WebLayoutTranslatorForFile.elementMap[element.tagName] ?: continue
+            if(k.first().isUpperCase())
+                println("- id: android.widget.$k")
+            else
+                println("- id: $k")
+            println("  type: type")
+            println("  template: $type")
+            println()
         }
     }
 }

@@ -1,13 +1,15 @@
 import {inflateHtmlFile} from "android-xml-runtime";
 import html from './test_text.html'
 
+//! Declares com.example.painfullyvanilla.databinding.TestTextBinding
 export interface TestTextBinding {
-    _root: HTMLElement
+    root: HTMLElement
+    
     
 }
 
 export namespace TestTextBinding {
    export function inflate() {
-       return inflateHtmlFile(html, ) as TestTextBinding
+       return inflateHtmlFile(html, [], {}) as TestTextBinding
    }
 }

@@ -1,13 +1,15 @@
 import {inflateHtmlFile} from "android-xml-runtime";
 import html from './test_image.html'
 
+//! Declares com.example.painfullyvanilla.databinding.TestImageBinding
 export interface TestImageBinding {
-    _root: HTMLElement
+    root: HTMLElement
+    
     
 }
 
 export namespace TestImageBinding {
    export function inflate() {
-       return inflateHtmlFile(html, ) as TestImageBinding
+       return inflateHtmlFile(html, [], {}) as TestImageBinding
    }
 }

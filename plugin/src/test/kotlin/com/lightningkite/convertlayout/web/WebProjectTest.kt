@@ -26,4 +26,13 @@ class WebProjectTest {
         println("Complete!")
     }
 
+    @Test
+    fun swaml() {
+        WebTranslator(
+            androidFolder = File("../test-project"),
+            webFolder = File("../test-project-web"),
+            webName = "TestProject",
+            replacementFolders = listOf(File("../web-runtime"))
+        ).swaml()
+    }
 }

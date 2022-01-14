@@ -84,12 +84,11 @@ class XmlToXibPlugin: Plugin<Project> {
             it.doLast {
                 val webName = ext.webProjectName ?: target.name.camelCase().capitalize()
                 val webBase = ext.webFolder ?: target.projectDir.resolve("../web")
-                val webFolder = webBase.resolve(webName)
                 val translator = WebTranslator(
                     androidFolder = target.projectDir,
-                    webFolder = webFolder,
+                    webFolder = webBase,
                     webName = webName,
-                    replacementFolders = listOf(webFolder)
+                    replacementFolders = listOf(webBase)
                 )
                 translator()
             }

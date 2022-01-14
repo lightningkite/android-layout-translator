@@ -1,8 +1,9 @@
 import './resources/resources.scss'
-import {TestMarginBinding} from "./resources/layouts/TestMarginBinding";
+import {TestToggleBinding} from "./resources/layouts/TestToggleBinding";
 
 console.log("Inflating TestToggleBinding")
-const x = TestMarginBinding.inflate()
-console.log("Appending view ", x._root)
-document.body.appendChild(x._root)
+const x = TestToggleBinding.inflate()
+console.log("Appending view ", x.root)
+document.body.appendChild(x.root)
 console.log("Done")
+console.log(x)

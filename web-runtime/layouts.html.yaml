@@ -100,6 +100,10 @@
   type: element
   template: <video controls="true" crossorigin="anonymous" />
 
+- id: com.google.android.exoplayer2.ui.PlayerView
+  type: element
+  template: <video controls="true" crossorigin="anonymous" />
+
 - id: ProgressBar
   type: element
   template: |
@@ -135,6 +139,8 @@
   type: element
   template: ""
 
+
+
 - id: EditText
   type: element
   parent: EditTextLike
@@ -160,6 +166,61 @@
       attribute:
         type: password
 
+- id: "android:inputType"
+  type: attribute
+  element: EditText
+  valueType: String
+  rules:
+    "":
+      ifContains:
+        #        text:
+        textCapCharacters:
+          attribute:
+            autocapitalize: characters
+        textCapWords:
+          attribute:
+            autocapitalize: words
+        textCapSentences:
+          attribute:
+            autocapitalize: sentences
+        textAutoCorrect:
+          attribute:
+            autocorrectionType: "on"
+        #        textAutoComplete:
+        textNoSuggestions:
+          attribute:
+            spellCheckingType: "no"
+        textUri:
+          attribute:
+            inputmode: url
+        textEmailAddress:
+          attribute:
+            inputmode: email
+        #        textEmailSubject:
+        #        textShortMessage:
+        #        textLongMessage:
+        textPersonName:
+          attribute:
+            textContentType: name
+        textPostalAddress:
+          attribute:
+            textContentType: street-address
+        textWebEmailAddress:
+          attribute:
+            inputmode: email
+        number:
+          attribute:
+            inputmode: numeric
+        numberSigned:
+          attribute:
+            inputmode: decimal
+        numberDecimal:
+          attribute:
+            inputmode: decimal
+        phone:
+          attribute:
+            inputmode: tel
+
 - id: EditText
   type: element
   caseIdentifier: MultilineEditText
@@ -179,6 +240,10 @@
   type: element
   template: <input type="range" min="1" value="50" max="100"/>
 
+- id: RatingBar
+  type: element
+  template: <input type="range" min="1" value="4" max="5"/>
+
 - id: Spinner
   type: element
   template: <select/>
@@ -197,7 +262,7 @@
   caseIdentifier: UnlabeledCheckBox
   attributes:
     android:text: 'unset'
-  template: <input type="checkbox" />
+  template: <input id="input" type="checkbox" />
 
 - id: RadioButton
   type: element
@@ -205,30 +270,22 @@
   caseIdentifier: UnlabeledRadioButton
   attributes:
     android:text: 'unset'
-  template: <input type="radio" />
-
-- id: Switch
-  type: element
-  parent: CheckOrRadio
-  caseIdentifier: UnlabeledSwitch
-  attributes:
-    android:text: 'unset'
-  template: <input type="checkbox"/>
+  template: <input id="input" type="radio" />
 
 - id: CheckBox
   type: element
   parent: LabeledCheckOrRadio
-  template: <label><input type="checkbox"/></label>
+  template: <label><input id="input" type="checkbox"/><span id="label"/></label>
 
 - id: RadioButton
   type: element
   parent: LabeledCheckOrRadio
-  template: <label><input type="radio"/></label>
+  template: <label><input id="input" type="radio"/><span id="label"/></label>
 
 - id: Switch
   type: element
   parent: LabeledCheckOrRadio
-  template: <label><input type="checkbox"/><span class="back"><span class="slider"></span></span></label>
+  template: <label><input id="input" type="checkbox"/><span class="back"><span class="slider"></span></span><span id="label"/></label>
 
 - id: "android:checked"
   type: attribute
@@ -652,6 +709,10 @@
 - id: RadioGroup
   type: element
   parent: LinearLayout
+
+- id: androidx.viewpager.widget.ViewPager
+  type: element
+  template: <div> <div id="container" class="pager-content"/> <button id="previous" class="pager-prev"/> <button id="next" class="pager-next"/> </div>
 
 - id: include
   type: element
