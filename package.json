@@ -14,5 +14,7 @@
     "build": "tsc",
     "test": "jest --env=node --colors --coverage test"
   },
-  "author": "Lightning Kite"
+  "author": "Lightning Kite",
+  "license": "MIT",
+  "files": ["index.d.ts", "index.js", "index.scss", "web-runtime"]
 }
