@@ -10,6 +10,7 @@
     "typescript": "^4.5.2"
   },
   "scripts": {
+    "prepack": "tsc",
     "prepare": "tsc",
     "test": "jest --env=node --colors --coverage test"
   },
