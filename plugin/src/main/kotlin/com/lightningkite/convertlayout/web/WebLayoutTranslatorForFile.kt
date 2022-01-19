@@ -121,7 +121,7 @@ internal class WebLayoutTranslatorForFile(
         layout: AndroidLayoutFile
     ): String {
         return """
-            |import {inflateHtmlFile} from "android-xml-runtime";
+            |import {inflateHtmlFile} from "@lightningkite/android-xml-runtime";
             |import html from './${layout.name}.html'
             |
             |//! Declares ${resources.packageName}.databinding.${layout.className}

@@ -1,9 +1,9 @@
 {
-  "name": "android-xml-runtime",
-  "version": "0.1.0",
-  "description": "",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "name": "@lightningkite/android-xml-runtime",
+  "version": "0.1.1",
+  "description": "The runtime for Lightning Kite's Android Layout XML to HTML translator",
+  "main": "index.js",
+  "types": "index.d.ts",
   "dependencies": {},
   "peerDependencies": {},
   "devDependencies": {
@@ -15,6 +15,17 @@
     "test": "jest --env=node --colors --coverage test"
   },
   "author": "Lightning Kite",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lightningkite/android-xml-to-ios-xib.git"
+  },
+  "keywords": [
+    "khrysalis"
+  ],
   "license": "MIT",
-  "files": ["index.d.ts", "index.js", "index.scss", "web-runtime"]
+  "bugs": {
+    "url": "https://github.com/lightningkite/android-xml-to-ios-xib/issues"
+  },
+  "homepage": "https://github.com/lightningkite/android-xml-to-ios-xib#readme",
+  "files": ["index.d.ts", "index.js", "index.scss", "web-runtime", "web-runtime/dist"]
 }
