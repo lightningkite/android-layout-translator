@@ -4,31 +4,31 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lightningkite.convertlayout.android.*
 import com.lightningkite.convertlayout.util.*
 
-fun IosTranslator.importResources(resources: AndroidResources) {
-    importDrawables(resources)
-    importStringsDimensionsColors(resources)
-    importColorAssets(resources)
+fun IosTranslator.importResources() {
+    importDrawables()
+    importStringsDimensionsColors()
+    importColorAssets()
 }
 
-fun IosTranslator.importDrawables(resources: AndroidResources) {
+fun IosTranslator.importDrawables() {
     for (it in resources.drawables.values) {
-        importDrawable(resources, it)
+        importDrawable(it)
     }
 }
 
-fun IosTranslator.importDrawable(resources: AndroidResources, drawableResource: AndroidDrawable) {
+fun IosTranslator.importDrawable(drawableResource: AndroidDrawable) {
     try {
         when (drawableResource) {
             is AndroidBitmap -> importBitmap(drawableResource)
-            is AndroidXmlDrawable -> importDrawableXml(resources, drawableResource)
-            is AndroidVector -> importVector(resources, drawableResource)
+            is AndroidXmlDrawable -> importDrawableXml(drawableResource)
+            is AndroidVector -> importVector(drawableResource)
         }
     } catch (e: Exception) {
         throw Exception("Failed to read ${drawableResource}", e)
     }
 }
 
-fun IosTranslator.importDrawableXml(resources: AndroidResources, drawableResource: AndroidXmlDrawable) {
+fun IosTranslator.importDrawableXml(drawableResource: AndroidXmlDrawable) {
     project.swiftResourcesFolder
         .resolve("drawables")
         .also { it.mkdirs() }
@@ -37,7 +37,7 @@ fun IosTranslator.importDrawableXml(resources: AndroidResources, drawableResourc
             appendLine("import XmlToXibRuntime")
             appendLine("public extension R.drawable {")
             appendLine("static func ${drawableResource.name}() -> CALayer {")
-            writeAndroidXml(resources, drawableResource.value)
+            writeAndroidXml(drawableResource.value)
             appendLine("}")
             appendLine("}")
         })
@@ -54,6 +54,7 @@ val AndroidDrawableXml.scaleOverResize: Boolean
             is AndroidLayer -> false
             is AndroidShape -> false
             is AndroidVector -> true
+            is AndroidNamedColor -> false
         }
         is AndroidBitmap.Reference -> true
         is AndroidShape.Value -> false
@@ -61,12 +62,12 @@ val AndroidDrawableXml.scaleOverResize: Boolean
         is AndroidLayer.Value -> false
     }
 
-fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawableXml) {
+fun Appendable.writeAndroidXml(xml: AndroidDrawableXml) {
     when (xml) {
         is AndroidDrawable.Reference -> when(val sub = xml.drawable.value){
             is AndroidNamedDrawable -> appendLine("R.drawable.${sub.name}()")
-            is AndroidColorResource -> writeAndroidXml(resources, AndroidShape.Value(AndroidShape.Value.ShapeType.Rectangle, fill = Lazy(sub)))
-            is AndroidColorStateResource -> writeAndroidXml(resources, AndroidShape.Value(AndroidShape.Value.ShapeType.Rectangle, fill = Lazy(sub)))
+            is AndroidColorResource -> writeAndroidXml(AndroidShape.Value(AndroidShape.Value.ShapeType.Rectangle, fill = Lazy(sub)))
+            is AndroidColorStateResource -> writeAndroidXml(AndroidShape.Value(AndroidShape.Value.ShapeType.Rectangle, fill = Lazy(sub)))
         }
         is AndroidBitmap.Reference -> appendLine("R.drawable.${xml.base.value.name}()")
         is AndroidShape.Value -> {
@@ -124,23 +125,23 @@ fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawable
             appendLine("LayerMaker.state(.init(")
 
             append("normal: ")
-            writeAndroidXml(resources, xml.states.normal)
+            writeAndroidXml(xml.states.normal)
             appendLine(",")
 
             append("selected: ")
-            xml.states.selected?.let { writeAndroidXml(resources, it) } ?: append("nil")
+            xml.states.selected?.let { writeAndroidXml(it) } ?: append("nil")
             appendLine(",")
 
             append("highlighted: ")
-            xml.states.highlighted?.let { writeAndroidXml(resources, it) } ?: append("nil")
+            xml.states.highlighted?.let { writeAndroidXml(it) } ?: append("nil")
             appendLine(",")
 
             append("disabled: ")
-            xml.states.disabled?.let { writeAndroidXml(resources, it) } ?: append("nil")
+            xml.states.disabled?.let { writeAndroidXml(it) } ?: append("nil")
             appendLine(",")
 
             append("focused: ")
-            xml.states.focused?.let { writeAndroidXml(resources, it) } ?: append("nil")
+            xml.states.focused?.let { writeAndroidXml(it) } ?: append("nil")
             appendLine("))")
         }
         is AndroidLayer.Value -> {
@@ -148,7 +149,7 @@ fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawable
             xml.states.forEachBetween(
                 forItem = { sub ->
                     append(".init(layer: ")
-                    writeAndroidXml(resources, sub.drawable)
+                    writeAndroidXml(sub.drawable)
                     append(", insets: .init(top: ")
                     append(sub.top?.value?.swift ?: "0")
                     append(", left: ")
@@ -170,7 +171,7 @@ fun Appendable.writeAndroidXml(resources: AndroidResources, xml: AndroidDrawable
     }
 }
 
-fun IosTranslator.importVector(resources: AndroidResources, drawableResource: AndroidVector) {
+fun IosTranslator.importVector(drawableResource: AndroidVector) {
     val iosFolder = project.assetsFolder.resolve(drawableResource.name + ".imageset").apply { mkdirs() }
 
     val one =
@@ -189,7 +190,7 @@ fun IosTranslator.importVector(resources: AndroidResources, drawableResource: An
 }
 
 fun IosTranslator.importBitmap(drawableResource: AndroidBitmap) {
-    val one = drawableResource.files["ldpi"] ?: drawableResource.files["drawble-mdpi"]
+    val one = drawableResource.files["ldpi"] ?: drawableResource.files["mdpi"]
     val two = drawableResource.files["hdpi"] ?: drawableResource.files["xhdpi"] ?: drawableResource.files[""]
     val three = drawableResource.files["xxhdpi"] ?: drawableResource.files["xxxhdpi"]
 
@@ -218,7 +219,7 @@ private data class PngJsonContents(
     data class Image(val filename: String, val scale: String = "1x", val idiom: String = "universal")
 }
 
-fun IosTranslator.importStringsDimensionsColors(resources: AndroidResources) {
+fun IosTranslator.importStringsDimensionsColors() {
     val locales = resources.strings.values.flatMap { it.languages.keys }.filter { it.isNotEmpty() }.toSet()
     locales.forEach { locale ->
         project.baseFolderForLocalizations
@@ -317,7 +318,7 @@ fun IosTranslator.importStringsDimensionsColors(resources: AndroidResources) {
     })
 }
 
-fun IosTranslator.importColorAssets(resources: AndroidResources) {
+fun IosTranslator.importColorAssets() {
     project.assetsFolder.mkdirs()
     val mapper = jacksonObjectMapper()
     for ((k, v) in resources.colors) {

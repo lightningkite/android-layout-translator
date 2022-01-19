@@ -1,0 +1,730 @@
+---
+
+#View
+- id: View
+  type: element
+  parent: null
+  template: <div/>
+
+- id: Button
+  type: element
+  template: <button/>
+
+- id: CompoundButton
+  type: element
+  parent: Button
+  template: <button class="compound-off"/>
+
+- id: ImageView
+  type: element
+  parent: Button
+  template: <img/>
+
+- id: "android:scaleType"
+  type: attribute
+  element: ImageView
+  rules:
+    "":
+      ifContains:
+        "center":
+          css:
+            object-fit: none
+        "centerCrop":
+          css:
+            object-fit: cover
+        "centerInside":
+          css:
+            object-fit: contain
+        "fitCenter":
+          css:
+            object-fit: contain
+        "fitEnd":
+          css:
+            object-fit: contain
+            object-position: right
+        "fitStart":
+          css:
+            object-fit: contain
+            object-position: left
+        "fitXY":
+          css:
+            object-fit: fill
+        "matrix":
+          css:
+            object-fit: fill
+        else:
+          css:
+            object-fit: contain
+
+- id: ImageButton
+  type: element
+  template: <button class="container"><img/></button>
+
+- id: "android:scaleType"
+  type: attribute
+  element: ImageButton
+  rules:
+    "img":
+      ifContains:
+        "center":
+          css:
+            object-fit: none
+        "centerCrop":
+          css:
+            object-fit: cover
+        "centerInside":
+          css:
+            object-fit: contain
+        "fitCenter":
+          css:
+            object-fit: contain
+        "fitEnd":
+          css:
+            object-fit: contain
+            object-position: right
+        "fitStart":
+          css:
+            object-fit: contain
+            object-position: left
+        "fitXY":
+          css:
+            object-fit: fill
+        "matrix":
+          css:
+            object-fit: fill
+        else:
+          css:
+            object-fit: contain
+
+- id: VideoView
+  type: element
+  template: <video controls="true" crossorigin="anonymous" />
+
+- id: com.google.android.exoplayer2.ui.PlayerView
+  type: element
+  template: <video controls="true" crossorigin="anonymous" />
+
+- id: ProgressBar
+  type: element
+  template: |
+    <div class="spinner"/>
+
+- id: ProgressBar
+  type: element
+  attributes:
+    style: ?android:attr/progressBarStyleHorizontal
+  template: <progress/>
+
+- id: "android:src"
+  type: attribute
+  element: ImageView
+  valueType: Bitmap
+  rules:
+    "":
+      attribute:
+        src: "../drawables/~name~.png"
+
+- id: "android:src"
+  type: attribute
+  element: ImageButton
+  valueType: Vector
+  rules:
+    "img":
+      attribute:
+        src: "../drawables/~name~.svg"
+
+#-------------
+
+- id: EditTextLike
+  type: element
+  template: ""
+
+
+
+- id: EditText
+  type: element
+  parent: EditTextLike
+  autoWrapFor:
+    - 'android:drawableLeft'
+    - 'android:drawableRight'
+    - 'android:drawableStart'
+    - 'android:drawableEnd'
+    - 'android:drawableTop'
+    - 'android:drawableBottom'
+  template: <input type="text" />
+
+- id: AutoCompleteTextView
+  type: element
+  parent: EditText
+
+- id: "android:inputType"
+  type: attribute
+  element: EditText
+  equalTo: "textPassword"
+  rules:
+    "":
+      attribute:
+        type: password
+
+- id: "android:inputType"
+  type: attribute
+  element: EditText
+  valueType: String
+  rules:
+    "":
+      ifContains:
+        #        text:
+        textCapCharacters:
+          attribute:
+            autocapitalize: characters
+        textCapWords:
+          attribute:
+            autocapitalize: words
+        textCapSentences:
+          attribute:
+            autocapitalize: sentences
+        textAutoCorrect:
+          attribute:
+            autocorrectionType: "on"
+        #        textAutoComplete:
+        textNoSuggestions:
+          attribute:
+            spellCheckingType: "no"
+        textUri:
+          attribute:
+            inputmode: url
+        textEmailAddress:
+          attribute:
+            inputmode: email
+        #        textEmailSubject:
+        #        textShortMessage:
+        #        textLongMessage:
+        textPersonName:
+          attribute:
+            textContentType: name
+        textPostalAddress:
+          attribute:
+            textContentType: street-address
+        textWebEmailAddress:
+          attribute:
+            inputmode: email
+        number:
+          attribute:
+            inputmode: numeric
+        numberSigned:
+          attribute:
+            inputmode: decimal
+        numberDecimal:
+          attribute:
+            inputmode: decimal
+        phone:
+          attribute:
+            inputmode: tel
+
+- id: EditText
+  type: element
+  caseIdentifier: MultilineEditText
+  attributes:
+    android:inputType: 'contains:textMultiLine'
+  parent: EditTextLike
+  autoWrapFor:
+    - 'android:drawableLeft'
+    - 'android:drawableRight'
+    - 'android:drawableStart'
+    - 'android:drawableEnd'
+    - 'android:drawableTop'
+    - 'android:drawableBottom'
+  template: <textarea/>
+
+- id: SeekBar
+  type: element
+  template: <input type="range" min="0" value="50" max="100"/>
+
+- id: RatingBar
+  type: element
+  template: <input type="range" min="0" value="4" max="5"/>
+
+- id: Spinner
+  type: element
+  template: <select/>
+
+- id: CheckOrRadio
+  type: element
+  template: <input type="checkbox" />
+
+- id: LabeledCheckOrRadio
+  type: element
+  template: <input type="checkbox" />
+
+- id: CheckBox
+  type: element
+  parent: CheckOrRadio
+  caseIdentifier: UnlabeledCheckBox
+  attributes:
+    android:text: 'unset'
+  template: <input id="input" type="checkbox" />
+
+- id: RadioButton
+  type: element
+  parent: CheckOrRadio
+  caseIdentifier: UnlabeledRadioButton
+  attributes:
+    android:text: 'unset'
+  template: <input id="input" type="radio" />
+
+- id: CheckBox
+  type: element
+  parent: LabeledCheckOrRadio
+  template: <label><input id="input" type="checkbox"/><span id="label"/></label>
+
+- id: RadioButton
+  type: element
+  parent: LabeledCheckOrRadio
+  template: <label><input id="input" type="radio"/><span id="label"/></label>
+
+- id: Switch
+  type: element
+  parent: LabeledCheckOrRadio
+  template: <label><input id="input" type="checkbox"/><span class="back"><span class="slider"></span></span><span id="label"/></label>
+
+- id: "android:checked"
+  type: attribute
+  element: CheckOrRadio
+  rules:
+    "":
+      attribute:
+        checked: "true"
+
+- id: "android:button"
+  type: attribute
+  element: CheckOrRadio
+  equalTo: "@null"
+  rules:
+    "":
+      css:
+        display: none
+
+- id: "android:checked"
+  type: attribute
+  element: LabeledCheckOrRadio
+  rules:
+    "input":
+      attribute:
+        checked: "true"
+
+- id: "android:button"
+  type: attribute
+  element: LabeledCheckOrRadio
+  equalTo: "@null"
+  rules:
+    "input":
+      css:
+        display: none
+
+#------------------------
+
+- id: "android:background"
+  type: attribute
+  valueType: NamedDrawable
+  rules:
+    "":
+      classes: ["drawable-~name~"]
+
+- id: "android:background"
+  type: attribute
+  valueType: ColorStateResource
+  rules:
+    "":
+      css:
+        background-color: "var(--color-~name~)"
+
+- id: "android:background"
+  type: attribute
+  valueType: Color
+  rules:
+    "":
+      css:
+        background-color: "~web~"
+
+- id: "android:alpha"
+  type: attribute
+  rules:
+    "":
+      css:
+        opacity: ~value~
+
+- id: "android:elevation"
+  type: attribute
+  rules:
+    "":
+      css:
+        box-shadow: 0px ~value~ ~value~ 0px rgba(0,0,0,0.25)
+
+- id: "android:text"
+  type: attribute
+  valueType: String
+  rules:
+    "":
+      append:
+        - ~escaped~
+
+- id: "android:textOn"
+  type: attribute
+  valueType: String
+  rules:
+    "":
+      append:
+        - ~escaped~
+
+- id: "android:textOff"
+  type: attribute
+  valueType: String
+  rules:
+    "":
+      append:
+        - ~escaped~
+
+- id: "android:text"
+  type: attribute
+  valueType: String
+  element: EditTextLike
+  rules:
+    "":
+      attribute:
+        value: ~escapedAttribute~
+
+- id: "android:textStyle"
+  type: attribute
+  valueType: String
+  rules:
+    "":
+      ifContains:
+        bold:
+          classes: [bold-text]
+        italic:
+          classes: [italic-text]
+
+- id: "android:hint"
+  type: attribute
+  valueType: String
+  rules:
+    "":
+      attribute:
+        placeholder: ~escaped~
+
+- id: "android:gravity"
+  type: attribute
+  element: TextView
+  valueType: String
+  rules:
+    "":
+      ifContains:
+        start:
+          css:
+            text-align: left
+        left:
+          css:
+            text-align: left
+        end:
+          css:
+            text-align: right
+        right:
+          css:
+            text-align: right
+        center:
+          css:
+            text-align: center
+        center-horizontal:
+          css:
+            text-align: center
+
+- id: "android:textColor"
+  type: attribute
+  valueType: Color
+  rules:
+    "":
+      css:
+        color: "~web~"
+
+- id: "android:textSize"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        font-size: "~web~"
+
+- id: "android:textAllCaps"
+  type: attribute
+  equalTo: true
+  rules:
+    "":
+      css:
+        text-transform: "uppercase"
+
+- id: "android:minWidth"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        min-width: "~web~"
+
+- id: "android:minHeight"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        min-height: "~web~"
+
+#----------------------
+
+- id: "include"
+  type: element
+  template: <div/>
+
+- id: "android:padding"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        padding: "~web~"
+
+- id: "android:paddingLeft"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        padding-left: "~web~"
+
+- id: "android:paddingRight"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        padding-right: "~web~"
+
+- id: "android:paddingStart"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        padding-left: "~web~"
+
+- id: "android:paddingEnd"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        padding-right: "~web~"
+
+- id: "android:paddingTop"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        padding-top: "~web~"
+
+- id: "android:paddingBottom"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        padding-bottom: "~web~"
+
+- id: "android:layout_margin"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        margin: "~web~"
+
+- id: "android:layout_marginLeft"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        margin-left: "~web~"
+
+- id: "android:layout_marginRight"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        margin-right: "~web~"
+
+- id: "android:layout_marginStart"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        margin-left: "~web~"
+
+- id: "android:layout_marginEnd"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        margin-right: "~web~"
+
+- id: "android:layout_marginTop"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        margin-top: "~web~"
+
+- id: "android:layout_marginBottom"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        margin-bottom: "~web~"
+
+#----------------------
+
+- id: "android:layout_width"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        width: "~web~"
+
+- id: "android:layout_height"
+  type: attribute
+  valueType: Dimension
+  rules:
+    "":
+      css:
+        height: "~web~"
+
+- id: "android:layout_weight"
+  type: attribute
+  rules:
+    "":
+      css:
+        flex-grow: "~value~"
+        flex-shrink: "~value~"
+        flex-basis: "0"
+
+- id: "android:orientation"
+  type: attribute
+  equalTo: "vertical"
+  rules:
+    "":
+      css:
+        flex-direction: column
+
+- id: "android:gravity"
+  type: attribute
+  rules:
+    "":
+      ifContains:
+        "android:orientation=vertical":
+          ifContains:
+            left:
+              css: { align-items: flex-start }
+            start:
+              css: { align-items: flex-start }
+            center_horizontal:
+              css: { align-items: center }
+            right:
+              css: { align-items: flex-end }
+            end:
+              css: { align-items: flex-end }
+            top:
+              css: { justify-content: flex-start }
+            center_vertical:
+              css: { justify-content: center }
+            bottom:
+              css: { justify-content: flex-end }
+            center:
+              css: { align-items: center, justify-content: center }
+        else:
+          ifContains:
+            left:
+              css: { justify-content: flex-start }
+            start:
+              css: { justify-content: flex-start }
+            center_horizontal:
+              css: { justify-content: center }
+            right:
+              css: { justify-content: flex-end }
+            end:
+              css: { justify-content: flex-end }
+            top:
+              css: { align-items: flex-start }
+            center_vertical:
+              css: { align-items: center }
+            bottom:
+              css: { align-items: flex-end }
+            center:
+              css: { align-items: center, justify-content: center }
+
+# -------------------
+
+- id: LinearLayout
+  type: element
+  childRule: linear
+  template: <div/>
+
+- id: FrameLayout
+  type: element
+  childRule: frame
+  template: <div/>
+
+- id: ScrollView
+  type: element
+  template: <div/>
+
+- id: HorizontalScrollView
+  type: element
+  template: <div/>
+
+- id: ViewFlipper
+  type: element
+  childRule: frame
+  template: <div/>
+
+- id: androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+  type: element
+  childRule: frame
+  template: <div/>
+
+- id: RadioGroup
+  type: element
+  parent: LinearLayout
+
+- id: androidx.viewpager.widget.ViewPager
+  type: element
+  template: |
+    <div>
+      <div id="container" class="pager-content"/> 
+      <button id="previous" class="pager-prev">
+        <span class="material-icons">arrow_back</span>
+      </button> 
+      <button id="next" class="pager-next">
+        <span class="material-icons">arrow_forward</span>
+      </button> 
+    </div>
+
+- id: include
+  type: element
+  parent: null
+  template: <div/>

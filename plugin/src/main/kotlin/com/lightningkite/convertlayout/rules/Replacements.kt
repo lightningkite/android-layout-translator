@@ -44,6 +44,7 @@ class Replacements() {
 
     fun getAttribute(
         elementName: String,
+        parentElementName: String,
         attributeName: String,
         attributeType: AttributeReplacement.ValueType2,
         rawValue: String
@@ -56,11 +57,39 @@ class Replacements() {
             println("    ${attributeType} in ${it.valueType}")
             println("    ${it.element} == ${elementName}")
             println("    ${it.equalTo} == null or ${rawValue}")
+            println("    ${it.parentElement} == null or ${parentElementName}")
             println("    ${res}")
         }
         res
     }
 
+    fun getAttributeOptionsForStyle(
+        attributeName: String,
+        attributeType: AttributeReplacement.ValueType2,
+        rawValue: String
+    ): Sequence<AttributeReplacement> = attributes[attributeName]?.asSequence()?.filter {
+        val res = (attributeType in it.valueType)
+                && (it.equalTo == null || it.equalTo == rawValue)
+        if(it.debug) {
+            println("Checking against rule $it")
+            println("    ${attributeType} in ${it.valueType}")
+            println("    ${it.equalTo} == null or ${rawValue}")
+            println("    ${res}")
+        }
+        res
+    } ?: sequenceOf()
+
+    private val canBeInStylesheetCache = HashMap<String, Boolean>()
+    fun canBeInStyleSheet(attributeName: String): Boolean = canBeInStylesheetCache.getOrPut(attributeName) {
+        val matching = attributes[attributeName] ?: return@getOrPut false
+
+        // all simple element accesses that can be reproduced in CSS
+        if(!matching.all { it.rules.keys.all { it.all { it.isLetterOrDigit() || it == '/' } } }) return@getOrPut false
+        // No ifContains rules that are dependent on knowing other values
+        if(!matching.all { it.rules.values.all { it.ifContains?.keys?.none { it.contains('=') } != false } }) return@getOrPut false
+
+        return@getOrPut true
+    }
 
     operator fun plusAssign(item: ReplacementRule) {
         if(item.debug){
@@ -76,13 +105,13 @@ class Replacements() {
     }
 
     operator fun plusAssign(yaml: String) {
-        mapper.readValue<List<ReplacementRule>>(yaml).forEach {
+        mapper.readValue<List<ReplacementRule>>(yaml).filterNotNull().forEach {
             this += it
         }
     }
 
     operator fun plusAssign(yaml: File) {
-        mapper.readValue<List<ReplacementRule>>(yaml).forEach {
+        mapper.readValue<List<ReplacementRule>>(yaml).filterNotNull().forEach {
             this += it
         }
     }

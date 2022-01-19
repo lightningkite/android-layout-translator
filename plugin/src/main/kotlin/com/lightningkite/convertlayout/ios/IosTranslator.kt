@@ -52,7 +52,7 @@ data class IosTranslator(
             .writeText(instance.swiftFile(layout))
     }
     operator fun invoke() {
-        importResources(resources)
+        importResources()
         for(layout in resources.layouts.values) {
             println("Translating ${layout.name}")
             translate(layout.layout.value)

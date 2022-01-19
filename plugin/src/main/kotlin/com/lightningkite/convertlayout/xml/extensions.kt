@@ -246,12 +246,14 @@ fun String.readXml(): Document {
 fun File.readXml(): Document {
     return defaultBuilder.parse(this)
 }
-fun File.writeXml(document: Document) = this.bufferedWriter().use { writer ->
+fun File.writeXml(document: Document, prefix: String? = null) = this.bufferedWriter().use { writer ->
+    prefix?.let { writer.appendLine(it) }
     TransformerFactory
         .newInstance()
         .newTransformer()
         .apply {
             setOutputProperty(OutputKeys.INDENT, "yes")
+            setOutputProperty(OutputKeys.METHOD, "html");
             setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
         }
         .transform(DOMSource(document), StreamResult(writer))
@@ -296,3 +298,5 @@ fun Element.getOrAppendChild(name: String): Element {
 fun Element.getOrAppendChildWithKey(name: String, key: String, keyPropertyName: String = "key"): Element {
     return this.childElements.find { it.tagName == name && it[keyPropertyName] == key } ?: this.appendElement(name) { this[keyPropertyName] = key }
 }
+
+fun Element.walkElements(): Sequence<Element> = sequenceOf(this) + childElements.flatMap { it.walkElements() }

@@ -6,18 +6,22 @@ import org.apache.fontbox.ttf.TTFParser
 import org.w3c.dom.Element
 import org.w3c.dom.Text
 import java.io.File
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 private val whitespaceRegexContent = "\\s+"
 private val whitespaceRegex = Regex(whitespaceRegexContent)
 
 class AndroidResources {
-    var styles: MutableMap<String, AndroidStyle> = HashMap()
-    val colors: MutableMap<String, AndroidColor> = HashMap()
-    val drawables: MutableMap<String, AndroidDrawable> = HashMap()
-    val fonts: MutableMap<String, AndroidFont> = HashMap()
-    val strings: MutableMap<String, AndroidStringResource> = HashMap()
-    val dimensions: MutableMap<String, AndroidDimensionResource> = HashMap()
-    val layouts: MutableMap<String, AndroidLayoutResource> = HashMap()
+    var packageName: String = ""
+    var styles: MutableMap<String, AndroidStyle> = TreeMap()
+    val colors: MutableMap<String, AndroidColor> = TreeMap()
+    val drawables: MutableMap<String, AndroidDrawable> = TreeMap()
+    val fonts: MutableMap<String, AndroidFont> = TreeMap()
+    val strings: MutableMap<String, AndroidStringResource> = TreeMap()
+    val dimensions: MutableMap<String, AndroidDimensionResource> = TreeMap()
+    val layouts: MutableMap<String, AndroidLayoutResource> = TreeMap()
 
     val all: Map<String, AndroidValue>
         get() = listOf(styles, colors, drawables, fonts, strings, dimensions, layouts)
@@ -104,6 +108,7 @@ class AndroidResources {
     }
 
     fun parse(androidResourcesDirectory: File) {
+        this.packageName = androidResourcesDirectory.resolve("../AndroidManifest.xml").readXml().documentElement["package"] ?: "unknown"
         getFonts(androidResourcesDirectory.resolve("font"))
         getStrings(androidResourcesDirectory)
         getDimensions(androidResourcesDirectory.resolve("values/dimens.xml"))
@@ -442,5 +447,58 @@ class AndroidResources {
                 focused = focused
             )
         )
+    }
+
+    fun HasGet.getPath(path: String): String = (this as Any).getPath(path)
+    fun Element.getPath(path: String): String = (this as Any).getPath(path)
+    fun Map<String, *>.getPath(path: String): String = (this as Any).getPath(path)
+    private fun Any.getPath(path: String): String {
+        var current: Any? = this
+        for (part in path.split('.')) {
+            while (current is Lazy<*>) {
+                current = current.value
+            }
+            current = when (current) {
+                is HasGet -> current[part]
+                is Element -> when(part) {
+                    "halfSize" -> (current.findSize()!! / 2).toString()
+                    else -> current[part]?.let { read(it) }
+                }
+                is Map<*, *> -> current[part]
+                else -> return current.toString()
+            }
+        }
+        while (current is Lazy<*>) {
+            current = current.value
+        }
+        return current.toString()
+    }
+
+    fun Element.findSize(): Double? {
+        return this["android:layout_width"]?.let { read(it) as? AndroidDimension }?.measurement?.number
+            ?: this["android:layout_height"]?.let { read(it) as? AndroidDimension }?.measurement?.number
+            ?: (this.parentNode as? Element)?.findSize()?.let {
+                it - (
+                        this["android:padding"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_margin"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingLeft"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginLeft"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingRight"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginRight"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingStart"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginStart"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingEnd"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginEnd"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingTop"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginTop"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingBottom"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginBottom"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingHorizontal"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginHorizontal"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:paddingVertical"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: this["android:layout_marginVertical"]?.let { read(it) as? AndroidDimension }?.measurement?.number?.times(2)
+                            ?: 0.0
+                        )
+            }
     }
 }

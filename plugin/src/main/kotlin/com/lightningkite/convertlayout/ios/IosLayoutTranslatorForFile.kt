@@ -73,7 +73,7 @@ internal class IosLayoutTranslatorForFile(
             val newElement =
                 destOwner.appendFragment(
                     rules.asSequence().mapNotNull { it.template }.first()
-                        .write { getProjectWide(it) ?: sourceElement.getPath(it) })
+                        .write { getProjectWide(it) ?: with(resources) { sourceElement.getPath(it) } })
             directSystemEdges?.let { newElement.directSystemEdges = it }
             allAttributes["android:id"]
                 ?.substringAfter('/')
@@ -128,7 +128,7 @@ internal class IosLayoutTranslatorForFile(
             val innerElement =
                 outerElement.getOrAppendChild("subviews")
                     .appendFragment(rules.asSequence().mapNotNull { it.template }.first()
-                        .write { getProjectWide(it) ?: sourceElement.getPath(it) })
+                        .write { getProjectWide(it) ?: with(resources) { sourceElement.getPath(it) } })
             directSystemEdges?.let { outerElement.directSystemEdges = it }
             assignIds(innerElement)
             allAttributes["android:id"]
@@ -745,16 +745,17 @@ internal class IosLayoutTranslatorForFile(
         allAttributes: Map<String, String>,
         attributeRule: AttributeReplacement,
         destElement: Element,
-        value: AndroidValue
+        value: AndroidValue,
+        inStyle: Boolean
     ) {
         usedResources.add(value)
-        super.handleAttribute(allAttributes, attributeRule, destElement, value)
+        super.handleAttribute(allAttributes, attributeRule, destElement, value, inStyle)
         attributeRule.code?.let {
             outlets[destElement["id"]!!] = destElement.swiftIdentifier()
             this.iosCode.appendLine(it.write {
                 getProjectWide(it) ?: when (it) {
                     "this" -> destElement["id"]!!
-                    else -> value.getPath(it)
+                    else -> with(resources) { value.getPath(it) }
                 }
             })
         }

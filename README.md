@@ -2,7 +2,7 @@
 
 This project converts Android layout files and resources into iOS layout files and resources.
 
-It is is composed of a few parts:
+It is composed of a few parts:
 
 ## Plugin
 

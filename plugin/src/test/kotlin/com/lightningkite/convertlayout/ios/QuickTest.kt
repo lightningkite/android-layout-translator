@@ -1,24 +1,31 @@
 package com.lightningkite.convertlayout.ios
 
-import com.lightningkite.convertlayout.MacLocation
-import com.lightningkite.convertlayout.rules.AttributeReplacement
+import com.lightningkite.convertlayout.web.WebTranslator
 import org.junit.Test
 import java.io.File
 
 class QuickTest {
     @Test
-    fun testResources() {
+    fun runIos() {
         val translator = IosTranslator(
-            androidFolder = File("/home/jivie/Projects/klyp-android/app"),
-            iosFolder = File("/home/jivie/Projects/klyp-ios/Klyp"),
-            iosName = "Klyp",
-            iosModuleName = "KLYP",
-            replacementFolders = listOf(File("/home/jivie/Projects/klyp-ios"), File("/home/jivie/Projects/android-xml-to-ios-xib/XmlToXibRuntime"), File("/home/jivie/Projects/RxSwiftPlus"))
+            androidFolder = File("../test-project"),
+            iosFolder = File("build/test-project-ios"),
+            iosName = "TestProject",
+            replacementFolders = listOf(File("../XmlToXibRuntime"))
         )
         println("Starting...")
-//        translator.resources.fonts.forEach { key, value ->
-//            println("$key: $value")
-//        }
+        translator()
+        println("Complete!")
+    }
+    @Test
+    fun runWeb() {
+        val translator = WebTranslator(
+            androidFolder = File("../test-project"),
+            webFolder = File("build/test-project-web"),
+            webName = "TestProject",
+            replacementFolders = listOf(File("../web-runtime"))
+        )
+        println("Starting...")
         translator()
         println("Complete!")
     }

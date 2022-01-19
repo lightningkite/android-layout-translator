@@ -87,12 +87,18 @@ sealed interface AndroidString : AndroidValue {
     val value: String
     override fun get(key: String): Any? = when (key) {
         "escaped" -> value
+            .replace("&", "&amp;")
+            .replace("\n", "&#xA;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\t", "&#x9;")
+        "escapedAttribute" -> value
+            .replace("&", "&amp;")
             .replace("\n", "&#xA;")
             .replace("<", "&lt;")
             .replace(">", "&gt;")
             .replace("\"", "&quot;")
             .replace("'", "&apos;")
-            .replace("&", "&amp;")
             .replace("\t", "&#x9;")
         else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
     }
@@ -143,10 +149,14 @@ data class AndroidColorLiteral(
     override val size: Size get() = Size.default
 }
 
+sealed interface AndroidNamedColor : AndroidColor {
+    val name: String
+}
+
 data class AndroidColorResource(
-    val name: String,
+    override val name: String,
     override val value: ColorInParts
-) : AndroidColor {
+) : AndroidNamedColor {
     override val size: Size get() = Size.default
     override fun get(key: String): Any? = when (key) {
         "name" -> name
@@ -155,9 +165,9 @@ data class AndroidColorResource(
 }
 
 data class AndroidColorStateResource(
-    val name: String,
+    override val name: String,
     val colors: StateSelector<Lazy<AndroidColor>>
-) : AndroidColor {
+) : AndroidNamedColor {
     override val value: ColorInParts get() = colors.normal.value.value
     override val size: Size get() = Size.default
     override fun get(key: String): Any? = when (key) {
@@ -378,6 +388,7 @@ data class AndroidDimensionResource(
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
+        "web" -> "var(--dimen-$name)"
         else -> super.get(key)
     }
 }
@@ -439,12 +450,21 @@ data class Measurement(
     val number: Double,
     val unit: MeasurementUnit
 ) {
+    val half get() = (number / 2).toString()
+    val halfInteger get() = (number / 2).toInt().toString()
+    val integer get() = number.toInt().toString()
+    val web get() = number.toString() + when(unit) {
+        MeasurementUnit.PX -> "px"
+        MeasurementUnit.DP -> "px"
+        MeasurementUnit.SP -> "pt"
+    }
     operator fun get(key: String): Any? = when (key) {
         "number" -> number.toString()
-        "half" -> (number / 2).toString()
-        "halfInteger" -> (number / 2).toInt().toString()
-        "integer" -> number.toInt().toString()
+        "half" -> half
+        "halfInteger" -> halfInteger
+        "integer" -> integer
         "unit" -> unit.name.toLowerCase()
+        "web" -> web
         else -> null
     }
 }

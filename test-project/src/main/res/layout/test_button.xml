@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:padding="8dp"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent">
+
+    <Button
+        style="@style/ButtonPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+        android:text="@string/submit"
+        android:layout_margin="8dp"
+        android:padding="8dp"/>
+
+    <Button
+        android:background="@drawable/border"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/submit"
+        android:textColor="@color/state_primary"
+        android:layout_margin="8dp"
+        android:gravity="right"
+        android:padding="8dp"/>
+
+    <Button
+        style="@style/ButtonPrimaryDarkText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:drawableRight="@drawable/ic_android_black_24dp"
+        android:text="I have dark text"
+        android:layout_margin="8dp"
+        android:padding="8dp"/>
+
+    <Button
+            style="@style/ButtonAccent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:padding="8dp"
+            android:textColor="@color/colorAccentDark"
+            android:letterSpacing="0.5"
+            android:textSize="18sp"
+            android:fontFamily="@font/proxima_nova_regular"
+            android:textStyle="bold"
+            android:lineSpacingMultiplier="1.5"
+            android:maxLines="3"
+            android:textAllCaps="true"
+            android:text="Some multiline\ntext for testing\nwith &lt;cursed&gt;\tparts"/>
+
+    <ImageButton
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:src="@drawable/ic_android_black_24dp"
+            android:padding="8dp"
+            android:layout_margin="8dp"
+            android:scaleType="centerCrop"
+            android:background="@drawable/button_primary"/>
+
+    <Spinner
+            style="@style/ButtonPrimary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:drawableRight="@drawable/ic_android_black_24dp"
+            android:text="@string/submit"
+            android:layout_margin="8dp"
+            android:padding="8dp"/>
+
+</LinearLayout>
