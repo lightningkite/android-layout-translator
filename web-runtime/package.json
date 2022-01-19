@@ -10,7 +10,8 @@
     "typescript": "^4.5.2"
   },
   "scripts": {
-    "build": "tsc",
+    "prepack": "tsc",
+    "prepare": "tsc",
     "test": "jest --env=node --colors --coverage test"
   },
   "author": "Lightning Kite"
