@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.sourceElementsConfigurationNa
 
 fun WebTranslator.importResources() {
     val sass = StringBuilder()
-    sass.appendLine("""@import "~android-xml-runtime/index.scss";""")
+    sass.appendLine("""@import "~@lightningkite/android-xml-runtime/index.scss";""")
     importDimensionsColors(sass)
     importDrawables(sass)
     importStyles(sass)

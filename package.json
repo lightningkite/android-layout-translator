@@ -1,6 +1,6 @@
 {
   "name": "@lightningkite/android-xml-runtime",
-  "version": "0.1.1",
+  "version": "0.1.3",
   "description": "The runtime for Lightning Kite's Android Layout XML to HTML translator",
   "main": "index.js",
   "types": "index.d.ts",
