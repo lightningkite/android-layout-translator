@@ -1334,7 +1334,7 @@
   type: element
   parent: EditText
   template: |
-    <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" >
+    <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" placeholder="" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" customClass="SearchTextField" customModule="SearchTextField">
         <fontDescription key="fontDescription" type="system" pointSize="14"/>
         <textInputTraits key="textInputTraits"/>
     </textField>
