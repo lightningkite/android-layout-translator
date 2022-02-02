@@ -1,7 +1,5 @@
 import com.lightningkite.deployhelpers.*
-import java.util.Properties
 
-val kotlinVersion = "1.6.0"
 plugins {
     kotlin("jvm")
     java
@@ -12,7 +10,6 @@ plugins {
     `maven-publish`
 }
 
-group = "com.lightningkite.xmltoxib"
 
 gradlePlugin {
     plugins {
@@ -23,11 +20,6 @@ gradlePlugin {
     }
 }
 
-repositories {
-    mavenLocal()
-    mavenCentral()
-    google()
-}
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
     kotlinOptions {
@@ -35,6 +27,8 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
     }
 }
 
+val kotlinVersion:String by project
+val jacksonVersion = "2.13.1"
 dependencies {
     api(localGroovy())
     api(gradleApi())
@@ -44,9 +38,9 @@ dependencies {
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
-    api("com.fasterxml.jackson.core:jackson-databind:2.13.0")
-    api("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
-    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.13.0")
+    api("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+    api("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
+    api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jacksonVersion")
 
     // https://mvnrepository.com/artifact/org.apache.xmlgraphics/batik-transcoder
     implementation(group = "org.apache.xmlgraphics", name = "batik-transcoder", version = "1.13")
