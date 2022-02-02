@@ -31,6 +31,7 @@ fun Element.swiftIdentifier(): SwiftIdentifier {
         "pageControl" -> SwiftIdentifier("UIKit", "UIPageControl")
         "label" -> SwiftIdentifier("UIKit", "UILabel")
         "mapView" -> SwiftIdentifier("MapKit", "MKMapView")
+        "wkWebView" -> SwiftIdentifier("WebKit", "WKWebView")
         else -> throw IllegalArgumentException("Couldn't identify swift name of element for ${this.tagName}")
     }
 }

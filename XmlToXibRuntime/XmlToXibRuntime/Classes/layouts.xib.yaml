@@ -1901,3 +1901,10 @@
             <segment title="Here"/>
         </segments>
     </segmentedControl>
+
+- id: WebView
+  type: element
+  template: |
+    <wkWebView opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO">
+    </wkWebView>
+  

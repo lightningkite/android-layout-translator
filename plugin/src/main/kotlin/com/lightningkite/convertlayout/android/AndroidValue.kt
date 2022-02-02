@@ -62,6 +62,13 @@ sealed interface AndroidDrawable : AndroidValue {
     }
 }
 
+data class AndroidAttrReference(val name: String): AndroidValue {
+    override fun get(key: String): Any? = when(key) {
+        "name" -> name
+        else -> throw IllegalArgumentException("No key $key for AndroidAttrReference")
+    }
+}
+
 sealed interface AndroidNamedDrawable : AndroidDrawable {
     val name: String
 }

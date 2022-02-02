@@ -14,6 +14,9 @@
 
 - id: android.view.View.setBackgroundResource
   type: call
+  reflectiveName:
+    pattern: "UIView.setBackgroundResource"
+    imports: [XmlToXibRuntime]
   template:
     pattern: "~this~.backgroundLayer = ~0~()"
     imports: [XmlToXibRuntime]

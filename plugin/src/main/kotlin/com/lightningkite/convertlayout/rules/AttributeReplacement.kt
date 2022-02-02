@@ -60,6 +60,7 @@ data class AttributeReplacement(
     enum class XibRuleType { SubNode, Attribute, UserDefined, StateSubNode, StateAttribute }
 
     enum class ValueType2(val kotlinClass: KClass<*>) {
+        AttrReference(AndroidAttrReference::class),
         FontLiteral(AndroidFontLiteral::class),
         FontSet(AndroidFontSet::class),
         ColorLiteral(AndroidColorLiteral::class),

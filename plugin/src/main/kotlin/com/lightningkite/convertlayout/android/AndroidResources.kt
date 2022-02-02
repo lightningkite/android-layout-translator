@@ -29,6 +29,7 @@ class AndroidResources {
 
     fun read(value: String): AndroidValue {
         return when {
+            value.startsWith("?android:attr/") -> AndroidAttrReference(value.substringAfter("?android:attr/"))
             value.startsWith('#') -> AndroidColorLiteral(value.hashColorToParts())
             value.startsWith("@style/") -> styles[value.substringAfter('/')] ?: AndroidStyle(
                 value.substringAfter('/'),
