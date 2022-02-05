@@ -28,7 +28,9 @@ internal class IosLayoutTranslatorForFile(
             "android:drawableBottom",
         )
         val defaultWrappedAttributes: Set<String> = setOf(
-            "android:visibility"
+            "android:visibility",
+            "android:minWidth",
+            "android:minHeight"
         )
     }
 
@@ -40,7 +42,9 @@ internal class IosLayoutTranslatorForFile(
             ?.plus(1)
             ?: 0
     }
-    fun Element.wrapPower(isVertical: Boolean): Int = 998 - childrenWhoWrap(isVertical) * 2
+    fun Element.wrapPower(isVertical: Boolean): Int {
+        return this["tools:wrapPower"]?.toIntOrNull() ?: (998 - childrenWhoWrap(isVertical) * 2)
+    }
 
     var outlets: MutableMap<String, SwiftIdentifier> = LinkedHashMap()
     val usedResources: MutableSet<AndroidValue> = LinkedHashSet()
@@ -570,8 +574,8 @@ internal class IosLayoutTranslatorForFile(
                     val innerElement = convertElement(target, child)
                     val paddingPlusMargins = padding + child.allAttributes.insets("android:layout_margin", resources)
                     destElement.constraintChildMatchEdges(innerElement, paddingPlusMargins)
-                    destElement.anchorWidth.constraint(
-                        innerElement.anchorWidth,
+                    innerElement.anchorWidth.constraint(
+                        destElement.anchorWidth,
                         constant = -paddingPlusMargins.left - paddingPlusMargins.right
                     )
                 }
@@ -582,8 +586,8 @@ internal class IosLayoutTranslatorForFile(
                     val innerElement = convertElement(target, child)
                     val paddingPlusMargins = padding + child.allAttributes.insets("android:layout_margin", resources)
                     destElement.constraintChildMatchEdges(innerElement, paddingPlusMargins)
-                    destElement.anchorHeight.constraint(
-                        innerElement.anchorHeight,
+                    innerElement.anchorHeight.constraint(
+                        destElement.anchorHeight,
                         constant = -paddingPlusMargins.top - paddingPlusMargins.bottom
                     )
                 }
@@ -714,6 +718,28 @@ internal class IosLayoutTranslatorForFile(
             }
             AttributeReplacement.XibRuleType.StateAttribute -> {
                 when (value) {
+                    is AndroidColorStateResource -> {
+                        value.colors.asMap.forEach { state, subValue ->
+                            val sub = subValue ?: return@forEach
+                            handleXibEntry(
+                                destElement.getOrAppendChildWithKey("state", state.name.lowercase()),
+                                sub.value,
+                                key,
+                                AttributeReplacement.XibRuleType.Attribute
+                            )
+                        }
+                    }
+                    is AndroidDrawableState -> {
+                        value.value.states.asMap.forEach { state, subValue ->
+                            val sub = subValue as? AndroidDrawable.Reference ?: return@forEach
+                            handleXibEntry(
+                                destElement.getOrAppendChildWithKey("state", state.name.lowercase()),
+                                sub.drawable.value,
+                                key,
+                                AttributeReplacement.XibRuleType.Attribute
+                            )
+                        }
+                    }
                     else -> {
                         handleXibEntry(
                             destElement.getOrAppendChildWithKey("state", "normal"),
@@ -821,6 +847,8 @@ internal class IosLayoutTranslatorForFile(
             .flatMap {
                 when (it) {
                     is AndroidColorStateResource -> it.colors.asMap.values.mapNotNull { it?.value }
+                        .asSequence() + sequenceOf(it)
+                    is AndroidDrawableState -> it.value.states.asMap.values.mapNotNull { (it as? AndroidDrawable.Reference)?.drawable?.value }
                         .asSequence() + sequenceOf(it)
                     else -> sequenceOf(it)
                 }

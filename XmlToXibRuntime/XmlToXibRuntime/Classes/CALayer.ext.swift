@@ -410,7 +410,9 @@ public extension UIView {
     
     var backgroundLayer: CALayer? {
         get { containerView.backgroundLayerForThis }
-        set(value) { containerView.backgroundLayerForThis = value }
+        set(value) {
+            containerView.backgroundLayerForThis = value
+        }
     }
     
     var backgroundLayerForThis: CALayer? {
@@ -433,7 +435,7 @@ public extension UIView {
             previous?.removeFromSuperlayer()
             if let value = value {
                 self.layer.insertSublayer(value, at: 0)
-                value.frame = self.layer.frame
+                value.frame = self.layer.bounds
                 value.zPosition = CGFloat(-Float.greatestFiniteMagnitude)
                 UIView.backgroundLayerMap[self] = value
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.01, execute: {

@@ -663,6 +663,13 @@
 - id: "android:src"
   type: attribute
   element: ImageButton
+  valueType: DrawableState
+  xib:
+    image: StateAttribute
+
+- id: "android:src"
+  type: attribute
+  element: ImageButton
   valueType: Drawable
   code: '~this~.setImage(R.drawable.~name~().toImage(), for: .normal)'
 
@@ -1177,7 +1184,6 @@
     <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" customClass="LabeledToggle" customModule="XmlToXibRuntime">
       <subviews>
           <view contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13Checkbox" customModule="M13Checkbox">
-            <color key="backgroundColor" systemColor="systemBackgroundColor"/>
             <constraints>
               <constraint firstAttribute="height" constant="20.5"/>
               <constraint firstAttribute="width" constant="20.5"/>
@@ -1211,7 +1217,6 @@
   type: element
   template: |
     <view contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13Checkbox" customModule="M13Checkbox">
-      <color key="backgroundColor" systemColor="systemBackgroundColor"/>
       <constraints>
         <constraint firstAttribute="height" constant="20.5"/>
         <constraint firstAttribute="width" constant="20.5"/>
@@ -1240,7 +1245,6 @@
     <stackView opaque="NO" contentMode="scaleToFill" alignment="center" spacing="16" translatesAutoresizingMaskIntoConstraints="NO" customClass="LabeledToggle" customModule="XmlToXibRuntime">
       <subviews>
           <view contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13RadioButton" customModule="XmlToXibRuntime" >
-            <color key="backgroundColor" systemColor="systemBackgroundColor"/>
             <constraints>
               <constraint firstAttribute="height" constant="20.5"/>
               <constraint firstAttribute="width" constant="20.5"/>
@@ -1271,7 +1275,6 @@
   type: element
   template: |
     <view contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" customClass="M13RadioButton" customModule="XmlToXibRuntime" >
-      <color key="backgroundColor" systemColor="systemBackgroundColor"/>
       <constraints>
         <constraint firstAttribute="height" constant="20.5"/>
         <constraint firstAttribute="width" constant="20.5"/>
@@ -1717,20 +1720,6 @@
     </constraints>
     </scrollView>
 
-#- id: "android:text"
-#  type: attribute
-#  element: TextView
-#  rules:
-#    "":
-#      append: [ ~value~ ]
-#- id: "android:textColor"
-#  type: attribute
-#  element: TextView
-#  valueType: Color
-#  rules:
-#    "":
-#      attribute:
-#        color: ~android~
 
 
 ## Attributes
@@ -1807,63 +1796,10 @@
     <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" customClass="~layout.xmlClass~" customModule="~moduleName~" customModuleProvider="target" placeholderIntrinsicWidth="50" placeholderIntrinsicHeight="50">
     </view>
 
-#- id: com.lightningkite.butterfly.views.widget.ColorRatingBar
-#  type: element
-#  parent: RatingBar
-#
-#- id: com.lightningkite.butterfly.views.widget.MultilineEditText
-#  type: element
-#  parent: EditText
-#
-#- id: com.lightningkite.butterfly.views.widget.CustomView
-#  type: element
-#  parent: View
-#
-#- id: com.lightningkite.butterfly.views.widget.TimeButton
-#  type: element
-#  parent: Button
-#
-#- id: com.lightningkite.butterfly.views.widget.DateButton
-#  type: element
-#  parent: Button
-#
-#- id: com.lightningkite.butterfly.views.widget.SwapView
-#  type: element
-#  parent: View
-#
-#- id: com.klypme.actuals.TwilioVideoCallView
-#  type: element
-#  parent: View
-#
-#- id: com.stripe.android.view.CardInputWidget
-#  type: element
-#  parent: View
-#
-#- id: com.adamstyrc.cookiecutter.CookieCutterImageView
-#  type: element
-#  parent: View
-#
-#- id: de.hdodenhof.circleimageview.CircleImageView
-#  type: element
-#  parent: ImageView
-#
-- id: com.google.android.gms.maps.MapView
-  type: element
-  template: |
-    <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO">
-    </mapView>
-
 - id: androidx.swiperefreshlayout.widget.SwipeRefreshLayout
   type: element
   parent: FrameLayout
 
-#- id: com.rd.PageIndicatorView
-#  type: element
-#  parent: View #TODO
-#
-#- id: com.lightningkite.butterfly.views.widget.VerticalRecyclerView
-#  type: element
-#  parent: androidx.recyclerview.widget.RecyclerView
 
 - id: androidx.recyclerview.widget.RecyclerView
   type: element
@@ -1906,5 +1842,9 @@
   type: element
   template: |
     <wkWebView opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="top" segmentControlStyle="plain" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO">
+      <wkWebViewConfiguration key="configuration">
+          <audiovisualMediaTypes key="mediaTypesRequiringUserActionForPlayback" none="YES"/>
+          <wkPreferences key="preferences"/>
+      </wkWebViewConfiguration>
     </wkWebView>
   
