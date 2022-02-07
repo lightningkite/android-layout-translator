@@ -538,6 +538,9 @@
         center_horizontal:
           attribute:
             contentHorizontalAlignment: center
+        center_vertical:
+          attribute:
+            contentHorizontalAlignment: leading
         right:
           attribute:
             contentHorizontalAlignment: right

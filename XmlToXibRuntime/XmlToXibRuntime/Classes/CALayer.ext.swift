@@ -201,14 +201,14 @@ public enum LayerMaker {
         fillColor: UIColor,
         strokeColor: UIColor,
         strokeWidth: CGFloat
-    ) -> CAShapeLayer {
+    ) -> CALayer {
         let layer = CAShapeLayer()
         layer.path = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: 100, height: 100), transform: nil)
         layer.frame.size = CGSize(width: 100, height: 100)
         layer.lineWidth = strokeWidth
         layer.strokeColor = strokeColor.cgColor
         layer.fillColor = fillColor.cgColor
-        return layer
+        return autosize(AutosizeCALayer.LayerWithParams(layer: layer, insets: .zero, scaleOverResize: true))
     }
     public static func ovalGradient(
         startColor: UIColor,
@@ -217,7 +217,7 @@ public enum LayerMaker {
         gradientAngle: CGFloat,
         strokeColor: UIColor,
         strokeWidth: CGFloat
-    ) -> CAGradientLayer {
+    ) -> CALayer {
         let layer = CAShapeLayer()
         layer.path = CGPath(ellipseIn: CGRect(x: 0, y: 0, width: 100, height: 100), transform: nil)
         layer.frame.size = CGSize(width: 100, height: 100)
@@ -227,7 +227,7 @@ public enum LayerMaker {
         gradient.colors = [startColor, midColor, endColor]
             .compactMap { $0?.cgColor }
         gradient.setGradientAngle(degrees: gradientAngle)
-        return gradient
+        return autosize(AutosizeCALayer.LayerWithParams(layer: gradient, insets: .zero, scaleOverResize: true))
     }
     public static func rect(
         fillColor: UIColor,
@@ -357,7 +357,6 @@ public extension CAGradientLayer {
 }
 
 public extension UIView {
-    private static let isJoinedContainer = WeakDictionary<UIView, Bool>()
     private static let backgroundLayerMap = WeakDictionary<UIView, CALayer?>()
     static var backgroundLayersByName: Dictionary<String, ()->CALayer> = [:]
     
