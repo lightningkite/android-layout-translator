@@ -1746,7 +1746,21 @@
     alpha: Attribute
 
 - id: android:elevation
-  type: attribute  # TODO
+  type: attribute
+  rules:
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='layer.shadowOpacity' and @type='number']/real[@key='value']":
+      attribute:
+        "value": '0.5'
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='layer.shadowOffset' and @type='size']/size[@key='value']":
+      attribute:
+        "width": '0'
+        "height": '~number~'
+    "userDefinedRuntimeAttributes/userDefinedRuntimeAttribute[@keyPath='layer.shadowColorIB' and @type='color']/color[@key='value']":
+      attribute:
+        "white": '0.666'
+        "alpha": '1'
+        "colorSpace": 'custom'
+        "customColorSpace": 'genericGamma22GrayColorSpace'
 
 - id: android:rotation
   type: attribute
