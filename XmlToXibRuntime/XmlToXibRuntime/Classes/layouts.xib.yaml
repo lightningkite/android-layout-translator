@@ -269,7 +269,7 @@
   rules:
     "fontDescription[@key='fontDescription']":
       ifContains:
-        "android:fontFamily=":
+        "android:fontFamily=null":
           ifContains:
             italic:
               attribute:
@@ -509,7 +509,7 @@
   rules:
     "fontDescription[@key='fontDescription']":
       ifContains:
-        "android:fontFamily=":
+        "android:fontFamily=null":
           ifContains:
             italic:
               attribute:
@@ -1054,7 +1054,7 @@
   rules:
     "subviews/label/fontDescription[@key='fontDescription']":
       ifContains:
-        "android:fontFamily=":
+        "android:fontFamily=null":
           ifContains:
             italic:
               attribute:
