@@ -10,10 +10,10 @@
   type: element
   template: <button/>
 
-- id: CompoundButton
+- id: ToggleButton
   type: element
   parent: Button
-  template: <button class="compound-off"/>
+  template: '<label><input id="input" type="checkbox" hidden="true"/><span id="button"></span></label>'
 
 - id: ImageView
   type: element
@@ -58,7 +58,7 @@
 
 - id: ImageButton
   type: element
-  template: <button class="container"><img/></button>
+  template: <button class="container"><img id="image"/></button>
 
 - id: "android:scaleType"
   type: attribute
@@ -358,7 +358,7 @@
   rules:
     "":
       css:
-        box-shadow: 0px ~value~ ~value~ 0px rgba(0,0,0,0.25)
+        box-shadow: 0px ~web~ ~web~ 0px rgba(0,0,0,0.25)
 
 - id: "android:text"
   type: attribute

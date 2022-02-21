@@ -1,0 +1,11 @@
+node_modules
+.gradle
+test-project
+.idea
+gradle
+plugin
+safe-insets
+build
+.github
+XmlToXibRuntime
+.git

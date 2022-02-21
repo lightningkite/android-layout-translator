@@ -23,6 +23,7 @@ internal class WebLayoutTranslatorForFile(
 ) : AndroidLayoutTranslator(replacements, resources) {
 
     var outlets: MutableMap<String, String> = LinkedHashMap()
+    var includes: MutableMap<String, String> = LinkedHashMap()
     var compoundOutlets: MutableMap<String, Map<String, String>> = LinkedHashMap()
 
     override fun getProjectWide(key: String): String? = when (key) {
@@ -40,8 +41,12 @@ internal class WebLayoutTranslatorForFile(
         sourceElement["android:id"]
             ?.substringAfter('/')
             ?.camelCase()
+            ?.safeJsIdentifier()
             ?.let { codeId ->
-                if (result.walkElements().any { it["id"] != null }) {
+                if(sourceElement.tagName == "include") {
+                    includes[codeId] = sourceElement["layout"]!!.substringAfter("@layout/").capitalize().camelCase().plus("Binding")
+                    result["class"] = result["class"]?.let { "$it id-$codeId" } ?: "id-$codeId"
+                } else if (result.walkElements().any { it["id"] != null }) {
                     //compound
                     val out = LinkedHashMap<String, String>()
                     out["root"] = result.tagName
@@ -123,6 +128,11 @@ internal class WebLayoutTranslatorForFile(
         return """
             |import {inflateHtmlFile} from "@lightningkite/android-xml-runtime";
             |import html from './${layout.name}.html'
+            |${
+            includes.entries.joinToString("\n|    ") {
+                """import { ${it.value} } from './${it.value}' """
+            }
+            }
             |
             |//! Declares ${resources.packageName}.databinding.${layout.className}
             |export interface ${layout.className} {
@@ -139,14 +149,21 @@ internal class WebLayoutTranslatorForFile(
                 } + "}")
             }
         }
+            |    ${
+            includes.entries.joinToString("\n|    ") {
+                it.key + ": " + it.value
+            }
+        }
             |}
             |
             |export namespace ${layout.className} {
-            |   export function inflate() {
+            |   export function inflate(): ${layout.className} {
             |       return inflateHtmlFile(html, [${
             outlets.keys.map { "\"" + it + "\"" }.joinToString()
         }], {${
             compoundOutlets.entries.map { it.key + ": [" + it.value.keys.map { "\"" + it + "\"" }.joinToString() + "]" }.joinToString()
+        }}, {${
+            includes.entries.map { it.key + ": " + it.value + ".inflate" }.joinToString()
         }}) as ${layout.className}
             |   }
             |}

@@ -145,8 +145,8 @@ fun WebTranslator.importStrings() {
         appendLine("R.ts")
         appendLine("Created by Khrysalis")
         appendLine("*/")
-        appendLine("")
-        appendLine("export interface Strings {")
+        appendLine("//! Declares ${resources.packageName}.R")
+        appendLine("export interface StringInterface {")
         for (key in resources.strings.keys) {
             appendLine("${key.safeJsIdentifier()}: string")
         }
@@ -160,7 +160,20 @@ fun WebTranslator.importStrings() {
                 .replace("\t", "\\t")
             appendLine("export const ${key.safeJsIdentifier()} = \"$fixedString\"")
         }
-        appendLine("export const strings: Strings = Object.assign({}, DefaultStrings);")
+        appendLine("}")
+        appendLine("export const Strings: StringInterface = Object.assign({}, DefaultStrings);")
+        appendLine("export namespace Colors {")
+        for ((key, value) in resources.colors.entries) {
+            appendLine("export const ${key.safeJsIdentifier()} = \"${when(value) {
+                is AndroidColorStateResource -> "--color-" + value.name
+                else -> value.value.web
+            }}\"")
+        }
+        appendLine("}")
+        appendLine("export namespace Dimen {")
+        for ((key, value) in resources.dimensions.entries) {
+            appendLine("export const ${key.safeJsIdentifier()} = \"${value.name}\"")
+        }
         appendLine("}")
     })
 }
