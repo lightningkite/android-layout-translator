@@ -30,7 +30,8 @@ internal class IosLayoutTranslatorForFile(
         val defaultWrappedAttributes: Set<String> = setOf(
             "android:visibility",
             "android:minWidth",
-            "android:minHeight"
+            "android:minHeight",
+            "android:elevation"
         )
     }
 
