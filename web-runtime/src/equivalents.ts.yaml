@@ -6,6 +6,11 @@
 
 - type: cast
   from: android.widget.ImageButton
+  to: android.widget.Button
+  template: ~this~.root
+
+- type: cast
+  from: android.widget.ImageButton
   to: android.view.View
   template: ~this~.root
 
