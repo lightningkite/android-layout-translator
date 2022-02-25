@@ -12,6 +12,7 @@ import com.lightningkite.convertlayout.util.camelCase
 import com.lightningkite.convertlayout.xml.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import java.io.File
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 import kotlin.math.min
@@ -43,8 +44,9 @@ internal class WebLayoutTranslatorForFile(
             ?.camelCase()
             ?.safeJsIdentifier()
             ?.let { codeId ->
-                if(sourceElement.tagName == "include") {
-                    includes[codeId] = sourceElement["layout"]!!.substringAfter("@layout/").capitalize().camelCase().plus("Binding")
+                if (sourceElement.tagName == "include") {
+                    includes[codeId] =
+                        sourceElement["layout"]!!.substringAfter("@layout/").capitalize().camelCase().plus("Binding")
                     result["class"] = result["class"]?.let { "$it id-$codeId" } ?: "id-$codeId"
                 } else if (result.walkElements().any { it["id"] != null }) {
                     //compound
@@ -73,6 +75,23 @@ internal class WebLayoutTranslatorForFile(
         return result
     }
 
+    override fun handleAttribute(
+        rules: List<ElementReplacement>,
+        sourceElement: Element,
+        destElement: Element,
+        allAttributes: Map<String, String>,
+        key: String,
+        raw: String
+    ) {
+        super.handleAttribute(rules, sourceElement, destElement, allAttributes, key, raw)
+        if (key.substringAfterLast(':').startsWith("web_attr_")) {
+            destElement.setAttribute(key.substringAfter(":web_attr_"), raw)
+        }
+        if (key.substringAfterLast(':').startsWith("web_style_")) {
+            destElement.css[key.substringAfter(":web_style_")] = raw
+        }
+    }
+
     override fun handleChildren(
         rules: List<ElementReplacement>,
         childAddRule: String?,
@@ -84,7 +103,7 @@ internal class WebLayoutTranslatorForFile(
         when (childAddRule) {
             "linear" -> {
                 val isVertical = myAttributes["android:orientation"] == "vertical"
-                sourceElement.childElements.forEach { childSrc ->
+                sourceElement.convertibleChildElements.forEach { childSrc ->
                     val childDest = this.convertElement(target, childSrc)
                     if (childSrc.allAttributes["android:layout_${if (isVertical) "width" else "height"}"] == "match_parent") {
                         childDest.css["align-self"] = "stretch"
@@ -96,7 +115,7 @@ internal class WebLayoutTranslatorForFile(
                 }
             }
             "frame" -> {
-                sourceElement.childElements.forEach { childSrc ->
+                sourceElement.convertibleChildElements.forEach { childSrc ->
                     val childDest = this.convertElement(target, childSrc)
                     val childGravity = childSrc["android:layout_gravity"]?.toGravity() ?: Gravity()
                     if (childSrc.allAttributes["android:layout_width"] == "match_parent") {
@@ -123,53 +142,25 @@ internal class WebLayoutTranslatorForFile(
     }
 
     fun tsFile(
-        layout: AndroidLayoutFile
-    ): String {
-        return """
-            |import {inflateHtmlFile} from "@lightningkite/android-xml-runtime";
-            |import html from './${layout.name}.html'
-            |${
-            includes.entries.joinToString("\n|    ") {
-                """import { ${it.value} } from './${it.value}' """
-            }
-            }
-            |
-            |//! Declares ${resources.packageName}.databinding.${layout.className}
-            |export interface ${layout.className} {
-            |    root: HTMLElement
-            |    ${
-            outlets.entries.joinToString("\n|    ") {
-                it.key + ": " + (it.value.let { elementMap[it] } ?: "HTMLElement")
-            }
-        }
-            |    ${
-            compoundOutlets.entries.joinToString("\n|    ") {
-                it.key + ": {" + (it.value.entries.joinToString(", ") {
-                    it.key + ": " + (it.value.let { elementMap[it] } ?: "HTMLElement")
-                } + "}")
-            }
-        }
-            |    ${
-            includes.entries.joinToString("\n|    ") {
-                it.key + ": " + it.value
-            }
-        }
-            |}
-            |
-            |export namespace ${layout.className} {
-            |   export function inflate(): ${layout.className} {
-            |       return inflateHtmlFile(html, [${
-            outlets.keys.map { "\"" + it + "\"" }.joinToString()
-        }], {${
-            compoundOutlets.entries.map { it.key + ": [" + it.value.keys.map { "\"" + it + "\"" }.joinToString() + "]" }.joinToString()
-        }}, {${
-            includes.entries.map { it.key + ": " + it.value + ".inflate" }.joinToString()
-        }}) as ${layout.className}
-            |   }
-            |}
-            |
-        """.trimMargin("|")
-    }
+        androidXmlName: String,
+        htmlFile: File,
+        variant: String? = null,
+    ): WebLayoutFile = WebLayoutFile(
+        packageName = resources.packageName,
+        name = androidXmlName,
+        variants = setOfNotNull(variant),
+        files = setOf(htmlFile),
+        bindings = outlets.mapValues { WebLayoutFile.Hook(it.key, elementMap[it.value] ?: "HTMLElement") }
+                + compoundOutlets.mapValues {
+            WebLayoutFile.Hook(
+                name = it.key,
+                baseType = elementMap[it.value["root"]!!] ?: "HTMLElement",
+                additionalParts = it.value.filterKeys { it != "root" }
+                    .mapValues { elementMap[it.value] ?: "HTMLElement" }
+            )
+        },
+        sublayouts = this.includes.mapValues { WebLayoutFile.SubLayout(it.key, it.value) }
+    )
 
     companion object {
 

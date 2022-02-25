@@ -116,12 +116,6 @@
   xib:
     image: attribute
 
-- id: "android:src"
-  type: attribute
-  element: ImageView
-  valueType: Drawable
-  code: ~this~.image = R.drawable.~name~().toImage()
-
 - id: "android:scaleType"
   type: attribute
   element: ImageView
@@ -669,12 +663,6 @@
   valueType: DrawableState
   xib:
     image: StateAttribute
-
-- id: "android:src"
-  type: attribute
-  element: ImageButton
-  valueType: Drawable
-  code: '~this~.setImage(R.drawable.~name~().toImage(), for: .normal)'
 
 - id: "android:scaleType"
   type: attribute

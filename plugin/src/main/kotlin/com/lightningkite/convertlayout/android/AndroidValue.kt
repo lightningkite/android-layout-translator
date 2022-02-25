@@ -184,6 +184,7 @@ data class AndroidColorStateResource(
         "highlighted" -> colors.highlighted
         "disabled" -> colors.disabled
         "focused" -> colors.focused
+        "web" -> "var(--color-$name)"
         else -> super.get(key)
     }
 }
@@ -395,7 +396,6 @@ data class AndroidDimensionResource(
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
-        "web" -> "var(--dimen-$name)"
         else -> super.get(key)
     }
 }
@@ -507,7 +507,7 @@ data class ColorInParts(
         )
     }
 
-    override fun get(key: String): Any?? = when (key) {
+    override fun get(key: String): Any? = when (key) {
         "web" -> web
         "android" -> android
         "red" -> red.toString(16).padStart(2, '0')

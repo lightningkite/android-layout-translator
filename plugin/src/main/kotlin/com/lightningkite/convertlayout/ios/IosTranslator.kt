@@ -3,6 +3,8 @@ package com.lightningkite.convertlayout.ios
 import com.lightningkite.convertlayout.android.AndroidLayoutFile
 import com.lightningkite.convertlayout.android.AndroidResources
 import com.lightningkite.convertlayout.rules.Replacements
+import com.lightningkite.convertlayout.web.WebLayoutFile
+import com.lightningkite.convertlayout.web.WebLayoutTranslatorForFile
 import com.lightningkite.convertlayout.xml.cleanBlanks
 import com.lightningkite.convertlayout.xml.readXml
 import com.lightningkite.convertlayout.xml.writeXml
@@ -35,21 +37,22 @@ data class IosTranslator(
 
     private fun make() = IosLayoutTranslatorForFile(project, replacements, resources)
     fun translate(layout: AndroidLayoutFile) {
-        val existingLayout = project.layoutsFolder
-            .also { it.mkdirs() }
-            .resolve(layout.className + ".xib")
-        if(existingLayout.exists() && existingLayout.readText().let { !it.contains("Generated with XmlToXib, will be overwritten") && it.contains("userComments") }) {
-            return
+        layout.variants.entries.map {
+            val translator = IosLayoutTranslatorForFile(project, replacements, resources)
+            val htmlFile = project.layoutsFolder
+                .also { it.mkdirs() }
+                .resolve(layout.className + (if(it.key.isBlank()) "" else "-${it.key}") + ".xib")
+            translator
+                .convertDocument(layout, it.value.readXml())
+                .also { it.documentElement.cleanBlanks() }
+                .let { htmlFile.writeXml(it) }
+            translator.swiftFile(layout.name, htmlFile, it.key.takeUnless { it.isBlank() })
+        }.asSequence().let { IosLayoutFile.combine(it) }.let {
+            project.layoutsFolder
+                .also { it.mkdirs() }
+                .resolve(layout.className + ".swift")
+                .writeText(it.emit())
         }
-        val instance = make()
-        project.layoutsFolder
-            .also { it.mkdirs() }
-            .resolve(layout.className + ".xib")
-            .writeXml(instance.convertDocument(layout, layout.files.first().readXml()).also { it.documentElement.cleanBlanks() })
-        project.layoutsFolder
-            .also { it.mkdirs() }
-            .resolve(layout.className + ".swift")
-            .writeText(instance.swiftFile(layout))
     }
     operator fun invoke() {
         importResources()

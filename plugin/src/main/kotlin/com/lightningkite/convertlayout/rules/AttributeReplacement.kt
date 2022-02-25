@@ -15,13 +15,13 @@ data class AttributeReplacement(
     var parentElement: String? = null,
     var rules: Map<String, SubRule> = mapOf(),
     var xib: Map<String, XibRuleType> = mapOf(),
-    var code: Template? = null,
     var equalTo: String? = null,
     override val debug: Boolean = false
 ) : ReplacementRule {
 
     data class SubRule(
         var ifContains: Map<String, SubRule>? = null,
+        val content: Template? = null,
         val append: List<Template> = listOf(),
         val attribute: Map<String, Template?> = mapOf(),
         var css: Map<String, Template?> = mapOf(),
@@ -114,5 +114,5 @@ data class AttributeReplacement(
         }
     }
 
-    override val priority: Int get() = (if (equalTo != null) 20 else 0) + valueType.depth
+    override val priority: Int get() = (if (equalTo != null) 40 else 0) + (if (element != "View") 20 else 0) + valueType.depth
 }

@@ -6,18 +6,30 @@
   parent: null
   template: <div/>
 
+- id: "android:visibility"
+  type: attribute
+  equalTo: "gone"
+  rules:
+    "":
+      attribute:
+        hidden: 'true'
+      css:
+        display: 'none'
+
+- id: "android:visibility"
+  type: attribute
+  equalTo: "invisible"
+  rules:
+    "":
+      css:
+        visibility: hidden
+
 - id: Button
   type: element
   template: <button/>
 
-- id: ToggleButton
-  type: element
-  parent: Button
-  template: '<label><input id="input" type="checkbox" hidden="true"/><span id="button"></span></label>'
-
 - id: ImageView
   type: element
-  parent: Button
   template: <img/>
 
 - id: "android:scaleType"
@@ -126,12 +138,50 @@
 
 - id: "android:src"
   type: attribute
+  element: ImageView
+  valueType: Vector
+  rules:
+    "":
+      attribute:
+        src: "../drawables/~name~.svg"
+
+- id: "android:src"
+  type: attribute
+  element: ImageView
+  valueType: Drawable
+  rules:
+    "":
+      attribute:
+        src: "https://upload.wikimedia.org/wikipedia/commons/c/ce/Transparent.gif"
+      classes: ["drawable-~name~", "asImage"]
+
+- id: "android:src"
+  type: attribute
+  element: ImageButton
+  valueType: Bitmap
+  rules:
+    "img":
+      attribute:
+        src: "../drawables/~name~.png"
+
+- id: "android:src"
+  type: attribute
   element: ImageButton
   valueType: Vector
   rules:
     "img":
       attribute:
         src: "../drawables/~name~.svg"
+
+- id: "android:src"
+  type: attribute
+  element: ImageButton
+  valueType: Drawable
+  rules:
+    "img":
+      attribute:
+        src: "https://upload.wikimedia.org/wikipedia/commons/c/ce/Transparent.gif"
+      classes: ["drawable-~name~", "asImage"]
 
 #-------------
 
@@ -256,6 +306,11 @@
   type: element
   template: <input type="checkbox" />
 
+- id: ToggleButton
+  type: element
+  parent: LabeledCheckOrRadio
+  template: '<label><input id="input" type="checkbox" hidden="true"/><span id="label"></span></label>'
+
 - id: CheckBox
   type: element
   parent: CheckOrRadio
@@ -294,6 +349,30 @@
     "":
       attribute:
         checked: "true"
+
+- id: "android:text"
+  element: LabeledCheckOrRadio
+  type: attribute
+  valueType: String
+  rules:
+    "span[@id='label']":
+      content: ~escaped~
+
+- id: "android:textOn"
+  element: ToggleButton
+  type: attribute
+  valueType: String
+  rules:
+    "span[@id='label']":
+      content: ~escaped~
+
+- id: "android:textOff"
+  element: ToggleButton
+  type: attribute
+  valueType: String
+  rules:
+    "span[@id='label']":
+      content: ~escaped~
 
 - id: "android:button"
   type: attribute
@@ -346,6 +425,13 @@
       css:
         background-color: "~web~"
 
+- id: "android:background"
+  type: attribute
+  valueType: AttrReference
+  rules:
+    "":
+      classes: ["drawable-attr-~name~"]
+
 - id: "android:alpha"
   type: attribute
   rules:
@@ -361,22 +447,6 @@
         box-shadow: 0px ~web~ ~web~ 0px rgba(0,0,0,0.25)
 
 - id: "android:text"
-  type: attribute
-  valueType: String
-  rules:
-    "":
-      append:
-        - ~escaped~
-
-- id: "android:textOn"
-  type: attribute
-  valueType: String
-  rules:
-    "":
-      append:
-        - ~escaped~
-
-- id: "android:textOff"
   type: attribute
   valueType: String
   rules:
@@ -414,7 +484,6 @@
 
 - id: "android:gravity"
   type: attribute
-  element: TextView
   valueType: String
   rules:
     "":
@@ -614,6 +683,38 @@
       css:
         height: "~web~"
 
+- id: "android:layout_width"
+  type: attribute
+  equalTo: 'wrap_content'
+  rules:
+    "":
+      css:
+        width: "unset"
+
+- id: "android:layout_height"
+  type: attribute
+  equalTo: 'wrap_content'
+  rules:
+    "":
+      css:
+        height: "unset"
+
+- id: "android:layout_width"
+  type: attribute
+  equalTo: 'match_parent'
+  rules:
+    "":
+      css:
+        width: "unset"
+
+- id: "android:layout_height"
+  type: attribute
+  equalTo: 'match_parent'
+  rules:
+    "":
+      css:
+        height: "unset"
+
 - id: "android:layout_weight"
   type: attribute
   rules:
@@ -633,6 +734,7 @@
 
 - id: "android:gravity"
   type: attribute
+  element: LinearLayout
   rules:
     "":
       ifContains:
@@ -728,3 +830,8 @@
   type: element
   parent: null
   template: <div/>
+
+- id: WebView
+  type: element
+  template: <iframe/>
+

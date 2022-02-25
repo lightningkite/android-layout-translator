@@ -13,15 +13,39 @@ body {
   height: 100%;
   width: 100%;
   margin: 0;
+  font-size: 14pt;
 }
 
 body > * {
-  height: 100%;
-  width: 100%;
+  height: 100% !important;
+  width: 100% !important;
 }
 
 button {
-  border: none
+  border: none;
+  min-height: 42px;
+  text-transform: uppercase;
+  background: none;
+  text-align: center;
+  &.android-ImageButton {
+    min-height: unset;
+  }
+}
+
+textarea {
+  resize: none;
+  border: none;
+}
+input {
+  border: none;
+}
+
+.android-ToggleButton {
+  border: none;
+  min-height: 42px;
+  text-transform: uppercase;
+  background: none;
+  text-align: center;
 }
 
 button input {
@@ -31,15 +55,32 @@ button input {
   font: unset;
 }
 
+.drawable-attr-selectableItemBackground {
+  background: none;
+  &:hover {
+    background: #80808030;
+  }
+}
+
+.android-ScrollView {
+  overflow-y: auto;
+}
+.android-HorizontalScrollView {
+  overflow-x: auto;
+}
+
 .android-LinearLayout {
   display: flex;
   flex-direction: row;
   justify-content: start;
   align-items: start;
+  &.dynamic {
+    align-items: stretch;
+  }
 }
 
 .android-RecyclerView {
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .bold-text {
@@ -61,6 +102,10 @@ button input {
   grid-column-end: 1;
   grid-row-start: 1;
   grid-row-end: 1;
+}
+
+.android-ViewFlipper {
+  @extend .android-FrameLayout
 }
 
 .android-Switch {

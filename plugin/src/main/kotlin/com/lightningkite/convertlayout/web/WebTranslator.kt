@@ -32,17 +32,23 @@ data class WebTranslator(
         }
     )
 
-    private fun make() = WebLayoutTranslatorForFile(project, replacements, resources)
     fun translate(layout: AndroidLayoutFile) {
-        val instance = make()
-        project.layoutsFolder
-            .also { it.mkdirs() }
-            .resolve(layout.name + ".html")
-            .writeXml(instance.convertDocument(layout, layout.files.first().readXml()).also { it.documentElement.cleanBlanks() })
-        project.layoutsFolder
-            .also { it.mkdirs() }
-            .resolve(layout.className + ".ts")
-            .writeText(instance.tsFile(layout))
+        layout.variants.entries.map {
+            val translator = WebLayoutTranslatorForFile(project, replacements, resources)
+            val htmlFile = project.layoutsFolder
+                .also { it.mkdirs() }
+                .resolve(layout.name + (if(it.key.isBlank()) "" else "-${it.key}") + ".html")
+            translator
+                .convertDocument(layout, it.value.readXml())
+                .also { it.documentElement.cleanBlanks() }
+                .let { htmlFile.writeXml(it) }
+            translator.tsFile(layout.name, htmlFile, it.key.takeUnless { it.isBlank() })
+        }.asSequence().let { WebLayoutFile.combine(it) }.let {
+            project.layoutsFolder
+                .also { it.mkdirs() }
+                .resolve(layout.className + ".ts")
+                .writeText(it.emit())
+        }
     }
     operator fun invoke() {
         importResources()
@@ -52,41 +58,4 @@ data class WebTranslator(
         }
     }
 
-    internal fun swaml() {
-        println("---")
-        for(k in replacements.elements.keys) {
-            val e = replacements.getElement(k, mapOf()) ?: continue
-            val template = (e.template ?: continue).toString()
-                .trim()
-            val element = try { template.readXml().documentElement } catch(e:Exception) {
-                println("Failed to read $template")
-                continue
-            }
-            val type = element.walkElements()
-                .filter { it.hasAttribute("id") }
-                .toList()
-                .takeUnless { it.isEmpty() }
-                ?.let {
-                    buildString {
-                        append('{')
-                        it.forEachBetween(
-                            forItem = { i ->
-                                append(i["id"])
-                                append(": ")
-                                append(WebLayoutTranslatorForFile.elementMap[i.tagName])
-                            },
-                            between = { append(", ") }
-                        )
-                        append('}')
-                    }
-                } ?: WebLayoutTranslatorForFile.elementMap[element.tagName] ?: continue
-            if(k.first().isUpperCase())
-                println("- id: android.widget.$k")
-            else
-                println("- id: $k")
-            println("  type: type")
-            println("  template: $type")
-            println()
-        }
-    }
 }

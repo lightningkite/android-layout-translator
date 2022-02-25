@@ -142,7 +142,7 @@ class AndroidResources {
                         },
                     parent = it["parent"]?.let {
                         Lazy(it) {
-                            styles[it] ?: styles[it.removePrefix("@style/")] ?: AndroidStyle("x", mapOf())
+                            styles[it] ?: styles[it.removePrefix("@style/")] ?: AndroidStyle("", mapOf())
                         }
                     }
                 )

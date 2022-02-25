@@ -14,7 +14,7 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
                 this["style"]?.let { resources.read(it) as? AndroidStyle }?.chainedMap,
                 (resources.read("@style/AppTheme") as? AndroidStyle)?.chainedMap,
                 this["layout"]?.let { resources.read(it) as? AndroidLayoutResource }?.let {
-                    it.layout.value.files.first().readXml().documentElement.allAttributes
+                    it.layout.value.variants[""]!!.readXml().documentElement.allAttributes
 //                        .also { println("Borrowed ${it.entries.joinToString() { it.key + ": " + it.value }} from source") }
                 }
             )
@@ -62,6 +62,10 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         handleChildren(rules, rule, sourceElement, destElement, target)
     }
 
+    open fun includeElement(sourceElement: Element): Boolean {
+        return sourceElement["android:id"]?.startsWith("@+id/dummy") != true
+    }
+
     open fun handleChildren(
         rules: List<ElementReplacement>,
         childAddRule: String?,
@@ -69,10 +73,12 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         destElement: Element,
         target: Element
     ) {
-        for (child in sourceElement.children.mapNotNull { it as? Element }) {
+        for (child in sourceElement.children.mapNotNull { it as? Element }.filter { includeElement(it) }) {
             convertElement(target, child)
         }
     }
+
+    val Element.convertibleChildElements: Sequence<Element> get() = this.childElements.filter { includeElement(it) }
 
     open fun handleAttributes(
         rules: List<ElementReplacement>,
@@ -146,6 +152,14 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
                             target["class"] =
                                 ((target["class"]?.split(' ') ?: listOf()) + sub.classes.map { it.write { getProjectWide(it) ?: value.getPath(it) } }).joinToString(" ")
                         }
+                    }
+                    sub.content?.let {
+                        for(existing in target.children.toList()) target.removeChild(existing)
+                        val content = it.write { getProjectWide(it) ?: value.getPath(it) }
+                        if (content.startsWith('<'))
+                            target.appendFragment(content)
+                        else
+                            target.appendText(content)
                     }
                     for (toAppend in sub.append) {
                         val content = toAppend.write { getProjectWide(it) ?: value.getPath(it) }

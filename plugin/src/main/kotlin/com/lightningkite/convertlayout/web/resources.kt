@@ -41,11 +41,11 @@ fun WebTranslator.importDrawable(drawableResource: AndroidDrawable, sass: String
 fun Appendable.writeSass(xml: AndroidDrawableXml) {
     when (xml) {
         is AndroidDrawable.Reference -> when (val sub = xml.drawable.value) {
-            is AndroidNamedDrawable -> appendLine("@extend drawable-${sub.name};")
+            is AndroidNamedDrawable -> appendLine("@extend .drawable-${sub.name};")
             is AndroidColor -> appendLine("background-color: ${sub.value.web};")
         }
         is AndroidBitmap.Reference -> {
-            appendLine("@extend drawable-${xml.base.value.name};")
+            appendLine("@extend .drawable-${xml.base.value.name};")
             appendLine("width: ${xml.size.width};")
             appendLine("height: ${xml.size.height};")
         }
@@ -72,10 +72,10 @@ fun Appendable.writeSass(xml: AndroidDrawableXml) {
                         appendLine("border-top-right-radius: $it;")
                     }
                     xml.bottomLeftCorner?.value?.measurement?.web?.let {
-                        appendLine("border-bottom-right-radius: $it;")
+                        appendLine("border-bottom-left-radius: $it;")
                     }
                     xml.bottomRightCorner?.value?.measurement?.web?.let {
-                        appendLine("border-bottom-left-radius: $it;")
+                        appendLine("border-bottom-right-radius: $it;")
                     }
                 }
                 AndroidShape.Value.ShapeType.Oval -> {
@@ -86,12 +86,12 @@ fun Appendable.writeSass(xml: AndroidDrawableXml) {
         is AndroidDrawableState.Value -> {
             writeSass(xml.states.normal)
             xml.states.focused?.let {
-                appendLine("&:focus {")
+                appendLine("&:focus, :focus>& {")
                 writeSass(it)
                 appendLine("}")
             }
             xml.states.selected?.let {
-                appendLine("&:checked {")
+                appendLine("&:checked, :checked>&, :checked~& {")
                 writeSass(it)
                 appendLine("}")
             }
@@ -101,7 +101,7 @@ fun Appendable.writeSass(xml: AndroidDrawableXml) {
                 appendLine("}")
             }
             xml.states.disabled?.let {
-                appendLine("&:disabled {")
+                appendLine("&:disabled, :disabled>& {")
                 writeSass(it)
                 appendLine("}")
             }
@@ -120,7 +120,11 @@ fun WebTranslator.importVector(drawableResource: AndroidVector, sass: StringBuil
     drawableResource.toSvg(resources, 1f, svgFile)
     sass.appendLine(".drawable-${drawableResource.name} {")
     sass.appendLine("""background-image: url("drawables/${svgFile.name}");""")
-    sass.appendLine("background-size: contain;")
+    sass.appendLine("background-size: cover;")
+    sass.appendLine("&.asImage {")
+    sass.appendLine("width: ${drawableResource.size.width}px;")
+    sass.appendLine("height: ${drawableResource.size.height}px;")
+    sass.appendLine("}")
     sass.appendLine("}")
 }
 
@@ -135,7 +139,11 @@ fun WebTranslator.importBitmap(drawableResource: AndroidBitmap, sass: StringBuil
     sourceFile.copyTo(destFile, overwrite = true)
     sass.appendLine(".drawable-${drawableResource.name} {")
     sass.appendLine("""background-image: url("./drawables/${destFile.name}");""")
-    sass.appendLine("background-size: contain;")
+    sass.appendLine("background-size: cover;")
+    sass.appendLine("&.asImage {")
+    sass.appendLine("width: ${drawableResource.size.width}px;")
+    sass.appendLine("height: ${drawableResource.size.height}px;")
+    sass.appendLine("}")
     sass.appendLine("}")
 }
 
@@ -173,6 +181,29 @@ fun WebTranslator.importStrings() {
         appendLine("export namespace Dimen {")
         for ((key, value) in resources.dimensions.entries) {
             appendLine("export const ${key.safeJsIdentifier()} = \"${value.name}\"")
+        }
+        appendLine("}")
+        for ((key, value) in resources.drawables.entries) {
+            when(value) {
+                is AndroidBitmap -> {
+                    val sourceFile = value.files["ldpi"]
+                        ?: value.files["mdpi"]
+                        ?: value.files["hdpi"]
+                        ?: value.files["xhdpi"]
+                        ?: value.files["xxhdpi"]
+                        ?: value.files["xxxhdpi"]!!
+                    appendLine("import drawable_${key.safeJsIdentifier()} from \"./drawables/${sourceFile.name}\"")
+                }
+                is AndroidVector -> appendLine("import drawable_${key.safeJsIdentifier()} from \"./drawables/${value.file.nameWithoutExtension}.svg\"")
+                else -> {}
+            }
+        }
+        appendLine("export namespace Drawables {")
+        for ((key, value) in resources.drawables.entries) {
+            when(value) {
+                is AndroidBitmap, is AndroidVector -> appendLine("export const ${key} = {name: \"${key}\", file: drawable_${key}}")
+                else -> appendLine("export const ${key} = {name: \"${key}\"}")
+            }
         }
         appendLine("}")
     })
@@ -219,6 +250,9 @@ fun WebTranslator.importDimensionsColors(sass: StringBuilder) {
 fun WebTranslator.importStyles(sass: StringBuilder) {
     for((name, style) in resources.styles) {
         sass.appendLine(".style-${name} {")
+        style.parent?.value?.name?.takeUnless { it.isBlank() }?.let {
+            sass.appendLine("@extend .style-$it;")
+        }
         for((key, rawValue) in style.map) {
             val value = resources.read(rawValue)
             if(!replacements.canBeInStyleSheet(key)) continue
@@ -273,4 +307,10 @@ val AndroidColor.sass: String
         is AndroidColorStateResource -> "var(--color-$name)"
         is AndroidColorResource -> "$${name}"
         is AndroidColorLiteral -> value.web
+    }
+
+val AndroidDimension.sass: String
+    get() = when (this) {
+        is AndroidDimensionResource -> "$${name}"
+        else -> measurement.web
     }

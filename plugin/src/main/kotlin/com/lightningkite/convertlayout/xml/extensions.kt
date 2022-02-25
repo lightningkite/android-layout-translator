@@ -109,12 +109,8 @@ class DeferIterator<E>(val parentList: List<E>, var cursor: Int = 0): ListIterat
         return if (i >= parentList.size) {
             throw NoSuchElementException()
         } else {
-            if (i >= parentList.size) {
-                throw ConcurrentModificationException()
-            } else {
-                this.cursor = i + 1
-                parentList[i.also { lastRet = it }]
-            }
+            this.cursor = i + 1
+            parentList[i.also { lastRet = it }]
         }
     }
 

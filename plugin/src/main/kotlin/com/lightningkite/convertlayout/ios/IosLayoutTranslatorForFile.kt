@@ -5,9 +5,12 @@ import com.lightningkite.convertlayout.rules.AttributeReplacement
 import com.lightningkite.convertlayout.rules.ElementReplacement
 import com.lightningkite.convertlayout.rules.Replacements
 import com.lightningkite.convertlayout.util.camelCase
+import com.lightningkite.convertlayout.web.WebLayoutFile
+import com.lightningkite.convertlayout.web.WebLayoutTranslatorForFile
 import com.lightningkite.convertlayout.xml.*
 import org.w3c.dom.Document
 import org.w3c.dom.Element
+import java.io.File
 import kotlin.collections.HashMap
 import kotlin.collections.HashSet
 import kotlin.math.min
@@ -86,7 +89,7 @@ internal class IosLayoutTranslatorForFile(
                 ?.also { outlets[it] = newElement.swiftIdentifier() }
                 ?.let { newElement["id"] = it }
             assignIds(newElement)
-            if (sourceElement.childElements.none()) {
+            if (sourceElement.convertibleChildElements.none()) {
                 if (allAttributes["android:layout_width"] == "wrap_content") {
                     newElement["horizontalHuggingPriority"] = "1000"
                     newElement["horizontalCompressionResistancePriority"] = "1000"
@@ -143,7 +146,7 @@ internal class IosLayoutTranslatorForFile(
                 ?.let { innerElement["id"] = it }
             assignIds(outerElement)
 
-            if (sourceElement.childElements.none()) {
+            if (sourceElement.convertibleChildElements.none()) {
                 if (allAttributes["android:layout_width"] == "wrap_content") {
                     innerElement["horizontalHuggingPriority"] = "1000"
                     innerElement["horizontalCompressionResistancePriority"] = "1000"
@@ -279,7 +282,7 @@ internal class IosLayoutTranslatorForFile(
                 // Find most common alignment
                 val defaultAlignInSource: AlignOrStretch =
                     myAttributes["android:gravity"]?.toGravity()?.get(!isVertical)?.orStretch() ?: AlignOrStretch.START
-                val childAlignments = sourceElement.childElements
+                val childAlignments = sourceElement.convertibleChildElements
                     .map {
                         val attrs = it.allAttributes
                         if (attrs["android:layout_${if (isVertical) "width" else "height"}"] == "match_parent") AlignOrStretch.STRETCH
@@ -293,7 +296,7 @@ internal class IosLayoutTranslatorForFile(
                     .entries
                     .maxByOrNull { it.value + if (it.key == AlignOrStretch.STRETCH) 0.1 else 0.0 }
                     ?.key ?: defaultAlignInSource
-                val minMargins: Insets = sourceElement.childElements
+                val minMargins: Insets = sourceElement.convertibleChildElements
                     .map { it.allAttributes.insets("android:layout_margin", resources) }
                     .takeUnless { it.none() }
                     ?.fold(Insets(999.0, 999.0, 999.0, 999.0)) { a, b ->
@@ -343,7 +346,7 @@ internal class IosLayoutTranslatorForFile(
 
                 var firstWeightedChild: Element? = null
                 var firstWeightedChildWeight = 1.0
-                sourceElement.children.mapNotNull { it as? Element }.forEachIndexed { index, child ->
+                sourceElement.convertibleChildElements.forEachIndexed { index, child ->
                     val childAttributes = child.allAttributes
                     val childAlign: AlignOrStretch = childAlignments[index]
                     val rawChildMargins = childAttributes.insets("android:layout_margin", resources)
@@ -458,7 +461,7 @@ internal class IosLayoutTranslatorForFile(
                 }
 
                 // If no weights AND size isn't wrap content, add final spacer view
-                if (sourceElement.childElements.any() && firstWeightedChild == null && myAttributes["android:layout_${if (isVertical) "height" else "width"}"] != "wrap_content") {
+                if (sourceElement.convertibleChildElements.any() && firstWeightedChild == null && myAttributes["android:layout_${if (isVertical) "height" else "width"}"] != "wrap_content") {
                     when(myAttributes["android:gravity"]?.toGravity()?.get(isVertical) ?: Align.START) {
                         Align.START -> {
                             val finalSpacer = target.appendElement("view") {
@@ -499,7 +502,7 @@ internal class IosLayoutTranslatorForFile(
                 }
             }
             "frame" -> {
-                for (child in sourceElement.children.mapNotNull { it as? Element }) {
+                for (child in sourceElement.convertibleChildElements) {
                     val childAttributes = child.allAttributes
                     val childElement = convertElement(target, child)
                     val total = myAttributes.insets(
@@ -530,7 +533,7 @@ internal class IosLayoutTranslatorForFile(
                 }
             }
             "frame-first-visible" -> {
-                val childElements = sourceElement.children.mapNotNull { it as? Element }
+                val childElements = sourceElement.convertibleChildElements
 
                 val firstChild = childElements.first()
                 val childAttributes = firstChild.allAttributes
@@ -571,7 +574,7 @@ internal class IosLayoutTranslatorForFile(
             }
             "scroll-vertical" -> {
                 val padding = myAttributes.insets("android:padding", resources)
-                for (child in sourceElement.children.mapNotNull { it as? Element }) {
+                for (child in sourceElement.convertibleChildElements) {
                     val innerElement = convertElement(target, child)
                     val paddingPlusMargins = padding + child.allAttributes.insets("android:layout_margin", resources)
                     destElement.constraintChildMatchEdges(innerElement, paddingPlusMargins)
@@ -583,7 +586,7 @@ internal class IosLayoutTranslatorForFile(
             }
             "scroll-horizontal" -> {
                 val padding = myAttributes.insets("android:padding", resources)
-                for (child in sourceElement.children.mapNotNull { it as? Element }) {
+                for (child in sourceElement.convertibleChildElements) {
                     val innerElement = convertElement(target, child)
                     val paddingPlusMargins = padding + child.allAttributes.insets("android:layout_margin", resources)
                     destElement.constraintChildMatchEdges(innerElement, paddingPlusMargins)
@@ -777,15 +780,6 @@ internal class IosLayoutTranslatorForFile(
     ) {
         usedResources.add(value)
         super.handleAttribute(allAttributes, attributeRule, destElement, value, inStyle)
-        attributeRule.code?.let {
-            outlets[destElement["id"]!!] = destElement.swiftIdentifier()
-            this.iosCode.appendLine(it.write {
-                getProjectWide(it) ?: when (it) {
-                    "this" -> destElement["id"]!!
-                    else -> with(resources) { value.getPath(it) }
-                }
-            })
-        }
         attributeRule.xib.entries.sortedBy { it.key }.forEach {
             handleXibEntry(
                 destElement.xpathElementOrCreate(it.key.substringBefore("|", "")),
@@ -941,35 +935,14 @@ internal class IosLayoutTranslatorForFile(
     """.trimIndent().readXml()
 
     fun swiftFile(
-        layout: AndroidLayoutFile
-    ): String {
-
-        fun swiftDeclaration(outlet: Map.Entry<String, SwiftIdentifier>): String {
-            return "@IBOutlet weak private var ${"_".plus(outlet.key.camelCase()).safeSwiftViewIdentifier()}: ${outlet.value.name}!"
-        }
-        fun swiftAccess(outlet: Map.Entry<String, SwiftIdentifier>): String {
-            return "public var ${outlet.key.camelCase().safeSwiftViewIdentifier()}: ${outlet.value.name} { return ${"_".plus(outlet.key.camelCase()).safeSwiftIdentifier()} }"
-        }
-
-        return """
-    |//
-    |// ${layout.className}.swift
-    |// Created by Android Xml to iOS Xib Translator
-    |//
-    |
-    |import XmlToXibRuntime
-    |${outlets.values.mapNotNull { it.module }.filter { it != project.name }.toSet().joinToString("\n|") { "import $it" }}
-    |
-    |public class ${layout.className}: XibView {
-    |
-    |    ${outlets.entries.joinToString("\n|    ") { swiftDeclaration(it) }}
-    |    ${outlets.entries.joinToString("\n|    ") { swiftAccess(it) }}
-    |
-    |    override public func awakeFromNib() {
-    |        super.awakeFromNib()
-    |        ${iosCode.split('\n').joinToString("\n|    ")}
-    |    }
-    |}
-    """.trimMargin("|")
-    }
+        androidXmlName: String,
+        xibFile: File,
+        variant: String? = null,
+    ): IosLayoutFile = IosLayoutFile(
+        projectName = project.name,
+        name = androidXmlName,
+        variants = setOfNotNull(variant),
+        files = setOf(xibFile),
+        bindings = outlets.mapValues { IosLayoutFile.Hook(it.key.safeSwiftIdentifier(), it.value) }
+    )
 }

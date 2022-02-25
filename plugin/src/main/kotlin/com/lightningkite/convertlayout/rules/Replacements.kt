@@ -79,7 +79,7 @@ class Replacements() {
         res
     } ?: sequenceOf()
 
-    private val canBeInStylesheetCache = HashMap<String, Boolean>()
+    private val canBeInStylesheetCache = hashMapOf<String, Boolean>("android:background" to false)
     fun canBeInStyleSheet(attributeName: String): Boolean = canBeInStylesheetCache.getOrPut(attributeName) {
         val matching = attributes[attributeName] ?: return@getOrPut false
 
