@@ -22,7 +22,7 @@ data class IosLayoutFile(
         val optional: Boolean = false
     ) {
         fun declaration() = "@IBOutlet weak private var _$name: ${baseType.name}${if (optional) "?" else "!"}"
-        fun access() = "public var $name: ${baseType.name}${if (optional) "?" else ""} { return _$name }"
+        fun access() = "public var ${name.safeSwiftViewIdentifier()}: ${baseType.name}${if (optional) "?" else ""} { return _$name }"
     }
 
     @get:JsonIgnore

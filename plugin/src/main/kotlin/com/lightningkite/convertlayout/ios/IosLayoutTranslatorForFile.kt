@@ -247,7 +247,6 @@ internal class IosLayoutTranslatorForFile(
             if (src is AndroidNamedDrawable) {
                 handleXibEntry(drawableElement, src, "backgroundLayerName", AttributeReplacement.XibRuleType.UserDefined)
             }
-            println("Compound size is ${src.size} - ${src}")
             drawableElement.anchorWidth.setTo(src.size.width.toDouble())
             drawableElement.anchorHeight.setTo(src.size.height.toDouble())
             outerElement.constraintChildMatch(drawableElement, ConstraintAttribute[vertical, end, locale], constant = padding[vertical, end, locale])
@@ -943,6 +942,6 @@ internal class IosLayoutTranslatorForFile(
         name = androidXmlName,
         variants = setOfNotNull(variant),
         files = setOf(xibFile),
-        bindings = outlets.mapValues { IosLayoutFile.Hook(it.key.safeSwiftIdentifier(), it.value) }
+        bindings = outlets.mapValues { IosLayoutFile.Hook(it.key, it.value) }
     )
 }
