@@ -1,10 +1,7 @@
 package com.lightningkite.convertlayout.web
 
 import com.lightningkite.convertlayout.android.*
-import com.lightningkite.convertlayout.ios.Gravity
-import com.lightningkite.convertlayout.ios.SwiftIdentifier
-import com.lightningkite.convertlayout.ios.swiftIdentifier
-import com.lightningkite.convertlayout.ios.toGravity
+import com.lightningkite.convertlayout.ios.*
 import com.lightningkite.convertlayout.rules.AttributeReplacement
 import com.lightningkite.convertlayout.rules.ElementReplacement
 import com.lightningkite.convertlayout.rules.Replacements
@@ -75,6 +72,19 @@ internal class WebLayoutTranslatorForFile(
         return result
     }
 
+    override fun handleAttributes(
+        rules: List<ElementReplacement>,
+        allAttributes: Map<String, String>,
+        sourceElement: Element,
+        destElement: Element
+    ) {
+        super.handleAttributes(rules, allAttributes, sourceElement, destElement)
+        // Special hack fix for "tall" text views
+        if(rules.any { it.id == "TextView" } && rules.none { it.id == "Button" } && allAttributes["android:layout_height"] != "wrap_content" && allAttributes["android:gravity"]?.toGravity()?.vertical != Align.START) {
+            destElement["class"] = (destElement["class"] ?: "") + " center-text-vertical"
+        }
+    }
+
     override fun handleAttribute(
         rules: List<ElementReplacement>,
         sourceElement: Element,
@@ -85,10 +95,10 @@ internal class WebLayoutTranslatorForFile(
     ) {
         super.handleAttribute(rules, sourceElement, destElement, allAttributes, key, raw)
         if (key.substringAfterLast(':').startsWith("web_attr_")) {
-            destElement.setAttribute(key.substringAfter(":web_attr_"), raw)
+            destElement.setAttribute(key.substringAfter(":web_attr_").replace('_', '-'), raw)
         }
         if (key.substringAfterLast(':').startsWith("web_style_")) {
-            destElement.css[key.substringAfter(":web_style_")] = raw
+            destElement.css[key.substringAfter(":web_style_").replace('_', '-')] = raw
         }
     }
 
@@ -148,7 +158,7 @@ internal class WebLayoutTranslatorForFile(
     ): WebLayoutFile = WebLayoutFile(
         packageName = resources.packageName,
         name = androidXmlName,
-        variants = setOfNotNull(variant),
+        variants = setOf(variant?.let { AndroidVariant.parse(it) } ?: AndroidVariant()),
         files = setOf(htmlFile),
         bindings = outlets.mapValues { WebLayoutFile.Hook(it.key, elementMap[it.value] ?: "HTMLElement") }
                 + compoundOutlets.mapValues {

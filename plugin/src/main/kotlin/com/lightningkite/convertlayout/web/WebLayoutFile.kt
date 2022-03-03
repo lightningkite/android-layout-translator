@@ -1,6 +1,7 @@
 package com.lightningkite.convertlayout.web
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.lightningkite.convertlayout.android.AndroidVariant
 import com.lightningkite.convertlayout.util.camelCase
 import com.lightningkite.convertlayout.xml.attributeMap
 import com.lightningkite.convertlayout.xml.children
@@ -12,7 +13,7 @@ import java.io.File
 data class WebLayoutFile(
     val packageName: String,
     val name: String,
-    val variants: Set<String>,
+    val variants: Set<AndroidVariant>,
     val files: Set<File>,
     val bindings: Map<String, Hook>,
     val sublayouts: Map<String, SubLayout>
@@ -70,7 +71,7 @@ data class WebLayoutFile(
     fun emit(): String {
         return """
             |import {inflateHtmlFile} from "@lightningkite/android-xml-runtime";
-            |import html from './${name}.html'
+            |${variants.joinToString("\n|"){ "import html${it.camelCaseSuffix} from './${name}${it.suffix}.html'" }}
             |${sublayouts.values.joinToString("\n|    ") { it.import() }}
             |
             |//! Declares ${packageName}.databinding.${className}
@@ -81,8 +82,9 @@ data class WebLayoutFile(
             |}
             |
             |export namespace ${className} {
+            |   const variants = [${variants.sorted().joinToString { it.web }}]
             |   export function inflate(): ${className} {
-            |       return inflateHtmlFile(html, [${
+            |       return inflateHtmlFile(variants, [${
             bindings.values.filter { it.additionalParts.isEmpty() }.map { "\"" + it.name + "\"" }.joinToString()
         }], {${
             bindings.values.filter { it.additionalParts.isNotEmpty() }.map { it.name + ": [" + it.additionalParts.map { "\"" + it.key + "\"" }.joinToString() + "]" }
@@ -95,4 +97,11 @@ data class WebLayoutFile(
             |
         """.trimMargin("|")
     }
+
+    val AndroidVariant.web: String get() = """
+        {
+            html: html${camelCaseSuffix},
+            widerThan: ${widerThan?.toString() ?: "undefined"}
+        }
+    """.trimIndent()
 }

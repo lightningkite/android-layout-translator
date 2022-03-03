@@ -194,13 +194,6 @@
 - id: EditText
   type: element
   parent: EditTextLike
-  autoWrapFor:
-    - 'android:drawableLeft'
-    - 'android:drawableRight'
-    - 'android:drawableStart'
-    - 'android:drawableEnd'
-    - 'android:drawableTop'
-    - 'android:drawableBottom'
   template: <input type="text" />
 
 - id: AutoCompleteTextView
@@ -277,13 +270,6 @@
   attributes:
     android:inputType: 'contains:textMultiLine'
   parent: EditTextLike
-  autoWrapFor:
-    - 'android:drawableLeft'
-    - 'android:drawableRight'
-    - 'android:drawableStart'
-    - 'android:drawableEnd'
-    - 'android:drawableTop'
-    - 'android:drawableBottom'
   template: <textarea/>
 
 - id: SeekBar
@@ -487,6 +473,8 @@
   valueType: String
   rules:
     "":
+      css:
+        text-align: left
       ifContains:
         start:
           css:
@@ -512,6 +500,15 @@
   valueType: Color
   rules:
     "":
+      css:
+        color: "~web~"
+
+- id: "android:textColor"
+  type: attribute
+  element: LabeledCheckOrRadio
+  valueType: Color
+  rules:
+    "span[@id='label']":
       css:
         color: "~web~"
 
@@ -828,10 +825,113 @@
 
 - id: include
   type: element
-  parent: null
   template: <div/>
 
 - id: WebView
   type: element
   template: <iframe/>
 
+- id: 'android:drawableLeft'
+  type: attribute
+  rules:
+    "":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'row-reverse' }
+
+- id: 'android:drawableStart'
+  type: attribute
+  rules:
+    "":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'row-reverse' }
+
+- id: 'android:drawableRight'
+  type: attribute
+  rules:
+    "":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'row' }
+
+- id: 'android:drawableEnd'
+  type: attribute
+  rules:
+    "":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'row' }
+
+- id: 'android:drawableTop'
+  type: attribute
+  rules:
+    "":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'column-reverse' }
+
+- id: 'android:drawableBottom'
+  type: attribute
+  rules:
+    "":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'column' }
+
+
+- id: 'android:drawablePadding'
+  type: attribute
+  rules:
+    "":
+      css: { gap: '~web~' }
+
+- id: 'android:drawableLeft'
+  type: attribute
+  element: LabeledCheckOrRadio
+  rules:
+    "span[@id='label']":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'row-reverse' }
+
+- id: 'android:drawableStart'
+  type: attribute
+  element: LabeledCheckOrRadio
+  rules:
+    "span[@id='label']":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'row-reverse' }
+
+- id: 'android:drawableRight'
+  type: attribute
+  element: LabeledCheckOrRadio
+  rules:
+    "span[@id='label']":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'row' }
+
+- id: 'android:drawableEnd'
+  type: attribute
+  element: LabeledCheckOrRadio
+  rules:
+    "span[@id='label']":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'row' }
+
+- id: 'android:drawableTop'
+  type: attribute
+  element: LabeledCheckOrRadio
+  rules:
+    "span[@id='label']":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'column-reverse' }
+
+- id: 'android:drawableBottom'
+  type: attribute
+  element: LabeledCheckOrRadio
+  rules:
+    "span[@id='label']":
+      classes: ["compoundDrawable", "compound-~name~"]
+      css: { flex-direction: 'column' }
+
+
+- id: 'android:drawablePadding'
+  type: attribute
+  element: LabeledCheckOrRadio
+  rules:
+    "span[@id='label']":
+      css: { gap: '~web~' }

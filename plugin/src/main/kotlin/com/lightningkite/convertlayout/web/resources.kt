@@ -30,6 +30,7 @@ fun WebTranslator.importDrawable(drawableResource: AndroidDrawable, sass: String
                 sass.appendLine(".drawable-${drawableResource.name} {")
                 sass.writeSass(drawableResource.value)
                 sass.appendLine("}")
+                sass.appendLine(".compound-${drawableResource.name}::after { @extend .drawable-${drawableResource.name}; }")
             }
             is AndroidVector -> importVector(drawableResource, sass)
         }
@@ -91,7 +92,7 @@ fun Appendable.writeSass(xml: AndroidDrawableXml) {
                 appendLine("}")
             }
             xml.states.selected?.let {
-                appendLine("&:checked, :checked>&, :checked~& {")
+                appendLine("&.checked, .checked>& {")
                 writeSass(it)
                 appendLine("}")
             }
@@ -119,13 +120,12 @@ fun WebTranslator.importVector(drawableResource: AndroidVector, sass: StringBuil
     val svgFile = project.drawablesFolder.resolve(drawableResource.name + ".svg")
     drawableResource.toSvg(resources, 1f, svgFile)
     sass.appendLine(".drawable-${drawableResource.name} {")
+    sass.appendLine("@extend .imageDrawable;")
     sass.appendLine("""background-image: url("drawables/${svgFile.name}");""")
-    sass.appendLine("background-size: cover;")
-    sass.appendLine("&.asImage {")
-    sass.appendLine("width: ${drawableResource.size.width}px;")
-    sass.appendLine("height: ${drawableResource.size.height}px;")
+    sass.appendLine("--drawable-width: ${drawableResource.size.width}px;")
+    sass.appendLine("--drawable-height: ${drawableResource.size.height}px;")
     sass.appendLine("}")
-    sass.appendLine("}")
+    sass.appendLine(".compound-${drawableResource.name}::after { @extend .drawable-${drawableResource.name}; }")
 }
 
 fun WebTranslator.importBitmap(drawableResource: AndroidBitmap, sass: StringBuilder) {
@@ -138,13 +138,12 @@ fun WebTranslator.importBitmap(drawableResource: AndroidBitmap, sass: StringBuil
     val destFile = project.drawablesFolder.resolve(drawableResource.name + "." + sourceFile.extension)
     sourceFile.copyTo(destFile, overwrite = true)
     sass.appendLine(".drawable-${drawableResource.name} {")
+    sass.appendLine("@extend .imageDrawable;")
     sass.appendLine("""background-image: url("./drawables/${destFile.name}");""")
-    sass.appendLine("background-size: cover;")
-    sass.appendLine("&.asImage {")
-    sass.appendLine("width: ${drawableResource.size.width}px;")
-    sass.appendLine("height: ${drawableResource.size.height}px;")
+    sass.appendLine("--drawable-width: ${drawableResource.size.width}px;")
+    sass.appendLine("--drawable-height: ${drawableResource.size.height}px;")
     sass.appendLine("}")
-    sass.appendLine("}")
+    sass.appendLine(".compound-${drawableResource.name}::after { @extend .drawable-${drawableResource.name}; }")
 }
 
 fun WebTranslator.importStrings() {
@@ -172,10 +171,14 @@ fun WebTranslator.importStrings() {
         appendLine("export const Strings: StringInterface = Object.assign({}, DefaultStrings);")
         appendLine("export namespace Colors {")
         for ((key, value) in resources.colors.entries) {
-            appendLine("export const ${key.safeJsIdentifier()} = \"${when(value) {
-                is AndroidColorStateResource -> "--color-" + value.name
-                else -> value.value.web
-            }}\"")
+            appendLine(
+                "export const ${key.safeJsIdentifier()} = \"${
+                    when (value) {
+                        is AndroidColorStateResource -> "--color-" + value.name
+                        else -> value.value.web
+                    }
+                }\""
+            )
         }
         appendLine("}")
         appendLine("export namespace Dimen {")
@@ -184,7 +187,7 @@ fun WebTranslator.importStrings() {
         }
         appendLine("}")
         for ((key, value) in resources.drawables.entries) {
-            when(value) {
+            when (value) {
                 is AndroidBitmap -> {
                     val sourceFile = value.files["ldpi"]
                         ?: value.files["mdpi"]
@@ -200,7 +203,7 @@ fun WebTranslator.importStrings() {
         }
         appendLine("export namespace Drawables {")
         for ((key, value) in resources.drawables.entries) {
-            when(value) {
+            when (value) {
                 is AndroidBitmap, is AndroidVector -> appendLine("export const ${key} = {name: \"${key}\", file: drawable_${key}}")
                 else -> appendLine("export const ${key} = {name: \"${key}\"}")
             }
@@ -221,7 +224,7 @@ fun WebTranslator.importDimensionsColors(sass: StringBuilder) {
         sass.appendLine("--color-${it.name}: ${it.colors.normal.value.sass};")
     }
     sass.appendLine("}")
-    sass.appendLine(":checked ~ * {")
+    sass.appendLine(".checked, .checked>* {")
     resources.colors.values.mapNotNull { it as? AndroidColorStateResource }.forEach {
         val color = it.colors.selected?.value ?: return@forEach
         sass.appendLine("--color-${it.name}: ${color.sass};")
@@ -248,14 +251,14 @@ fun WebTranslator.importDimensionsColors(sass: StringBuilder) {
 }
 
 fun WebTranslator.importStyles(sass: StringBuilder) {
-    for((name, style) in resources.styles) {
+    for ((name, style) in resources.styles) {
         sass.appendLine(".style-${name} {")
         style.parent?.value?.name?.takeUnless { it.isBlank() }?.let {
             sass.appendLine("@extend .style-$it;")
         }
-        for((key, rawValue) in style.map) {
+        for ((key, rawValue) in style.map) {
             val value = resources.read(rawValue)
-            if(!replacements.canBeInStyleSheet(key)) continue
+            if (!replacements.canBeInStyleSheet(key)) continue
             replacements.getAttributeOptionsForStyle(key, AttributeReplacement.ValueType2[value::class], rawValue)
                 .forEach { rule ->
                     // Potential upgrade: Support element and parentElement?
@@ -263,24 +266,25 @@ fun WebTranslator.importStyles(sass: StringBuilder) {
                     var postAmpersand = ""
                     rule.element.takeUnless { it == "View" }?.let { element ->
                         val uniqueElementType = replacements.elements[element]?.singleOrNull()?.uniqueElementType
-                        if(uniqueElementType != null) postAmpersand += "$uniqueElementType"
+                        if (uniqueElementType != null) postAmpersand += "$uniqueElementType"
                         else postAmpersand += ".android-${element}"
                     } ?: rule.parentElement?.let { parentElement ->
                         val uniqueElementType = replacements.elements[parentElement]?.singleOrNull()?.uniqueElementType
-                        if(uniqueElementType != null) preAmpersand = "$uniqueElementType $preAmpersand"
+                        if (uniqueElementType != null) preAmpersand = "$uniqueElementType $preAmpersand"
                         else preAmpersand = ".android-$parentElement $preAmpersand"
                     }
-                    val sub = if(preAmpersand.isNotEmpty() || postAmpersand.isNotEmpty()) "$preAmpersand&$postAmpersand" else null
-                    if(sub != null) sass.appendLine("$sub {")
+                    val sub =
+                        if (preAmpersand.isNotEmpty() || postAmpersand.isNotEmpty()) "$preAmpersand&$postAmpersand" else null
+                    if (sub != null) sass.appendLine("$sub {")
                     for ((path, subrule) in rule.rules) {
-                        if(!path.isEmpty()) {
+                        if (!path.isEmpty()) {
                             sass.appendLine(path.replace('/', ' ') + " {")
                         }
                         subrule(
                             value = value,
                             getter = { with(resources) { style.chainedMap.getPath(it) } },
                             action = { subrule ->
-                                for((ckey, ctemplate) in subrule.css) {
+                                for ((ckey, ctemplate) in subrule.css) {
                                     val cvalue = ctemplate?.write { with(resources) { value.getPath(it) } }
                                     sass.appendLine("$ckey: $cvalue;")
                                 }
@@ -291,11 +295,11 @@ fun WebTranslator.importStyles(sass: StringBuilder) {
                                     ?.let { sass.appendLine("@extend $it;") }
                             }
                         )
-                        if(!path.isEmpty()) {
+                        if (!path.isEmpty()) {
                             sass.appendLine("}")
                         }
                     }
-                    if(sub != null) sass.appendLine("}")
+                    if (sub != null) sass.appendLine("}")
                 }
         }
         sass.appendLine("}")
@@ -305,12 +309,12 @@ fun WebTranslator.importStyles(sass: StringBuilder) {
 val AndroidColor.sass: String
     get() = when (this) {
         is AndroidColorStateResource -> "var(--color-$name)"
-        is AndroidColorResource -> "$${name}"
+        is AndroidColorResource -> "#{$${name}}"
         is AndroidColorLiteral -> value.web
     }
 
 val AndroidDimension.sass: String
     get() = when (this) {
-        is AndroidDimensionResource -> "$${name}"
+        is AndroidDimensionResource -> "#{$${name}}"
         else -> measurement.web
     }

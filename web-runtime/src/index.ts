@@ -2,15 +2,36 @@ export interface SomeBinding extends Record<string, HTMLElement | SomeBinding | 
     root: HTMLElement
 }
 
+export type LayoutVariant = {
+    widerThan?: number
+    html: string
+}
+
 export function inflateHtmlFile(
-    html: string,
+    html: Array<LayoutVariant>,
     identifiers: Array<string>,
     compoundIdentifiers: Record<string, Array<string>>,
     includes: Record<string, () => SomeBinding>
 ): SomeBinding {
     const holder = document.createElement("div")
-    holder.innerHTML = html
+    for(const variant of html) {
+        if(!variant.widerThan || window.innerWidth > variant.widerThan) {
+            holder.innerHTML = variant.html
+            break
+        }
+    }
     const root = holder.firstElementChild!.firstElementChild! as HTMLElement
+    for(const input of root.getElementsByTagName("input")) {
+        const label = input.parentElement
+        if(!(label instanceof HTMLLabelElement)) continue
+        label.onclick = ev => {
+            ev.stopPropagation()
+        }
+        input.addEventListener("input", ev => {
+            if (input.checked) label.classList.add("checked")
+            else label.classList.remove("checked")
+        })
+    }
     return makeRecord(root, identifiers, compoundIdentifiers, includes)
 }
 

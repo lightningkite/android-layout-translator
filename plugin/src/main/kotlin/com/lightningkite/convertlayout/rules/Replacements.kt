@@ -87,6 +87,16 @@ class Replacements() {
         if(!matching.all { it.rules.keys.all { it.all { it.isLetterOrDigit() || it == '/' } } }) return@getOrPut false
         // No ifContains rules that are dependent on knowing other values
         if(!matching.all { it.rules.values.all { it.ifContains?.keys?.none { it.contains('=') } != false } }) return@getOrPut false
+        // All matching rules set the same CSS
+        val first = matching.firstOrNull() ?: return@getOrPut false
+        val firstType = first.element
+        if(!matching.all { firstType == it.element }) return@getOrPut false
+//        fun AttributeReplacement.SubRule.setKeys(): Set<String> = this.css.keys + (this.ifContains?.values?.flatMap { it.setKeys() }?.toSet() ?: setOf())
+//        fun AttributeReplacement.setKeys(): Set<String> = this.rules.entries.flatMap { it.value.setKeys().map { k -> "${it.key}.${k}"} }.toSet()
+//        val firstKeys = first.setKeys()
+//        println("Can be in stylesheet: $attributeName")
+//        matching.forEach { println(it.setKeys()) }
+//        if(!matching.drop(1).all { it.setKeys() == firstKeys }) return@getOrPut false
 
         return@getOrPut true
     }
@@ -105,13 +115,13 @@ class Replacements() {
     }
 
     operator fun plusAssign(yaml: String) {
-        mapper.readValue<List<ReplacementRule>>(yaml).filterNotNull().forEach {
+        mapper.readValue<List<ReplacementRule>>(yaml).forEach {
             this += it
         }
     }
 
     operator fun plusAssign(yaml: File) {
-        mapper.readValue<List<ReplacementRule>>(yaml).filterNotNull().forEach {
+        mapper.readValue<List<ReplacementRule>>(yaml).forEach {
             this += it
         }
     }

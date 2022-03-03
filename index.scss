@@ -3,9 +3,12 @@
   font-family: "Roboto", "Open Sans", sans-serif;
   overflow-x: hidden;
   overflow-y: hidden;
+  overflow-wrap: anywhere;
   flex-shrink: 0;
   max-width: 100%;
   max-height: 100%;
+  --drawable-width: 24px;
+  --drawable-height: 24px;
 }
 
 html,
@@ -21,14 +24,49 @@ body > * {
   width: 100% !important;
 }
 
+.center-text-vertical {
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+
+.compoundDrawable {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &::after {
+    content: "";
+    display: inline-block;
+    vertical-align: middle;
+    width: var(--drawable-width);
+    height: var(--drawable-height);
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.imageDrawable {
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.asImage {
+  width: var(--drawable-width);
+  height: var(--drawable-height);
+}
+
 button {
   border: none;
   min-height: 42px;
   text-transform: uppercase;
-  background: none;
+  background-image: none;
+  background-color: transparent;
   text-align: center;
   &.android-ImageButton {
     min-height: unset;
+    padding: 0;
   }
 }
 
@@ -44,19 +82,22 @@ input {
   border: none;
   min-height: 42px;
   text-transform: uppercase;
-  background: none;
+  background-image: none;
+  background-color: transparent;
   text-align: center;
 }
 
 button input {
-  background: none;
+  background-image: none;
+  background-color: transparent;
   border: none;
   color: unset;
   font: unset;
 }
 
 .drawable-attr-selectableItemBackground {
-  background: none;
+  background-image: none;
+  background-color: transparent;
   &:hover {
     background: #80808030;
   }
@@ -64,9 +105,15 @@ button input {
 
 .android-ScrollView {
   overflow-y: auto;
+  & > * {
+    max-height: unset;
+  }
 }
 .android-HorizontalScrollView {
   overflow-x: auto;
+  & > * {
+    max-width: unset;
+  }
 }
 
 .android-LinearLayout {
@@ -77,10 +124,16 @@ button input {
   &.dynamic {
     align-items: stretch;
   }
+  & > * {
+    flex-shrink: 1;
+  }
 }
 
 .android-RecyclerView {
   overflow-y: auto;
+  & > * {
+    max-height: unset;
+  }
 }
 
 .bold-text {
@@ -104,8 +157,50 @@ button input {
   grid-row-end: 1;
 }
 
+$primary: #888 !default;
+
 .android-ViewFlipper {
-  @extend .android-FrameLayout
+  @extend .android-FrameLayout;
+  & > * {
+    transition: opacity 0.5s;
+  }
+  &::after {
+    content: "";
+    transition: opacity 0.5s;
+    opacity: 0;
+    width: 32px;
+    height: 32px;
+    border-style: solid;
+    border-color: $primary $primary $primary transparent;
+    border-width: 5px;
+    border-radius: 50%;
+    grid-column-start: 1;
+    grid-column-end: 1;
+    grid-row-start: 1;
+    grid-row-end: 1;
+    align-self: center;
+    justify-self: center;
+    animation: speen 2s infinite linear;
+  }
+}
+
+@keyframes android-ViewFlipper-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+
+.android-ViewFlipper.loading {
+  & > * {
+    opacity: 0;
+  }
+  &::after {
+    opacity: 1;
+  }
 }
 
 .android-Switch {
@@ -317,12 +412,14 @@ button input {
 .android-SwapView {
   display: block;
   position: relative;
+  pointer-events: none;
 }
 
 .android-SwapView > * {
   width: 100%;
   height: 100%;
   position: absolute;
+  pointer-events: auto;
 }
 
 .android-ViewPager {
