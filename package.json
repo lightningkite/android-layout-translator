@@ -1,6 +1,6 @@
 {
   "name": "@lightningkite/android-xml-runtime",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "The runtime for Lightning Kite's Android Layout XML to HTML translator",
   "main": "index.js",
   "types": "index.d.ts",
@@ -27,5 +27,13 @@
     "url": "https://github.com/lightningkite/android-xml-to-ios-xib/issues"
   },
   "homepage": "https://github.com/lightningkite/android-xml-to-ios-xib#readme",
-  "files": ["index.d.ts", "index.js", "index.scss", "web-runtime", "web-runtime/dist"]
+  "files": [
+    "index.d.ts",
+    "index.js",
+    "index.scss",
+    "web-runtime",
+    "web-runtime/dist",
+    "web-runtime/src/**/*.ts.yaml",
+    "web-runtime/src/**/*ts.fqnames",
+  ]
 }
