@@ -3,13 +3,13 @@
 - id: android.widget.ImageView.setImageResource
   type: call
   template:
-    pattern: "~this~.image = ~0~().toImage()"
+    pattern: "~this~.image = (~0~)().toImage()"
     imports: [UIKit]
 
 - id: android.widget.ImageButton.setImageResource
   type: call
   template:
-    pattern: "~this~.setImage(~0~().toImage(), for: .normal)"
+    pattern: "~this~.setImage((~0~)().toImage(), for: .normal)"
     imports: [UIKit]
 
 - id: android.view.View.setBackgroundResource
@@ -18,5 +18,5 @@
     pattern: "UIView.setBackgroundResource"
     imports: [XmlToXibRuntime]
   template:
-    pattern: "~this~.backgroundLayer = ~0~()"
+    pattern: "~this~.backgroundLayer = (~0~)()"
     imports: [XmlToXibRuntime]
