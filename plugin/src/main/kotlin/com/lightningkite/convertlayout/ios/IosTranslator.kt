@@ -3,6 +3,7 @@ package com.lightningkite.convertlayout.ios
 import com.lightningkite.convertlayout.android.AndroidLayoutFile
 import com.lightningkite.convertlayout.android.AndroidResources
 import com.lightningkite.convertlayout.rules.Replacements
+import com.lightningkite.convertlayout.util.walkZip
 import com.lightningkite.convertlayout.web.WebLayoutFile
 import com.lightningkite.convertlayout.web.WebLayoutTranslatorForFile
 import com.lightningkite.convertlayout.xml.cleanBlanks
@@ -26,7 +27,7 @@ data class IosTranslator(
         replacements = Replacements().apply {
             replacementFolders
                 .asSequence()
-                .flatMap { it.walkTopDown() }
+                .flatMap { it.walkZip() }
                 .filter { it.name.endsWith(".xib.yaml") }
                 .forEach { this += it }
         },

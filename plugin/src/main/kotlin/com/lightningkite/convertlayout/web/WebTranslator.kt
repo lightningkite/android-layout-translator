@@ -4,6 +4,7 @@ import com.lightningkite.convertlayout.android.AndroidLayoutFile
 import com.lightningkite.convertlayout.android.AndroidResources
 import com.lightningkite.convertlayout.rules.Replacements
 import com.lightningkite.convertlayout.util.forEachBetween
+import com.lightningkite.convertlayout.util.walkZip
 import com.lightningkite.convertlayout.xml.*
 import java.io.File
 
@@ -23,9 +24,9 @@ data class WebTranslator(
             replacementFolders
                 .also { println("Searching $it for replacements...") }
                 .asSequence()
-                .flatMap { it.walkTopDown() }
+                .flatMap { it.walkZip() }
                 .filter { it.name.endsWith(".html.yaml") }
-                .forEach { println("Loaded replacement file $it"); this += it }
+                .forEach { this += it }
         },
         resources = AndroidResources().apply {
             this.parse(androidFolder.resolve("src/main/res"))

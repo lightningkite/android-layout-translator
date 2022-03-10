@@ -23,64 +23,36 @@ fun Project.xmlToXib(configure: Action<XmlToXibPluginExtension>) {
 
 class XmlToXibPlugin: Plugin<Project> {
     override fun apply(target: Project) {
+
+        val equivalentsConfiguration = target.configurations.maybeCreate("equivalents").apply {
+            description = "Equivalent declarations for translations"
+            isCanBeResolved = true
+            isCanBeConsumed = false
+            isVisible = true
+        }
+
         val ext = target.extensions.create("XmlToXibPluginExtension", XmlToXibPluginExtension::class.java)
         target.tasks.create("xmlToXib") {
             it.group = "ios"
+            it.inputs.files(equivalentsConfiguration)
             it.doLast {
                 val iosName = ext.iosProjectName ?: target.name.camelCase().capitalize()
                 val iosModuleName = ext.iosModuleName ?: iosName
                 val iosBase = ext.iosFolder ?: target.projectDir.resolve("../ios")
                 val iosFolder = iosBase.resolve(iosName)
-                val dependencies = run {
-                    val localProperties = Properties().apply {
-                        val f = target.rootProject.file("local.properties")
-                        if (f.exists()) {
-                            load(f.inputStream())
-                        }
-                    }
-                    val pathRegex = Regex(":path => '([^']+)'")
-                    val home = System.getProperty("user.home")
-                    val localPodSpecRefs = iosBase
-                        .resolve("Podfile")
-                        .takeIf { it.exists() }
-                        ?.also { println("Found podfile: $it") }
-                        ?.let { file ->
-                            file
-                                .readText()
-                                .let { pathRegex.findAll(it) }
-                                .also { println("Found podfile paths: ${it.joinToString { it.value }}") }
-                                .map { it.groupValues[1] }
-                                .map { it.replace("~", home) }
-                                .map {
-                                    if (it.startsWith('/'))
-                                        File(it).parentFile
-                                    else
-                                        File(file.parentFile, it).parentFile
-                                }
-                        } ?: sequenceOf()
-                    val allLocations = (localProperties.getProperty("xmltoxib.conversions") ?: "")
-                        .splitToSequence(File.pathSeparatorChar)
-                        .filter { it.isNotBlank() }
-                        .map { File(it) }
-                        .filter { it.exists() }
-                        .plus(sequenceOf(iosBase))
-                        .plus(sequenceOf(target.projectDir))
-                        .plus(localPodSpecRefs)
-                    println("Checking for iOS view definitions at: ${allLocations.joinToString("\n")}")
-                    allLocations
-                }
                 val translator = IosTranslator(
                     androidFolder = target.projectDir,
                     iosFolder = iosFolder,
                     iosModuleName = iosModuleName,
                     iosName = iosName,
-                    replacementFolders = dependencies.toList()
+                    replacementFolders = equivalentsConfiguration.toList()
                 )
                 translator()
             }
         }
         target.tasks.create("xmlToHtml") {
             it.group = "web"
+            it.inputs.files(equivalentsConfiguration)
             it.doLast {
                 val webName = ext.webProjectName ?: target.name.camelCase().capitalize()
                 val webBase = ext.webFolder ?: target.projectDir.resolve("../web")
@@ -88,7 +60,7 @@ class XmlToXibPlugin: Plugin<Project> {
                     androidFolder = target.projectDir,
                     webFolder = webBase,
                     webName = webName,
-                    replacementFolders = listOf(webBase)
+                    replacementFolders = equivalentsConfiguration.toList()
                 )
                 translator()
             }

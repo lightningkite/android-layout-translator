@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.MapperFeature
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.lightningkite.convertlayout.util.MaybeZipFile
 import java.io.File
 import java.util.*
 import kotlin.collections.HashMap
@@ -121,7 +122,15 @@ class Replacements() {
     }
 
     operator fun plusAssign(yaml: File) {
+        println("Loading replacement rules from ${yaml}")
         mapper.readValue<List<ReplacementRule>>(yaml).forEach {
+            this += it
+        }
+    }
+
+    operator fun plusAssign(yaml: MaybeZipFile) {
+        println("Loading replacement rules from ${yaml}")
+        mapper.readValue<List<ReplacementRule>>(yaml.inputStream()).forEach {
             this += it
         }
     }
