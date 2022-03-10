@@ -473,8 +473,6 @@
   valueType: String
   rules:
     "":
-      css:
-        text-align: left
       ifContains:
         start:
           css:
@@ -491,9 +489,11 @@
         center:
           css:
             text-align: center
-        center-horizontal:
+        center_horizontal:
           css:
             text-align: center
+      css:
+        text-align: left
 
 - id: "android:textColor"
   type: attribute
