@@ -34,6 +34,6 @@
     "web-runtime",
     "web-runtime/dist",
     "web-runtime/src/**/*.ts.yaml",
-    "web-runtime/src/**/*ts.fqnames",
+    "web-runtime/src/**/*ts.fqnames"
   ]
 }
