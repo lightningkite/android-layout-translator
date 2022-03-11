@@ -6,6 +6,8 @@ import com.lightningkite.convertlayout.web.WebTranslator
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.dsl.DependencyHandler
 import java.io.File
 import java.util.*
 
@@ -19,6 +21,10 @@ open class XmlToXibPluginExtension {
 
 fun Project.xmlToXib(configure: Action<XmlToXibPluginExtension>) {
     (this as org.gradle.api.plugins.ExtensionAware).extensions.configure("XmlToXibPluginExtension", configure)
+}
+
+internal fun DependencyHandler.equivalents(dependencyNotation: Any): Dependency? {
+    return this.add("equivalents", dependencyNotation)
 }
 
 class XmlToXibPlugin: Plugin<Project> {
