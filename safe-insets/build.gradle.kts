@@ -17,6 +17,7 @@ android {
     compileOptions {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+    sourceSets
 }
 
 dependencies {

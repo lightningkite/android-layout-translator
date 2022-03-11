@@ -28,9 +28,12 @@ internal fun DependencyHandler.equivalents(dependencyNotation: Any): Dependency?
 }
 
 class XmlToXibPlugin: Plugin<Project> {
-    override fun apply(target: Project) {
 
-        val equivalentsConfiguration = project.configurations.maybeCreate("equivalents").apply {
+    override fun apply(target: Project) {
+        val equivalentsSourceSet = target.objects.sourceDirectorySet("equivalents", "XML/XIB/HTML Equivalents")
+        equivalentsSourceSet.srcDirs(target.projectDir.resolve("src/main/equivalents"))
+
+        val equivalentsConfiguration = target.configurations.maybeCreate("equivalents").apply {
             description = "Equivalent declarations for translations"
             isCanBeResolved = true
             isCanBeConsumed = true
@@ -51,7 +54,7 @@ class XmlToXibPlugin: Plugin<Project> {
                     iosFolder = iosFolder,
                     iosModuleName = iosModuleName,
                     iosName = iosName,
-                    replacementFolders = equivalentsConfiguration.toList()
+                    replacementFolders = equivalentsConfiguration.toList() + equivalentsSourceSet.toList()
                 )
                 translator()
             }
@@ -66,7 +69,7 @@ class XmlToXibPlugin: Plugin<Project> {
                     androidFolder = target.projectDir,
                     webFolder = webBase,
                     webName = webName,
-                    replacementFolders = equivalentsConfiguration.toList()
+                    replacementFolders = equivalentsConfiguration.toList() + equivalentsSourceSet.toList()
                 )
                 translator()
             }
