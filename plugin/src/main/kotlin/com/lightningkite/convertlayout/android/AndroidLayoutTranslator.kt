@@ -7,6 +7,9 @@ import com.lightningkite.convertlayout.web.css
 import org.w3c.dom.Element
 
 abstract class AndroidLayoutTranslator(val replacements: Replacements, val resources: AndroidResources) {
+
+    abstract val useTools: Boolean
+
     val Element.allAttributes: Map<String, String>
         get() = DeferMap(
             listOfNotNull(
@@ -87,18 +90,18 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         destElement: Element
     ) {
         for ((key, raw) in allAttributes) {
-//            if (key.startsWith("tools:") && !allAttributes.containsKey("android:" + key.substringAfter(':'))) {
-//                handleAttribute(
-//                    rules,
-//                    sourceElement,
-//                    destElement,
-//                    allAttributes,
-//                    "android:" + key.substringAfter(':'),
-//                    raw
-//                )
-//            } else {
+            if (useTools && key.startsWith("tools:") && !allAttributes.containsKey("android:" + key.substringAfter(':'))) {
+                handleAttribute(
+                    rules,
+                    sourceElement,
+                    destElement,
+                    allAttributes,
+                    "android:" + key.substringAfter(':'),
+                    raw
+                )
+            } else {
                 handleAttribute(rules, sourceElement, destElement, allAttributes, key, raw)
-//            }
+            }
         }
     }
 

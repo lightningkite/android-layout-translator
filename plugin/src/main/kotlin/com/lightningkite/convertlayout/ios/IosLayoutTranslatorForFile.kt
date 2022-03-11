@@ -38,6 +38,9 @@ internal class IosLayoutTranslatorForFile(
         )
     }
 
+    override val useTools: Boolean
+        get() = true
+
     private fun Element.childrenWhoWrap(isVertical: Boolean): Int {
         return childElements
             .filter { it.allAttributes["android:layout_${if(isVertical) "height" else "vertical"}"] == "wrap_content" }

@@ -24,6 +24,9 @@ internal class WebLayoutTranslatorForFile(
     var includes: MutableMap<String, String> = LinkedHashMap()
     var compoundOutlets: MutableMap<String, Map<String, String>> = LinkedHashMap()
 
+    override val useTools: Boolean
+        get() = false
+
     override fun getProjectWide(key: String): String? = when (key) {
         "projectName" -> project.name
         else -> null
