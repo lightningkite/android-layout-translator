@@ -30,10 +30,10 @@ internal fun DependencyHandler.equivalents(dependencyNotation: Any): Dependency?
 class XmlToXibPlugin: Plugin<Project> {
     override fun apply(target: Project) {
 
-        val equivalentsConfiguration = target.configurations.maybeCreate("equivalents").apply {
+        val equivalentsConfiguration = project.configurations.maybeCreate("equivalents").apply {
             description = "Equivalent declarations for translations"
             isCanBeResolved = true
-            isCanBeConsumed = false
+            isCanBeConsumed = true
             isVisible = true
         }
 
