@@ -2,9 +2,9 @@
 buildscript {
     val kotlinVersion:String by extra
     repositories {
+        mavenCentral()
         maven(url="https://s01.oss.sonatype.org/content/repositories/snapshots/")
         google()
-        mavenCentral()
     }
     dependencies {
         classpath("com.android.tools.build:gradle:7.0.4")
@@ -22,9 +22,8 @@ buildscript {
 allprojects {
     group = "com.lightningkite.xmltoxib"
     repositories {
-        mavenLocal()
         mavenCentral()
-        google()
         maven(url="https://s01.oss.sonatype.org/content/repositories/snapshots/")
+        google()
     }
 }
