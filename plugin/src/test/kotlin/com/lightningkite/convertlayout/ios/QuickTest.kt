@@ -11,7 +11,7 @@ class QuickTest {
             androidFolder = File("../test-project"),
             iosFolder = File("build/test-project-ios"),
             iosName = "TestProject",
-            replacementFolders = listOf(File("../XmlToXibRuntime"))
+            replacementFolders = listOf(File("../safe-insets/src/main/equivalents"))
         )
         println("Starting...")
         translator()
@@ -23,7 +23,7 @@ class QuickTest {
             androidFolder = File("../test-project"),
             webFolder = File("build/test-project-web"),
             webName = "TestProject",
-            replacementFolders = listOf(File("../web-runtime"))
+            replacementFolders = listOf(File("../safe-insets/src/main/equivalents"))
         )
         println("Starting...")
         translator()
