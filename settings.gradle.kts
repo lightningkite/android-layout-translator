@@ -1,4 +1,4 @@
-rootProject.name = "android-xml-to-ios-xib"
+rootProject.name = "android-layout-translator"
 
 pluginManagement {
     repositories {
@@ -8,5 +8,5 @@ pluginManagement {
 }
 
 include("plugin")
-include("safe-insets")
+include("android-runtime")
 include("test-project")

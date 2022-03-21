@@ -1,4 +1,4 @@
-package com.lightningkite.safeinsets
+package com.lightningkite.androidruntime
 
 
 import android.os.Build
