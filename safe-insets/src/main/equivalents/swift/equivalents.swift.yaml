@@ -20,3 +20,37 @@
   template:
     pattern: "~this~.backgroundLayer = (~0~)()"
     imports: [XmlToXibRuntime]
+
+
+- id: android.widget.Switch.setText
+  type: get
+  reflectiveName:
+    pattern:   "\\LabeledToggle.label.text"
+    imports: [XmlToXibRuntime]
+  template:
+    pattern:  '~this~.label.text'
+    imports: [ XmlToXibRuntime ]
+
+- id: android.widget.Switch.text
+  type: get
+  reflectiveName:
+    pattern:   "\\LabeledToggle.label.text"
+    imports: [XmlToXibRuntime]
+  template:
+    pattern:  '~this~.label.text'
+    imports: [ XmlToXibRuntime ]
+
+- id: android.widget.Switch.text
+  type: set
+  template:
+    pattern:  '~this~.label.text = ~0~'
+    imports: [ XmlToXibRuntime ]
+
+- id: android.widget.Switch.setText
+  type: call
+  reflectiveName:
+    pattern:   "\\LabeledToggle.label.text"
+    imports: [XmlToXibRuntime]
+  template:
+    pattern:  '~this~.label.text = ~0~'
+    imports: [ XmlToXibRuntime ]
