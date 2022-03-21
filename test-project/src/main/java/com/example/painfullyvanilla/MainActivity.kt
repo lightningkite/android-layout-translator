@@ -5,7 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.app.ViewPumpAppCompatDelegate
 import com.example.painfullyvanilla.databinding.TestSystemEdgesBinding
-import com.lightningkite.safeinsets.SafeInsetsInterceptor
+import com.lightningkite.androidruntime.SafeInsetsInterceptor
 import dev.b3nedikt.viewpump.ViewPump
 
 class MainActivity : AppCompatActivity() {

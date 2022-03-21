@@ -32,9 +32,9 @@ dependencies {
 
 
 standardPublishing {
-    name.set("Android Safe Insets")
-    description.set("A tool for making safe insets work easily on Android.")
-    github("lightningkite", "android-xml-to-ios-xib")
+    name.set("Android Runtime")
+    description.set("A package holding the android tools for safe insets made easy, along with converting them to other platforms.")
+    github("lightningkite", "android-layout-translator")
 
     licenses { mit() }
 

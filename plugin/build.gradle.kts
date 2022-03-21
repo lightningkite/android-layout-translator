@@ -14,8 +14,8 @@ plugins {
 gradlePlugin {
     plugins {
         val khrysalisPlugin by creating() {
-            id = "com.lightningkite.xmltoxib"
-            implementationClass = "com.lightningkite.convertlayout.gradle.XmlToXibPlugin"
+            id = "com.lightningkite.androidlayouttranslator"
+            implementationClass = "com.lightningkite.convertlayout.gradle.AndroidLayoutConverterPlugin"
         }
     }
 }
@@ -56,9 +56,9 @@ dependencies {
 
 
 standardPublishing {
-    name.set("Android XML to iOS Xib Converter")
-    description.set("A Gradle plugin that automatically generates ViewGenerators from Android Layout XMLs")
-    github("lightningkite", "android-xml-to-ios-xib")
+    name.set("Android XML Converter")
+    description.set("A Gradle plugin that translates Android XML layouts to Xib and HTML")
+    github("lightningkite", "android-layout-translator")
 
     licenses { mit() }
 

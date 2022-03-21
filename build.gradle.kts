@@ -20,7 +20,7 @@ buildscript {
 
 
 allprojects {
-    group = "com.lightningkite.xmltoxib"
+    group = "com.lightningkite.androidlayouttranslator"
     repositories {
         mavenCentral()
         maven(url="https://s01.oss.sonatype.org/content/repositories/snapshots/")

@@ -9,9 +9,8 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.dsl.DependencyHandler
 import java.io.File
-import java.util.*
 
-open class XmlToXibPluginExtension {
+open class AndroidLayoutConverterPluginExtension {
     open var iosFolder: File? = null
     open var iosProjectName: String? = null
     open var iosModuleName: String? = null
@@ -19,15 +18,15 @@ open class XmlToXibPluginExtension {
     open var webProjectName: String? = null
 }
 
-fun Project.xmlToXib(configure: Action<XmlToXibPluginExtension>) {
-    (this as org.gradle.api.plugins.ExtensionAware).extensions.configure("XmlToXibPluginExtension", configure)
+fun Project.androidLayoutConverter(configure: Action<AndroidLayoutConverterPluginExtension>) {
+    (this as org.gradle.api.plugins.ExtensionAware).extensions.configure("AndroidLayoutConverterPluginExtension", configure)
 }
 
 internal fun DependencyHandler.equivalents(dependencyNotation: Any): Dependency? {
     return this.add("equivalents", dependencyNotation)
 }
 
-class XmlToXibPlugin: Plugin<Project> {
+class AndroidLayoutConverterPlugin: Plugin<Project> {
 
     override fun apply(target: Project) {
         val equivalentsSourceSet = target.objects.sourceDirectorySet("equivalents", "XML/XIB/HTML Equivalents")
@@ -40,7 +39,7 @@ class XmlToXibPlugin: Plugin<Project> {
             isVisible = true
         }
 
-        val ext = target.extensions.create("XmlToXibPluginExtension", XmlToXibPluginExtension::class.java)
+        val ext = target.extensions.create("AndroidLayoutConverterPluginExtension", AndroidLayoutConverterPluginExtension::class.java)
         target.tasks.create("xmlToXib") {
             it.group = "ios"
             it.inputs.files(equivalentsConfiguration)

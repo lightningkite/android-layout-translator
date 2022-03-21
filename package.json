@@ -17,16 +17,16 @@
   "author": "Lightning Kite",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lightningkite/android-xml-to-ios-xib.git"
+    "url": "git+https://github.com/lightningkite/android-layout-translator.git"
   },
   "keywords": [
     "khrysalis"
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/lightningkite/android-xml-to-ios-xib/issues"
+    "url": "https://github.com/lightningkite/android-layout-translator/issues"
   },
-  "homepage": "https://github.com/lightningkite/android-xml-to-ios-xib#readme",
+  "homepage": "https://github.com/lightningkite/android-layout-translator#readme",
   "files": [
     "index.d.ts",
     "index.js",

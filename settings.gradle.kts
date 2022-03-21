@@ -8,5 +8,5 @@ pluginManagement {
 }
 
 include("plugin")
-include("safe-insets")
+include("android-runtime")
 include("test-project")
