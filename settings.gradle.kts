@@ -1,4 +1,4 @@
-rootProject.name = "android-xml-to-ios-xib"
+rootProject.name = "android-layout-translator"
 
 pluginManagement {
     repositories {
