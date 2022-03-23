@@ -463,7 +463,8 @@ internal class IosLayoutTranslatorForFile(
                 }
 
                 // If no weights AND size isn't wrap content, add final spacer view
-                if (sourceElement.convertibleChildElements.any() && firstWeightedChild == null && myAttributes["android:layout_${if (isVertical) "height" else "width"}"] != "wrap_content") {
+                val canScale = myAttributes["android:layout_${if (isVertical) "height" else "width"}"] != "wrap_content" || (sourceElement.parentNode as? Element)?.allAttributes?.get("android:fillViewport") == "true"
+                if (sourceElement.convertibleChildElements.any() && firstWeightedChild == null && canScale) {
                     when(myAttributes["android:gravity"]?.toGravity()?.get(isVertical) ?: Align.START) {
                         Align.START -> {
                             val finalSpacer = target.appendElement("view") {
@@ -584,6 +585,16 @@ internal class IosLayoutTranslatorForFile(
                         destElement.anchorWidth,
                         constant = -paddingPlusMargins.left - paddingPlusMargins.right
                     )
+                    if(myAttributes["android:fillViewport"] == "true") {
+                        innerElement.anchorHeight.constraint(
+                            destElement.anchorHeight,
+                            relationship = ConstraintRelation.greaterThanOrEqual
+                        )
+                        innerElement.anchorHeight.constraint(
+                            destElement.anchorHeight,
+                            priority = 250
+                        )
+                    }
                 }
             }
             "scroll-horizontal" -> {
@@ -596,6 +607,16 @@ internal class IosLayoutTranslatorForFile(
                         destElement.anchorHeight,
                         constant = -paddingPlusMargins.top - paddingPlusMargins.bottom
                     )
+                    if(myAttributes["android:fillViewport"] == "true") {
+                        innerElement.anchorWidth.constraint(
+                            destElement.anchorWidth,
+                            relationship = ConstraintRelation.greaterThanOrEqual
+                        )
+                        innerElement.anchorWidth.constraint(
+                            destElement.anchorWidth,
+                            priority = 250
+                        )
+                    }
                 }
             }
             else -> super.handleChildren(rules, childAddRule, sourceElement, destElement, target)
@@ -943,7 +964,7 @@ internal class IosLayoutTranslatorForFile(
     ): IosLayoutFile = IosLayoutFile(
         projectName = project.name,
         name = androidXmlName,
-        variants = setOfNotNull(variant),
+        variants = setOf(variant?.let { AndroidVariant.parse(it) } ?: AndroidVariant()),
         files = setOf(xibFile),
         bindings = outlets.mapValues { IosLayoutFile.Hook(it.key, it.value) }
     )

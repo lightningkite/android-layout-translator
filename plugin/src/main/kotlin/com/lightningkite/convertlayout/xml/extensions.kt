@@ -244,6 +244,23 @@ fun File.readXml(): Document {
 }
 fun File.writeXml(document: Document, prefix: String? = null) = this.bufferedWriter().use { writer ->
     prefix?.let { writer.appendLine(it) }
+    writer.write(document.writeToString())
+}
+
+private fun Node.patchNewlines(): Node {
+    this.childNodes.fix().forEach {
+        it.patchNewlines()
+    }
+    if(this is Element) {
+        this.attributeMap.entries.toList().forEach {
+            this.setAttribute(it.key, it.value.replace("\n", "---\$NEWLINE---"))
+        }
+    }
+    return this
+}
+
+fun Document.writeToString(): String = StringWriter().use {
+    this.documentElement.patchNewlines()
     TransformerFactory
         .newInstance()
         .newTransformer()
@@ -252,19 +269,9 @@ fun File.writeXml(document: Document, prefix: String? = null) = this.bufferedWri
             setOutputProperty(OutputKeys.METHOD, "html");
             setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
         }
-        .transform(DOMSource(document), StreamResult(writer))
-}
-fun Document.writeToString(): String = StringWriter().use {
-    TransformerFactory
-        .newInstance()
-        .newTransformer()
-        .apply {
-            setOutputProperty(OutputKeys.INDENT, "yes")
-            setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-        }
         .transform(DOMSource(this), StreamResult(it))
     it.toString()
-}
+}.replace("---\$NEWLINE---", "&#xA;")
 
 inline fun buildXmlDocument(name: String, action: Element.()->Unit): Document {
     val document = defaultBuilder.newDocument()
