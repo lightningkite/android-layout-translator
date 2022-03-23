@@ -433,6 +433,9 @@ public extension UIView {
             let previous = previousDoubleNillable ?? nil
             previous?.removeFromSuperlayer()
             if let value = value {
+                if let self = self as? ContainerView {
+                    value.opacity = Float(self.finalView?.alpha ?? 1)
+                }
                 self.layer.insertSublayer(value, at: 0)
                 value.frame = self.layer.bounds
                 value.zPosition = CGFloat(-Float.greatestFiniteMagnitude)
