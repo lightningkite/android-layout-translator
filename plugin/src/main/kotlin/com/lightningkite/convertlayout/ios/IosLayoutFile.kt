@@ -1,6 +1,7 @@
 package com.lightningkite.convertlayout.ios
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.lightningkite.convertlayout.android.AndroidVariant
 import com.lightningkite.convertlayout.util.camelCase
 import com.lightningkite.convertlayout.xml.attributeMap
 import com.lightningkite.convertlayout.xml.children
@@ -12,7 +13,7 @@ import java.io.File
 data class IosLayoutFile(
     val projectName: String,
     val name: String,
-    val variants: Set<String>,
+    val variants: Set<AndroidVariant>,
     val files: Set<File>,
     val bindings: Map<String, Hook>,
 ) {
@@ -22,7 +23,8 @@ data class IosLayoutFile(
         val optional: Boolean = false
     ) {
         fun declaration() = "@IBOutlet weak private var _$name: ${baseType.name}${if (optional) "?" else "!"}"
-        fun access() = "public var ${name.safeSwiftViewIdentifier()}: ${baseType.name}${if (optional) "?" else ""} { return _$name }"
+        fun access() =
+            "public var ${name.safeSwiftViewIdentifier()}: ${baseType.name}${if (optional) "?" else ""} { return _$name }"
     }
 
     @get:JsonIgnore
@@ -53,14 +55,34 @@ data class IosLayoutFile(
     |//
     |
     |import XmlToXibRuntime
-    |${bindings.values.mapNotNull { it.baseType.module }.filter { it != projectName }.toSet().joinToString("\n|") { "import $it" }}
+    |${
+            bindings.values.mapNotNull { it.baseType.module }.filter { it != projectName }.toSet()
+                .joinToString("\n|") { "import $it" }
+        }
     |
     |public class $className: XibView {
     |
     |    ${bindings.values.joinToString("\n|    ") { it.declaration() }}
     |    ${bindings.values.joinToString("\n|    ") { it.access() }}
+    |    
+    |    public override func selectNibName() -> String {
+    |       ${
+            variants.sorted().filter { it.parts.size > 0 }.joinToString(" else ") {
+                """if ${it.iosCondition} { 
+                    |            return "${className}${it.suffix}"
+                    |        }""".trimMargin("|")
+            }
+        }
+    |        return "$className"
+    |    }
     |
     |}
     """.trimMargin("|")
     }
+
+    val AndroidVariant.iosCondition: String?
+        get() = listOfNotNull(
+            widerThan?.let { "UIScreen.main.bounds.width > $it" },
+            landscape?.let { if (it) "UIDevice.current.orientation.isLandscape" else "!UIDevice.current.orientation.isLandscape" }
+        ).takeUnless { it.isEmpty() }?.joinToString(" && ")
 }

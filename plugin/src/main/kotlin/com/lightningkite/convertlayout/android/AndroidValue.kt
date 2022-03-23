@@ -407,6 +407,8 @@ data class AndroidNumber(
         get() = Measurement(value, MeasurementUnit.DP)
 
     override fun get(key: String): Any? = when (key) {
+        "escaped",
+        "escapedAttribute",
         "value" -> value.toString()
         else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
     }

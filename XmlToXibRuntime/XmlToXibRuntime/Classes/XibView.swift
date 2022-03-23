@@ -19,9 +19,13 @@ open class XibView: ContainerView {
         customInit()
     }
     
+    open func selectNibName() -> String {
+        return String(describing: type(of: self))
+    }
+    
     private func customInit() {
         self.translatesAutoresizingMaskIntoConstraints = false
-        let nib = UINib(nibName: String(describing: type(of: self)), bundle: nil)
+        let nib = UINib(nibName: selectNibName(), bundle: nil)
         let view = nib.instantiate(withOwner: self, options: nil).first as! UIView
         addSubview(view)
         view.topAnchor.constraint(equalTo: self.topAnchor).isActive = true
