@@ -83,6 +83,6 @@ data class IosLayoutFile(
     val AndroidVariant.iosCondition: String?
         get() = listOfNotNull(
             widerThan?.let { "UIScreen.main.bounds.width > $it" },
-            landscape?.let { if (it) "UIDevice.current.orientation.isLandscape" else "!UIDevice.current.orientation.isLandscape" }
+            landscape?.let { if (it) "UIScreen.main.bounds.width > UIScreen.main.bounds.height" else "UIScreen.main.bounds.width < UIScreen.main.bounds.height" }
         ).takeUnless { it.isEmpty() }?.joinToString(" && ")
 }

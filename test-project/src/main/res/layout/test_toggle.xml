@@ -78,4 +78,12 @@
             android:text="Test Text"
             tools:ignore="UseSwitchCompatOrMaterialXml"/>
 
+    <CheckBox
+            style="@style/Title3"
+            android:id="@+id/autoContinue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Auto continue"
+            />
+
 </LinearLayout>

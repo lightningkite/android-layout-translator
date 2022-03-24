@@ -1004,7 +1004,7 @@
 - id: "android:textColor"
   type: attribute
   element: LabeledToggle
-  valueType: ColorStateResource
+  valueType: Color
   xib:
     subviews/label|textColor: Subnode
 
