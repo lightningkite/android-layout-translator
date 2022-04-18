@@ -28,13 +28,13 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile::class).all {
 }
 
 val kotlinVersion:String by project
-val jacksonVersion = "2.13.1"
+val jacksonVersion = "2.13.2"
 dependencies {
     api(localGroovy())
     api(gradleApi())
 
-    api(group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version = kotlinVersion)
-    api(group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin-api", version = kotlinVersion)
+    api("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion")
+    api("org.jetbrains.kotlin:kotlin-gradle-plugin-api:$kotlinVersion")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
 
@@ -43,11 +43,11 @@ dependencies {
     api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jacksonVersion")
 
     // https://mvnrepository.com/artifact/org.apache.xmlgraphics/batik-transcoder
-    implementation(group = "org.apache.xmlgraphics", name = "batik-transcoder", version = "1.13")
-    implementation(group = "org.apache.xmlgraphics", name = "batik-codec", version = "1.13")
+    implementation("org.apache.xmlgraphics:batik-transcoder:1.14")
+    implementation("org.apache.xmlgraphics:batik-codec:1.14")
 
     // https://mvnrepository.com/artifact/net.mabboud.fontverter/FontVerter
-    implementation(group = "org.apache.pdfbox", name = "fontbox", version = "2.0.24")
+    implementation("org.apache.pdfbox:fontbox:2.0.25")
 //    implementation(group = "net.mabboud.fontverter", name = "FontVerter", version = "1.2.22")
 
     testImplementation("junit:junit:4.13.2")

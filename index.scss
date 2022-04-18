@@ -19,7 +19,7 @@ body {
   font-size: 14pt;
 }
 
-body > * {
+body>* {
   height: 100% !important;
   width: 100% !important;
 }
@@ -35,6 +35,7 @@ body > * {
   display: flex;
   align-items: center;
   justify-content: center;
+
   &::after {
     content: "";
     display: inline-block;
@@ -64,6 +65,7 @@ button {
   background-image: none;
   background-color: transparent;
   text-align: center;
+
   &.android-ImageButton {
     min-height: unset;
     padding: 0;
@@ -74,6 +76,7 @@ textarea {
   resize: none;
   border: none;
 }
+
 input {
   border: none;
 }
@@ -98,6 +101,7 @@ button input {
 .drawable-attr-selectableItemBackground {
   background-image: none;
   background-color: transparent;
+
   &:hover {
     background: #80808030;
   }
@@ -105,13 +109,16 @@ button input {
 
 .android-ScrollView {
   overflow-y: auto;
-  & > * {
+
+  &>* {
     max-height: unset;
   }
 }
+
 .android-HorizontalScrollView {
   overflow-x: auto;
-  & > * {
+
+  &>* {
     max-width: unset;
   }
 }
@@ -121,17 +128,20 @@ button input {
   flex-direction: row;
   justify-content: start;
   align-items: start;
+
   &.dynamic {
     align-items: stretch;
   }
-  & > * {
+
+  &>* {
     flex-shrink: 1;
   }
 }
 
 .android-RecyclerView {
   overflow-y: auto;
-  & > * {
+
+  &>* {
     max-height: unset;
   }
 }
@@ -150,7 +160,7 @@ button input {
   z-index: 0;
 }
 
-.android-FrameLayout > * {
+.android-FrameLayout>* {
   grid-column-start: 1;
   grid-column-end: 1;
   grid-row-start: 1;
@@ -161,9 +171,11 @@ $primary: #888 !default;
 
 .android-ViewFlipper {
   @extend .android-FrameLayout;
-  & > * {
+
+  &>* {
     transition: opacity 0.5s;
   }
+
   &::after {
     content: "";
     transition: opacity 0.5s;
@@ -184,26 +196,8 @@ $primary: #888 !default;
   }
 }
 
-@keyframes android-ViewFlipper-spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
-
-.android-ViewFlipper.loading {
-  & > * {
-    opacity: 0;
-  }
-  &::after {
-    opacity: 1;
-  }
-}
-
 .android-Switch {
+
   /* The switch - the box around the slider */
   .back {
     position: relative;
@@ -248,15 +242,15 @@ $primary: #888 !default;
     border-radius: 50%;
   }
 
-  input:checked + .back .slider {
+  input:checked+.back .slider {
     background-color: #2196F3;
   }
 
-  input:focus + .back .slider {
+  input:focus+.back .slider {
     box-shadow: 0 0 1px #2196F3;
   }
 
-  input:checked + .back .slider:before {
+  input:checked+.back .slider:before {
     -webkit-transform: translateX(13px);
     -ms-transform: translateX(13px);
     transform: translateX(13px);
@@ -355,153 +349,6 @@ $primary: #888 !default;
   visibility: visible;
 }
 
-@keyframes stack-pull-up-in {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-@keyframes stack-pull-up-out {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-100%);
-  }
-}
-
-@keyframes stack-pull-down-in {
-  from {
-    transform: translateY(-100%);
-  }
-  to {
-    transform: translateY(0%);
-  }
-}
-
-@keyframes stack-pull-down-out {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(100%);
-  }
-}
-
-@keyframes stack-push-in {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes stack-push-out {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-100%);
-  }
-}
-
-@keyframes stack-pop-in {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@keyframes stack-pop-out {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(100%);
-  }
-}
-
-@keyframes stack-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes stack-fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes stack-grow-fade-in {
-  from {
-    opacity: 0;
-    transform: scale(0.75) translateY(7%);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1.0) translateY(0%);
-  }
-}
-
-@keyframes stack-grow-fade-out {
-  from {
-    opacity: 1;
-    transform: scale(1.00) translateY(0%);
-  }
-  to {
-    opacity: 0;
-    transform: scale(1.33) translateY(-7%);
-  }
-}
-
-@keyframes stack-shrink-fade-in {
-  from {
-    opacity: 0;
-    transform: scale(1.33) translateY(-7%);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1.0) translateY(0%);
-  }
-}
-
-@keyframes stack-shrink-fade-out {
-  from {
-    opacity: 1;
-    transform: scale(1.0) translateY(0%);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.75) translateY(7%);
-  }
-}
-
-.android-SwapView {
-  display: block;
-  position: relative;
-  pointer-events: none;
-}
-
-.android-SwapView > * {
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  pointer-events: auto;
-}
-
 .android-ViewPager {
   position: relative;
 }
@@ -556,7 +403,7 @@ $primary: #888 !default;
   height: 100%;
 }
 
-.pager-content > * {
+.pager-content>* {
   width: 100%;
   height: 100%;
   position: absolute;
@@ -564,70 +411,4 @@ $primary: #888 !default;
 
 .android-ImageView {
   object-fit: contain;
-}
-
-.resp-sharing-dialog-back {
-  position: fixed;
-  display: flex;
-  flex-direction: column;
-  justify-items: center;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  left: 0;
-  top: 0;
-  background-color: rgba(0, 0, 0, 0.4);
-  z-index: 9999;
-}
-
-.rxjs-plus-dialog-front {
-  display: flex;
-  flex-direction: column;
-  justify-items: center;
-  align-items: center;
-  background-color: #F0F0F0;
-  padding: 0.5em;
-  max-height: 90%;
-  max-width: 90%;
-  box-sizing: border-box;
-  overflow-y: auto;
-  border-radius: 8px;
-}
-
-.rxjs-plus-dialog-message {
-  color: #000000
-}
-
-.rxjs-plus-dialog-buttons {
-  display: flex;
-  flex-direction: row;
-}
-
-.rxjs-plus-dialog-cancel {
-  min-height: 32px;
-  min-width: 42px;
-  color: #000000;
-  border-radius: 4px;
-  &:hover {
-    background: #DDDDDD;
-
-    &:active {
-      background: #AAAAAA;
-    }
-  }
-}
-
-.rxjs-plus-dialog-ok {
-  min-height: 32px;
-  min-width: 42px;
-  color: #000000;
-  border-radius: 4px;
-  &:hover {
-    background: #DDDDDD;
-
-    &:active {
-      background: #AAAAAA;
-    }
-  }
 }
