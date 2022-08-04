@@ -53,33 +53,33 @@ class AndroidResources {
                 ?: throw IllegalStateException("Reference $value not found")
             value.startsWith("@dimen/") -> dimensions[value.substringAfter('/')]
                 ?: throw IllegalStateException("Reference $value not found")
-            value.endsWith("dp") -> AndroidDimensionLiteral(
+            value.endsWith("dp") && value.removeSuffix("dp").toDoubleOrNull() != null -> AndroidDimensionLiteral(
                 Measurement(
-                    number = value.filter { it.isDigit() || it == '.' }.toDouble(),
+                    number = value.removeSuffix("dp").toDouble(),
                     unit = MeasurementUnit.DP
                 )
             )
-            value.endsWith("dip") -> AndroidDimensionLiteral(
+            value.endsWith("dip") && value.removeSuffix("dip").toDoubleOrNull() != null -> AndroidDimensionLiteral(
                 Measurement(
-                    number = value.filter { it.isDigit() || it == '.' }.toDouble(),
+                    number = value.removeSuffix("dip").toDouble(),
                     unit = MeasurementUnit.DP
                 )
             )
-            value.endsWith("sp") -> AndroidDimensionLiteral(
+            value.endsWith("sp") && value.removeSuffix("sp").toDoubleOrNull() != null -> AndroidDimensionLiteral(
                 Measurement(
-                    number = value.filter { it.isDigit() || it == '.' }.toDouble(),
+                    number = value.removeSuffix("sp").toDouble(),
                     unit = MeasurementUnit.SP
                 )
             )
-            value.endsWith("sip") -> AndroidDimensionLiteral(
+            value.endsWith("sip") && value.removeSuffix("sip").toDoubleOrNull() != null -> AndroidDimensionLiteral(
                 Measurement(
-                    number = value.filter { it.isDigit() || it == '.' }.toDouble(),
+                    number = value.removeSuffix("sip").toDouble(),
                     unit = MeasurementUnit.SP
                 )
             )
-            value.endsWith("px") -> AndroidDimensionLiteral(
+            value.endsWith("px") && value.removeSuffix("px").toDoubleOrNull() != null -> AndroidDimensionLiteral(
                 Measurement(
-                    number = value.filter { it.isDigit() || it == '.' }.toDouble(),
+                    number = value.removeSuffix("px").toDouble(),
                     unit = MeasurementUnit.PX
                 )
             )

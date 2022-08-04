@@ -113,19 +113,23 @@ abstract class AndroidLayoutTranslator(val replacements: Replacements, val resou
         key: String,
         raw: String
     ) {
-        val value = resources.read(raw)
-        val attributeRule = rules.asSequence()
-            .mapNotNull {
-                replacements.getAttribute(
-                    elementName = it.caseIdentifier ?: it.id,
-                    parentElementName = (sourceElement.parentNode as? Element)?.tagName ?: "",
-                    attributeName = key,
-                    attributeType = AttributeReplacement.ValueType2[value::class],
-                    rawValue = raw
-                )
-            }
-            .firstOrNull() ?: return
-        handleAttribute(allAttributes, attributeRule, destElement, value, sourceElement[key] == null)
+        try {
+            val value = resources.read(raw)
+            val attributeRule = rules.asSequence()
+                .mapNotNull {
+                    replacements.getAttribute(
+                        elementName = it.caseIdentifier ?: it.id,
+                        parentElementName = (sourceElement.parentNode as? Element)?.tagName ?: "",
+                        attributeName = key,
+                        attributeType = AttributeReplacement.ValueType2[value::class],
+                        rawValue = raw
+                    )
+                }
+                .firstOrNull() ?: return
+            handleAttribute(allAttributes, attributeRule, destElement, value, sourceElement[key] == null)
+        } catch(e: Exception) {
+            throw Exception("Error while processing $key with value $raw on ${sourceElement.tagName}", e)
+        }
     }
 
     open fun handleAttribute(

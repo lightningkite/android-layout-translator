@@ -78,7 +78,8 @@ internal class IosLayoutTranslatorForFile(
         val autowrap = rules.asSequence()
             .flatMap { it.autoWrapFor?.asSequence() ?: sequenceOf() }
             .toSet()
-        val directSystemEdges = sourceElement.allAttributes["app:safeInsets"]?.toSystemEdges() ?: sourceElement.allAttributes["app:safeInsetsSizing"]?.toSystemEdges()
+        val directSystemEdges = if((sourceElement.tagName == "ScrollView") || (sourceElement.tagName == "HorizontalScrollView"))
+            SystemEdges.default else sourceElement.allAttributes["app:safeInsets"]?.toSystemEdges() ?: sourceElement.allAttributes["app:safeInsetsSizing"]?.toSystemEdges()
 
         if (allAttributes.keys.none { it in autowrap }) {
             val newElement =
