@@ -72,7 +72,7 @@ data class WebLayoutFile(
         return """
             |import {inflateHtmlFile} from "@lightningkite/android-xml-runtime";
             |${variants.joinToString("\n|"){ "import html${it.camelCaseSuffix} from './${name}${it.suffix}.html'" }}
-            |${sublayouts.values.joinToString("\n|    ") { it.import() }}
+            |${sublayouts.values.distinctBy { it.layout }.joinToString("\n|    ") { it.import() }}
             |
             |//! Declares ${packageName}.databinding.${className}
             |export interface ${className} {
