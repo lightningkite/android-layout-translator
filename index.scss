@@ -22,6 +22,7 @@ body {
 body>* {
   height: 100% !important;
   width: 100% !important;
+  position: absolute;
 }
 
 .center-text-vertical {
@@ -177,6 +178,7 @@ $primary: #888 !default;
   }
 
   &::after {
+    pointer-events: none;
     content: "";
     transition: opacity 0.5s;
     opacity: 0;
@@ -193,6 +195,15 @@ $primary: #888 !default;
     align-self: center;
     justify-self: center;
     animation: speen 2s infinite linear;
+  }
+
+  &.loading {
+    &>* {
+      opacity: 0;
+    }
+    &::after {
+      opacity: 1;
+    }
   }
 }
 
