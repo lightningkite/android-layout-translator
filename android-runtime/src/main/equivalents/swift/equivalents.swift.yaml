@@ -12,6 +12,22 @@
     pattern: "~this~.setImage((~0~)().toImage(), for: .normal)"
     imports: [UIKit]
 
+- id: android.widget.ImageView.setImageDrawable
+  type: call
+  exactArguments:
+    0: null
+  template:
+    pattern: "~this~.image = nil"
+    imports: [UIKit]
+
+- id: android.widget.ImageButton.setImageDrawable
+  type: call
+  exactArguments:
+    0: null
+  template:
+    pattern: "~this~.setImage(nil, for: .normal)"
+    imports: [UIKit]
+
 - id: android.view.View.setBackgroundResource
   type: call
   reflectiveName:

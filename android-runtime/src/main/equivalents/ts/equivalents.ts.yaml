@@ -34,3 +34,10 @@
     pattern: setBackground(~this~, ~0~)
     imports:
       setBackground: '@lightningkite/android-xml-runtime'
+
+- id: android.widget.ImageView.setImageResource
+  type: call
+  template: '~this~.src = ~0~.file!'
+- id: android.widget.ImageButton.setImageResource
+  type: call
+  template: '~this~.image.src = ~0~.file!'
