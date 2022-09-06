@@ -10,26 +10,26 @@ The Gradle plugin does the actual conversion work.  It adds a task in the `ios` 
 
 ```kotlin
 plugins {
-    id("com.lightningkite.xmltoxib")
+    id("com.lightningkite.androidlayouttranslator")
     //...
 }
 //...
 
-xmlToXib {
+val androidRuntimeVersion: String by extra
+dependencies {
+    //...
+    implementation("com.lightningkite.androidlayouttranslator:android-runtime:${androidRuntimeVersion}")
+    equivalents("com.lightningkite.androidlayouttranslator:android-runtime:$androidRuntimeVersion:equivalents")
+}
+
+androidLayoutConverter {
     iosProjectName = "My Project"
     iosModuleName = "MyProject"
-    iosFolder = project.rootDir.absoluteFile.resolve("../my-ios-project")
+    iosFolder = rootDir.resolve("ios")
+    
+    webProjectName = "MyProject"
+    webFolder = rootDir.resolve("web")
 }
-```
-
-You then need to provide paths to search for layout equivalent files (ending in `xib.yaml`) that define how views and attributes in Android are translated to XIB layouts.  
-
-If you are on a Mac, the files are searched for based on your pods.  The equivalent files are expected to be in the iOS project and its dependencies.
-
-If you are not on a Mac, you can manually define the paths to search in your `local.properties` folder as follows:
-
-```properties
-xmltoxib.conversions=path:another/path:yet/another/path
 ```
 
 You can read more about equivalents [here](equivalents.md).
