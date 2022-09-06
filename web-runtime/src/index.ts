@@ -79,8 +79,8 @@ function makeRecord(
     return result
 }
 
-//! Declares androidx.viewpager.widget.ViewPager
-export type ViewPager =
+//! Declares androidx.viewpager.widget.ViewPager2
+export type ViewPager2 =
     HTMLLabelElement
     & { container: HTMLDivElement, previous: HTMLButtonElement, next: HTMLButtonElement }
 

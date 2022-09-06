@@ -800,13 +800,13 @@
 - id: androidx.swiperefreshlayout.widget.SwipeRefreshLayout
   type: element
   childRule: frame
-  template: <div/>
+  template: <div><button class="android-RefreshButton"/></div>
 
 - id: RadioGroup
   type: element
   parent: LinearLayout
 
-- id: androidx.viewpager.widget.ViewPager
+- id: androidx.viewpager2.widget.ViewPager2
   type: element
   template: |
     <div>

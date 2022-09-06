@@ -33,6 +33,7 @@ fun WebTranslator.importDrawable(drawableResource: AndroidDrawable, sass: String
                 sass.appendLine(".compound-${drawableResource.name}::after { @extend .drawable-${drawableResource.name}; }")
             }
             is AndroidVector -> importVector(drawableResource, sass)
+            else -> {}
         }
     } catch (e: Exception) {
         throw Exception("Failed to read ${drawableResource}", e)

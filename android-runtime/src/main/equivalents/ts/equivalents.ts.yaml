@@ -41,3 +41,19 @@
 - id: android.widget.ImageButton.setImageResource
   type: call
   template: '~this~.image.src = ~0~.file!'
+
+- id: androidx.swiperefreshlayout.widget.SwipeRefreshLayout.isRefreshing
+  type: get
+  template: ~this~.classList.contains("loading")
+  reflectiveName:
+    pattern: hasClass("loading")
+    imports:
+      hasClass: '@lightningkite/rxjs-plus'
+
+- id: androidx.swiperefreshlayout.widget.SwipeRefreshLayout.isRefreshing
+  type: set
+  template: ~this~.classList.toggle("loading", ~value~)
+
+- id: androidx.swiperefreshlayout.widget.SwipeRefreshLayout.setOnRefreshListener
+  type: call
+  template: ~this~.firstElementChild!.addEventListener('click', ~0~)

@@ -194,7 +194,7 @@ $primary: #888 !default;
     grid-row-end: 1;
     align-self: center;
     justify-self: center;
-    animation: speen 2s infinite linear;
+    animation: spin 2s infinite linear;
   }
 
   &.loading {
@@ -422,4 +422,46 @@ $primary: #888 !default;
 
 .android-ImageView {
   object-fit: contain;
+}
+
+.android-SwipeRefreshLayout {
+  @extend .android-FrameLayout;
+  &>* {
+    transition: opacity 0.5s;
+  }
+
+  .android-RefreshButton::after {
+    pointer-events: none;
+    content: "";
+    transition: opacity 0.5s;
+    opacity: 0;
+    width: 32px;
+    height: 32px;
+    border-style: solid;
+    border-color: $primary $primary $primary transparent;
+    border-width: 5px;
+    border-radius: 50%;
+    grid-column-start: 1;
+    grid-column-end: 1;
+    grid-row-start: 1;
+    grid-row-end: 1;
+    align-self: center;
+    justify-self: center;
+    animation: spin 2s infinite linear;
+  }
+
+  &.loading {
+    .android-RefreshButton::after {
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform:rotate(0deg);
+  }
+  to {
+    transform:rotate(360deg);
+  }
 }

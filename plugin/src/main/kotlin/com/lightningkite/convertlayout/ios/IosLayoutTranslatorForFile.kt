@@ -731,6 +731,7 @@ internal class IosLayoutTranslatorForFile(
                                             }
                                         }
                                 }
+                                else -> {}
                             }
                         }
                     }
@@ -927,6 +928,7 @@ internal class IosLayoutTranslatorForFile(
                             this["height"] = it.size.height.toString()
                         }
                     }
+                    else -> {}
                 }
             }
         return xib

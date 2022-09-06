@@ -22,6 +22,7 @@ fun IosTranslator.importDrawable(drawableResource: AndroidDrawable) {
             is AndroidBitmap -> importBitmap(drawableResource)
             is AndroidXmlDrawable -> importDrawableXml(drawableResource)
             is AndroidVector -> importVector(drawableResource)
+            else -> {}
         }
     } catch (e: Exception) {
         throw Exception("Failed to read ${drawableResource}", e)
@@ -68,6 +69,7 @@ fun Appendable.writeAndroidXml(xml: AndroidDrawableXml) {
             is AndroidNamedDrawable -> appendLine("R.drawable.${sub.name}()")
             is AndroidColorResource -> writeAndroidXml(AndroidShape.Value(AndroidShape.Value.ShapeType.Rectangle, fill = Lazy(sub)))
             is AndroidColorStateResource -> writeAndroidXml(AndroidShape.Value(AndroidShape.Value.ShapeType.Rectangle, fill = Lazy(sub)))
+            else -> {}
         }
         is AndroidBitmap.Reference -> appendLine("R.drawable.${xml.base.value.name}()")
         is AndroidShape.Value -> {
@@ -266,6 +268,7 @@ fun IosTranslator.importStringsDimensionsColors() {
             when (val value = entry.value) {
                 is AndroidBitmap, is AndroidVector ->
                     appendLine("public static func ${entry.key.safeSwiftIdentifier()}() -> CALayer { return CAImageLayer(UIImage(named: \"${entry.key}.png\")) }")
+                else -> {}
             }
         }
         appendLine("public static let allEntries: Dictionary<String, ()->CALayer> = [")
@@ -310,6 +313,7 @@ fun IosTranslator.importStringsDimensionsColors() {
                     appendLine("public static let ${entry.key}: UIColor = UIColor(named: \"color_${entry.key}\")!")
                     appendLine("public static let ${entry.key}State: StateSelector<UIColor> = StateSelector(normal: ${value.colors.normal.value.swift}, selected: ${value.colors.selected?.value?.swift ?: "nil"}, highlighted: ${value.colors.highlighted?.value?.swift ?: "nil"}, disabled: ${value.colors.disabled?.value?.swift ?: "nil"}, focused: ${value.colors.focused?.value?.swift ?: "nil"})")
                 }
+                else -> {}
             }
         }
         appendLine("}")

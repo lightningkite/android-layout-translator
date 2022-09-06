@@ -1,4 +1,4 @@
 @lightningkite/android-xml-runtime
 
-androidx.viewpager.widget.ViewPager
+androidx.viewpager2.widget.ViewPager2
 android.widget.ImageButton
