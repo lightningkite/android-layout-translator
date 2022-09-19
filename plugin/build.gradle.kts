@@ -47,7 +47,7 @@ dependencies {
     implementation("org.apache.xmlgraphics:batik-codec:1.14")
 
     // https://mvnrepository.com/artifact/net.mabboud.fontverter/FontVerter
-    implementation("org.apache.pdfbox:fontbox:2.0.25")
+    implementation("org.apache.pdfbox:fontbox:2.0.26")
 //    implementation(group = "net.mabboud.fontverter", name = "FontVerter", version = "1.2.22")
 
     testImplementation("junit:junit:4.13.2")

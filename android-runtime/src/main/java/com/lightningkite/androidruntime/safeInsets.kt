@@ -63,11 +63,11 @@ fun View.safeInsets(flags: Int) {
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         this.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-            override fun onViewDetachedFromWindow(v: View?) {
+            override fun onViewDetachedFromWindow(v: View) {
             }
 
-            override fun onViewAttachedToWindow(v: View?) {
-                v?.resetWindowInsets()
+            override fun onViewAttachedToWindow(v: View) {
+                v.resetWindowInsets()
             }
         })
     }
@@ -132,11 +132,11 @@ fun View.safeInsetsSizing(flags: Int) {
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         this.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-            override fun onViewDetachedFromWindow(v: View?) {
+            override fun onViewDetachedFromWindow(v: View) {
             }
 
-            override fun onViewAttachedToWindow(v: View?) {
-                v?.resetWindowInsets()
+            override fun onViewAttachedToWindow(v: View) {
+                v.resetWindowInsets()
             }
         })
     }
@@ -213,11 +213,11 @@ fun View.safeInsetsBoth(flags: Int) {
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         this.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-            override fun onViewDetachedFromWindow(v: View?) {
+            override fun onViewDetachedFromWindow(v: View) {
             }
 
-            override fun onViewAttachedToWindow(v: View?) {
-                v?.resetWindowInsets()
+            override fun onViewAttachedToWindow(v: View) {
+                v.resetWindowInsets()
             }
         })
     }
