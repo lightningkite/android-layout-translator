@@ -4,6 +4,7 @@ export interface SomeBinding extends Record<string, HTMLElement | SomeBinding | 
 
 export type LayoutVariant = {
     widerThan?: number
+    tallerThan?: number
     html: string
 }
 
@@ -15,7 +16,7 @@ export function inflateHtmlFile(
 ): SomeBinding {
     const holder = document.createElement("div")
     for(const variant of html) {
-        if(!variant.widerThan || window.innerWidth > variant.widerThan) {
+        if((!variant.widerThan || window.innerWidth > variant.widerThan) && (!variant.tallerThan || window.innerHeight > variant.tallerThan)) {
             holder.innerHTML = variant.html
             break
         }

@@ -57,3 +57,8 @@
 - id: androidx.swiperefreshlayout.widget.SwipeRefreshLayout.setOnRefreshListener
   type: call
   template: ~this~.firstElementChild!.addEventListener('click', ~0~)
+
+- id: com.lightningkite.androidruntime.setTextHtml
+  type: call
+  reflectiveName: '"innerHTML"'
+  template: '~this~.innerHTML = ~0~'

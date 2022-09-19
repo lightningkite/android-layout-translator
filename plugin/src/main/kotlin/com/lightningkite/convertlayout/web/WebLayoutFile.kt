@@ -101,7 +101,8 @@ data class WebLayoutFile(
     val AndroidVariant.web: String get() = """
         {
             html: html${camelCaseSuffix},
-            widerThan: ${widerThan?.toString() ?: "undefined"}
+            widerThan: ${widerThan?.toString() ?: "undefined"},
+            tallerThan: ${tallerThan?.toString() ?: "undefined"}
         }
     """.trimIndent()
 }

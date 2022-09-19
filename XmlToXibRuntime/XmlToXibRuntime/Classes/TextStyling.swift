@@ -284,3 +284,11 @@ private extension UIControl.State {
         UIControl.State.application
     ]
 }
+
+public extension UITextView {
+    func setTextHtml(html: String) {
+        let htmlData = NSString(string: html).data(using: String.Encoding.unicode.rawValue)
+        let attributedString = try! NSAttributedString(data: htmlData!, options: [NSDocumentTypeDocumentAttribute: NSHTMLTextDocumentType], documentAttributes: nil)
+        self.attributedText = attributedString
+    }
+}
