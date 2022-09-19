@@ -287,8 +287,90 @@ private extension UIControl.State {
 
 public extension UITextView {
     func setTextHtml(html: String) {
-        let htmlData = NSString(string: html).data(using: String.Encoding.unicode.rawValue)
-        let attributedString = try! NSAttributedString(data: htmlData!, options: [NSDocumentTypeDocumentAttribute: NSHTMLTextDocumentType], documentAttributes: nil)
+        let fullHtml = """
+        <!doctype html>
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: -apple-system;
+                font-size: \(self.font?.pointSize ?? 14)pt;
+                color: \(self.textColor?.hexString ?? "black");
+              }
+            </style>
+          </head>
+          <body>
+            \(html)
+          </body>
+        </html>
+        """
+        let htmlData = NSString(string: fullHtml).data(using: String.Encoding.unicode.rawValue)
+        let attributedString = try! NSAttributedString(
+            data: htmlData!,
+            options: [.documentType: NSAttributedString.DocumentType.html],
+            documentAttributes: nil
+        )
         self.attributedText = attributedString
+    }
+}
+
+public extension UILabel {
+    func setTextHtml(html: String) {
+        let fullHtml = """
+        <!doctype html>
+        <html>
+          <head>
+            <style>
+              body {
+                font-family: -apple-system;
+                font-size: \(self.font.pointSize)pt;
+                color: \(self.textColor.hexString);
+              }
+            </style>
+          </head>
+          <body>
+            \(html)
+          </body>
+        </html>
+        """
+        print(fullHtml)
+        let htmlData = NSString(string: fullHtml).data(using: String.Encoding.unicode.rawValue)
+        let attributedString = try! NSAttributedString(
+            data: htmlData!,
+            options: [.documentType: NSAttributedString.DocumentType.html],
+            documentAttributes: nil
+        )
+        self.attributedText = attributedString
+    }
+}
+
+private extension UIColor {
+    var hexString: String {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        let multiplier = CGFloat(255.999999)
+
+        self.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+
+        if alpha == 1.0 {
+            return String(
+                format: "#%02lX%02lX%02lX",
+                Int(red * multiplier),
+                Int(green * multiplier),
+                Int(blue * multiplier)
+            )
+        }
+        else {
+            return String(
+                format: "#%02lX%02lX%02lX%02lX",
+                Int(red * multiplier),
+                Int(green * multiplier),
+                Int(blue * multiplier),
+                Int(alpha * multiplier)
+            )
+        }
     }
 }
