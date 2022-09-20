@@ -294,7 +294,7 @@ public extension UITextView {
             <style>
               body {
                 font-family: -apple-system;
-                font-size: \(self.font?.pointSize ?? 14)pt;
+                font-size: \((self.font?.pointSize ?? 14) / 16)em;
                 color: \(self.textColor?.hexString ?? "black");
               }
             </style>
@@ -323,7 +323,7 @@ public extension UILabel {
             <style>
               body {
                 font-family: -apple-system;
-                font-size: \(self.font.pointSize)pt;
+                font-size: \(self.font.pointSize / 16)em;
                 color: \(self.textColor.hexString);
               }
             </style>
