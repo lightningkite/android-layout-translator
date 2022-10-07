@@ -23,6 +23,9 @@ open class XibView: ContainerView {
         return String(describing: type(of: self))
     }
     
+    private var _root: UIView!
+    public var root: UIView { _root }
+    
     private func customInit() {
         self.translatesAutoresizingMaskIntoConstraints = false
         let nib = UINib(nibName: selectNibName(), bundle: nil)
@@ -32,9 +35,8 @@ open class XibView: ContainerView {
         view.bottomAnchor.constraint(equalTo: self.bottomAnchor).isActive = true
         view.leadingAnchor.constraint(equalTo: self.leadingAnchor).isActive = true
         view.trailingAnchor.constraint(equalTo: self.trailingAnchor).isActive = true
+        _root = view
     }
-    
-    public var root: UIView { self.subviews.first! }
     
     open override var intrinsicContentSize: CGSize {
         return subviews.first!.intrinsicContentSize
