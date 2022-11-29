@@ -9,7 +9,7 @@
 - id: android.widget.ImageButton.setImageResource
   type: call
   template:
-    pattern: "~this~.setImage((~0~)().toImage(), for: .normal)"
+    pattern: "~this~.setImage((~0~)().toImage(), for: [])"
     imports: [UIKit]
 
 - id: android.widget.ImageView.setImageDrawable
