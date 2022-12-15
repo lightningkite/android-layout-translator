@@ -630,6 +630,10 @@ internal class IosLayoutTranslatorForFile(
         sourceElement: Element,
         destElement: Element
     ) {
+        if (sourceElement.tagName == "ImageView" && listOf(sourceElement["android:layout_width"], sourceElement["android:layout_height"]).count { it == "wrap_content" } == 1) {
+            destElement["customClass"] = "ScaleAspectFitImageView"
+            destElement["customModule"] = "XmlToXibRuntime"
+        }
         super.handleAttributes(rules, allAttributes, sourceElement, destElement)
         if (sourceElement.tagName == "TextView" && sourceElement["android:layout_width"] != "wrap_content") {
             destElement["numberOfLines"] = "0"
