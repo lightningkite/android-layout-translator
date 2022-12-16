@@ -285,17 +285,67 @@ private extension UIControl.State {
     ]
 }
 
+public extension UILabel{
+    internal static let extendedAttributedTextDefaultColor = ExtensionProperty<UILabel, UIColor>()
+    internal static let extendedAttributedTextAlignment = ExtensionProperty<UILabel, String>()
+    
+    var attributedTextDefaultColor: UIColor? {
+        get { return UILabel.extendedAttributedTextDefaultColor.get(self)}
+        set(value) { UILabel.extendedAttributedTextDefaultColor.set(self, value) }
+    }
+    
+    var attributedTextAlignment: String? {
+        get { return UILabel.extendedAttributedTextAlignment.get(self)}
+        set(value) { UILabel.extendedAttributedTextAlignment.set(self, value) }
+    }
+    
+}
+
+public extension UITextView{
+    
+    internal static let extendedAttributedTextDefaultColor = ExtensionProperty<UITextView, UIColor>()
+    internal static let extendedAttributedTextAlignment = ExtensionProperty<UITextView, String>()
+    
+    var attributedTextDefaultColor: UIColor? {
+        get { return UITextView.extendedAttributedTextDefaultColor.get(self)}
+        set(value) { UITextView.extendedAttributedTextDefaultColor.set(self, value) }
+    }
+    
+    var attributedTextAlignment: String? {
+        get { return UITextView.extendedAttributedTextAlignment.get(self)}
+        set(value) { UITextView.extendedAttributedTextAlignment.set(self, value) }
+    }
+}
+
+
 public extension UITextView {
     func setTextHtml(html: String) {
+                
+        let color = UITextView.extendedAttributedTextDefaultColor.getOrPut(self) { self.textColor ?? UIColor.black }
+        let align = UITextView.extendedAttributedTextAlignment.getOrPut(self){
+            switch self.textAlignment {
+            case .center:
+                return "center"
+            case .right:
+                return "right"
+            case .justified:
+                return "justify"
+            default:
+                return "left"
+            }
+        }
+
+    
         let fullHtml = """
         <!doctype html>
         <html>
           <head>
             <style>
               body {
-                font-family: -apple-system;
-                font-size: \((self.font?.pointSize ?? 14) / 16)em;
-                color: \(self.textColor?.hexString ?? "black");
+                font-family: \(self.font?.familyName ?? "-apple-system");
+                font-size: \((self.font?.pointSize ?? 14))px;
+                color: \(color);
+                text-align: \(align);
               }
             </style>
           </head>
@@ -316,15 +366,31 @@ public extension UITextView {
 
 public extension UILabel {
     func setTextHtml(html: String) {
+        
+        let color = UILabel.extendedAttributedTextDefaultColor.getOrPut(self) { self.textColor}
+        let align = UILabel.extendedAttributedTextAlignment.getOrPut(self){
+            switch self.textAlignment {
+            case .center:
+                return "center"
+            case .right:
+                return "right"
+            case .justified:
+                return "justify"
+            default:
+                return "left"
+            }
+        }
+
         let fullHtml = """
         <!doctype html>
         <html>
           <head>
             <style>
               body {
-                font-family: -apple-system;
-                font-size: \(self.font.pointSize / 16)em;
-                color: \(self.textColor.hexString);
+                font-family: "\(self.font.familyName)";
+                font-size: \(self.font.pointSize)px;
+                color: \(color.hexString);
+                text-align: \(align);
               }
             </style>
           </head>
@@ -333,7 +399,6 @@ public extension UILabel {
           </body>
         </html>
         """
-        print(fullHtml)
         let htmlData = NSString(string: fullHtml).data(using: String.Encoding.unicode.rawValue)
         let attributedString = try! NSAttributedString(
             data: htmlData!,
