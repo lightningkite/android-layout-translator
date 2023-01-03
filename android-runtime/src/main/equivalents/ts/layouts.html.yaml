@@ -792,6 +792,13 @@
   type: element
   template: <div/>
 
+- id: 'android:fillViewport'
+  type: attribute
+  equalTo: "true"
+  rules:
+    "":
+      classes: ["fillViewport"]
+
 - id: ViewFlipper
   type: element
   childRule: frame
@@ -811,12 +818,8 @@
   template: |
     <div>
       <div id="container" class="pager-content"/> 
-      <button id="previous" class="pager-prev">
-        <span class="material-icons">arrow_back</span>
-      </button> 
-      <button id="next" class="pager-next">
-        <span class="material-icons">arrow_forward</span>
-      </button> 
+      <button id="previous" class="pager-prev">&lt;</button> 
+      <button id="next" class="pager-next">&gt;</button> 
     </div>
 
 - id: include

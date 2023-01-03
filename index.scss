@@ -114,6 +114,9 @@ button input {
   &>* {
     max-height: unset;
   }
+  &.fillViewport>* {
+    min-height: 100%;
+  }
 }
 
 .android-HorizontalScrollView {
@@ -121,6 +124,9 @@ button input {
 
   &>* {
     max-width: unset;
+  }
+  &.fillViewport>* {
+    min-height: 100%;
   }
 }
 
@@ -360,7 +366,7 @@ $primary: #888 !default;
   visibility: visible;
 }
 
-.android-ViewPager {
+.android-ViewPager2 {
   position: relative;
 }
 
