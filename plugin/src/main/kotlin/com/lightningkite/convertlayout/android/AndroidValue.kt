@@ -216,6 +216,7 @@ data class AndroidBitmap(
 
     override fun get(key: String): Any? = when (key) {
         "name" -> name
+        "fileName" -> files.values.first().name
         else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
     }
 

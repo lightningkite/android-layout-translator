@@ -9,11 +9,32 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.sourceElementsConfigurationNa
 fun WebTranslator.importResources() {
     val sass = StringBuilder()
     sass.appendLine("""@import "~@lightningkite/android-xml-runtime/index.scss";""")
+    importFonts(sass)
     importDimensionsColors(sass)
     importDrawables(sass)
     importStyles(sass)
     importStrings()
     project.resourcesFolder.resolve("resources.scss").writeText(sass.toString())
+}
+
+fun WebTranslator.importFonts(sass: StringBuilder) {
+    for((key, font) in this.resources.fonts) {
+        when(font) {
+            is AndroidFontLiteral -> {
+                val destFile = project.fontFolder.resolve(font.file.name)
+                font.file.copyTo(destFile, overwrite = true)
+                sass.appendLine("""
+                    @font-face {
+                      font-family: ${font.fontFamily};
+                      src: url(./fonts/${font.file.name});
+                    }
+                """.trimIndent())
+            }
+            is AndroidFontSet -> {
+
+            }
+        }
+    }
 }
 
 fun WebTranslator.importDrawables(sass: StringBuilder) {
@@ -56,7 +77,7 @@ fun Appendable.writeSass(xml: AndroidDrawableXml) {
                 listOfNotNull(gradient.startColor.value, gradient.centerColor?.value, gradient.endColor.value)
                     .map { it.sass }
                     .joinToString()
-                    .let { appendLine("background-image: linear-gradient(${gradient.angle - 90}deg, $it);") }
+                    .let { appendLine("background-image: linear-gradient(${90 - gradient.angle}deg, $it);") }
             } ?: xml.fill?.value?.let { appendLine("background-color: ${it.sass};") }
             xml.stroke?.value?.let { color ->
                 appendLine("border-color: ${color.sass};")

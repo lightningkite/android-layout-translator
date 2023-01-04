@@ -57,7 +57,22 @@ private fun androidVectorToSvg(
 private fun Element.writeElement(svgOut: SvgEmitter, path: String): Unit {
     when(tagName) {
         "group" -> {
-            svgOut.main.appendLine("<g>")
+            svgOut.main.append("<g transform=\"")
+            this["android:translateX"]?.let {
+                svgOut.main.append("translate(")
+                svgOut.main.append(this["android:translateX"])
+                svgOut.main.append(",")
+                svgOut.main.append(this["android:translateY"])
+                svgOut.main.append(") ")
+            }
+            this["android:scaleX"]?.let {
+                svgOut.main.append("scale(")
+                svgOut.main.append(this["android:scaleX"])
+                svgOut.main.append(",")
+                svgOut.main.append(this["android:scaleY"])
+                svgOut.main.append(") ")
+            }
+            svgOut.main.appendLine("\">")
             for(sub in this.childElements.withIndex()) {
                 sub.value.writeElement(svgOut, path + "-${sub.index}")
             }

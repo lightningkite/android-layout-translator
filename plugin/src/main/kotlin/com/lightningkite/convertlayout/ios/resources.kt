@@ -266,7 +266,9 @@ fun IosTranslator.importStringsDimensionsColors() {
         appendLine("public enum drawable {")
         for (entry in resources.drawables) {
             when (val value = entry.value) {
-                is AndroidBitmap, is AndroidVector ->
+                is AndroidBitmap ->
+                    appendLine("public static func ${entry.key.safeSwiftIdentifier()}() -> CALayer { return CAImageLayer(UIImage(named: \"${entry.key}.${value.files.values.first().extension}\")) }")
+                is AndroidVector ->
                     appendLine("public static func ${entry.key.safeSwiftIdentifier()}() -> CALayer { return CAImageLayer(UIImage(named: \"${entry.key}.png\")) }")
                 else -> {}
             }

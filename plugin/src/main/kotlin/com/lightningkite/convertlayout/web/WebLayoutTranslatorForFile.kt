@@ -128,8 +128,9 @@ internal class WebLayoutTranslatorForFile(
                 }
             }
             "frame" -> {
-                sourceElement.convertibleChildElements.forEach { childSrc ->
+                sourceElement.convertibleChildElements.forEachIndexed { index, childSrc ->
                     val childDest = this.convertElement(target, childSrc)
+                    childDest.css["z-index"] = "$index"
                     val childGravity = childSrc["android:layout_gravity"]?.toGravity() ?: Gravity()
                     if (childSrc.allAttributes["android:layout_width"] == "match_parent") {
                         childDest.css["justify-self"] = "stretch"

@@ -112,14 +112,14 @@ class AndroidResources {
         this.packageName = androidResourcesDirectory.resolve("../AndroidManifest.xml").readXml().documentElement["package"] ?: "unknown"
         getFonts(androidResourcesDirectory.resolve("font"))
         getStrings(androidResourcesDirectory)
-        getDimensions(androidResourcesDirectory.resolve("values/dimens.xml"))
-        getColors(androidResourcesDirectory.resolve("values/colors.xml"))
+        val valuesFiles = androidResourcesDirectory.resolve("values").listFiles() ?: arrayOf()
+        valuesFiles.forEach { getDimensions(it) }
+        valuesFiles.forEach { getColors(it) }
         androidResourcesDirectory.resolve("color").listFiles()?.forEach {
             getStateColor(it)
         }
         getDrawables(androidResourcesDirectory)
-        getStyles(androidResourcesDirectory.resolve("values/styles.xml"))
-        getStyles(androidResourcesDirectory.resolve("values/themes.xml"))
+        valuesFiles.forEach { getStyles(it) }
         layouts.putAll(
             AndroidLayoutFile.parseAll(androidResourcesDirectory, this)
                 .mapValues { AndroidLayoutResource(it.key, Lazy(it.value)) })
@@ -158,7 +158,7 @@ class AndroidResources {
                 for (file in base.listFiles()!!) {
                     val name = file.nameWithoutExtension
                     when (file.extension) {
-                        "png" -> {
+                        "png", "jpg" -> {
                             drawables[name]?.let { it as? AndroidBitmap }?.let {
                                 drawables[name] = it.copy(files = it.files + (typeName to file))
                             } ?: run {
@@ -331,7 +331,7 @@ class AndroidResources {
                     fontSubFamily = font.naming.fontSubFamily,
                     postScriptName = font.naming.postScriptName,
                     file = file
-                )
+                ).also { println("Found font $it") }
                 fonts[file.nameWithoutExtension] = iosFont
             }
         folder.listFiles()!!

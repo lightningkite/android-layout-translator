@@ -130,7 +130,7 @@
   rules:
     "":
       attribute:
-        src: "../drawables/~name~.png"
+        src: "../drawables/~fileName~"
 
 - id: "android:src"
   type: attribute
@@ -158,7 +158,7 @@
   rules:
     "img":
       attribute:
-        src: "../drawables/~name~.png"
+        src: "../drawables/~fileName~"
 
 - id: "android:src"
   type: attribute
@@ -444,6 +444,14 @@
     "":
       attribute:
         value: ~escapedAttribute~
+
+- id: "android:fontFamily"
+  type: attribute
+  valueType: Font
+  rules:
+    "":
+      css:
+        font-family: '"~fontFamily~", Arial, sans-serif'
 
 - id: "android:textStyle"
   type: attribute
