@@ -3,11 +3,85 @@ package com.lightningkite.convertlayout.ios
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.lightningkite.convertlayout.android.*
 import com.lightningkite.convertlayout.util.*
+import com.lightningkite.convertlayout.web.importFonts
 
 fun IosTranslator.importResources() {
     importDrawables()
+    importFonts()
     importStringsDimensionsColors()
     importColorAssets()
+    importAppIcon()
+}
+
+fun IosTranslator.importAppIcon() {
+    this.resources.drawables["ic_launcher_foreground"]?.let { foreground ->
+        val backgroundColor = this.resources.colors["ic_launcher_background"]?.value?.webNoAlpha ?: "black"
+        when(foreground) {
+            is AndroidVector -> {
+                foreground.toIosIcon(
+                    resources,
+                    size = 1024.0,
+                    backgroundColor = backgroundColor
+                ).also { println(it.readText()) }.convertSvgToPng(project.assetsFolder.resolve("AppIcon.appiconset/full.png").also { it.parentFile!!.mkdirs() })
+                project.assetsFolder.resolve("AppIcon.appiconset/contents.json").writeText("""
+                    {
+                      "images" : [
+                        {
+                          "filename" : "full.png",
+                          "idiom" : "universal",
+                          "platform" : "ios",
+                          "size" : "1024x1024"
+                        }
+                      ],
+                      "info" : {
+                        "author" : "xcode",
+                        "version" : 1
+                      }
+                    }
+                """.trimIndent())
+            }
+            is AndroidBitmap -> {
+                val image = listOf(
+                    "ldpi",
+                    "mdpi",
+                    "hdpi",
+                    "xhdpi",
+                    "xxhdpi",
+                    "xxxhdpi",
+                ).reversed().mapNotNull { foreground.files[it] }
+            }
+            else -> return
+        }
+    }
+}
+
+fun IosTranslator.importFonts() {
+    val toPlist = ArrayList<String>()
+    for((key, font) in this.resources.fonts) {
+        when(font) {
+            is AndroidFontLiteral -> {
+                val destFile = project.swiftResourcesFolder.resolve(font.file.name)
+                font.file.copyTo(destFile, overwrite = true)
+                toPlist.add(destFile.name)
+            }
+            is AndroidFontSet -> {
+
+            }
+        }
+    }
+    project.folder.resolve("Info.plist").takeIf { it.exists() }?.let {
+        val original = it.readText()
+        it.writeText(original
+            .substringBefore("<key>UIAppFonts</key>") +
+                "<key>UIAppFonts</key><array>" +
+                toPlist.joinToString("") {
+                    "<string>$it</string>"
+                } +
+                "</array>" +
+            original.substringAfter("<key>UIAppFonts</key>")
+                .substringAfter("</array>")
+        )
+    }
 }
 
 fun IosTranslator.importDrawables() {

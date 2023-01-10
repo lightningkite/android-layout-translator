@@ -272,6 +272,33 @@
   type: element
   template: <input type="range" min="0" value="50" max="100"/>
 
+- id: "android:min"
+  type: attribute
+  element: SeekBar
+  valueType: Number
+  rules:
+    "":
+      attribute:
+        min: ~value~
+
+- id: "android:progress"
+  type: attribute
+  element: SeekBar
+  valueType: Number
+  rules:
+    "":
+      attribute:
+        value: ~value~
+
+- id: "android:max"
+  type: attribute
+  element: SeekBar
+  valueType: Number
+  rules:
+    "":
+      attribute:
+        max: ~value~
+
 - id: RatingBar
   type: element
   template: <input type="range" min="0" value="4" max="5"/>

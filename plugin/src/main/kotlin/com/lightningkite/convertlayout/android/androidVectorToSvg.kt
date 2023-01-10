@@ -12,6 +12,22 @@ fun AndroidVector.toSvg(resources: AndroidResources, scale: Float = 1f, out: Fil
     return out
 }
 
+fun AndroidVector.toIosIcon(resources: AndroidResources, size: Double, backgroundColor: String, out: File = File.createTempFile(name, ".svg")): File {
+    out.printWriter().use {
+        androidVectorToSvg(resources, this.file.readXml().documentElement, size, size,
+            beforeContent = { width, height ->
+                main.appendLine("<rect width=\"$width\" height=\"$height\" fill=\"$backgroundColor\" />")
+                main.appendLine("<g transform=\"translate(${width/2},${height/2}) scale(1.5,1.5) translate(-${width/2},-${height/2})\">")
+            },
+            afterContent = { width, height ->
+                main.appendLine("</g>")
+
+            }
+        ).emit(it)
+    }
+    return out
+}
+
 private data class SvgColor(val color: String, val alpha: String)
 
 private class SvgEmitter(
@@ -38,7 +54,31 @@ private class SvgEmitter(
 private fun androidVectorToSvg(
     resource: AndroidResources,
     node: Element,
-    scale: Float
+    width: Double,
+    height: Double,
+    beforeContent: SvgEmitter.(Double, Double)->Unit = {_, _ ->},
+    afterContent: SvgEmitter.(Double, Double)->Unit = {_, _ ->},
+): SvgEmitter {
+    val viewportWidth = node["android:viewportWidth"]?.toDoubleOrNull() ?: 24.0
+    val viewportHeight = node["android:viewportHeight"]?.toDoubleOrNull() ?: 24.0
+    val emitter = SvgEmitter(width, height, viewportWidth, viewportHeight) {
+        val v = resource.read(it).let { it as? AndroidColor}?.value ?: return@SvgEmitter SvgColor("black", "0")
+        SvgColor(v.webNoAlpha, v.alphaFloat.toString())
+    }
+    beforeContent(emitter, viewportWidth, viewportHeight)
+    node.childElements.forEachIndexed { index, value ->
+        value.writeElement(emitter, "$index")
+    }
+    afterContent(emitter, viewportWidth, viewportHeight)
+    return emitter
+}
+
+private fun androidVectorToSvg(
+    resource: AndroidResources,
+    node: Element,
+    scale: Float,
+    beforeContent: SvgEmitter.(Double, Double)->Unit = {_, _ ->},
+    afterContent: SvgEmitter.(Double, Double)->Unit = {_, _ ->},
 ): SvgEmitter {
     val viewportWidth = node["android:viewportWidth"]?.toDoubleOrNull() ?: 24.0
     val viewportHeight = node["android:viewportHeight"]?.toDoubleOrNull() ?: 24.0
@@ -48,9 +88,11 @@ private fun androidVectorToSvg(
         val v = resource.read(it).let { it as? AndroidColor}?.value ?: return@SvgEmitter SvgColor("black", "0")
         SvgColor(v.webNoAlpha, v.alphaFloat.toString())
     }
+    beforeContent(emitter, viewportWidth, viewportHeight)
     node.childElements.forEachIndexed { index, value ->
         value.writeElement(emitter, "$index")
     }
+    afterContent(emitter, viewportWidth, viewportHeight)
     return emitter
 }
 
