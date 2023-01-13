@@ -41,7 +41,7 @@ fun String.toGravity(): Gravity {
             "top" -> vert = Align.START
             "bottom" -> vert = Align.END
             "center_vertical" -> vert = Align.CENTER
-            "center" -> {
+            "center", "all" -> {
                 horz = Align.CENTER
                 vert = Align.CENTER
             }
@@ -101,7 +101,7 @@ fun String.toSystemEdges(): SystemEdges {
                 result.top = true
                 result.bottom = true
             }
-            "center" -> {
+            "center", "all" -> {
                 result.start = true
                 result.end = true
                 result.left = true
