@@ -1,6 +1,5 @@
 * {
   box-sizing: border-box;
-  font-family: "Roboto", "Open Sans", sans-serif;
   overflow-x: hidden;
   overflow-y: hidden;
   overflow-wrap: anywhere;
@@ -9,6 +8,10 @@
   max-height: 100%;
   --drawable-width: 24px;
   --drawable-height: 24px;
+}
+
+html {
+  font-family: "Roboto", "Open Sans", sans-serif;
 }
 
 html,
