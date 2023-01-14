@@ -146,7 +146,7 @@ data class AndroidFontSet(
     override fun get(key: String): Any? = when (key) {
         "italic" -> subFonts.find { it.style == "italic" }?.literal?.value
         "normal" -> subFonts.find { it.style == "normal" }?.literal?.value
-        else -> throw IllegalArgumentException("No key $key for ${this::class.simpleName}")
+        else -> subFonts.find { it.style == "normal" }?.literal?.value?.get(key)
     }
 }
 
