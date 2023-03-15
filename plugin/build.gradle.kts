@@ -43,11 +43,11 @@ dependencies {
     api("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:$jacksonVersion")
 
     // https://mvnrepository.com/artifact/org.apache.xmlgraphics/batik-transcoder
-    implementation("org.apache.xmlgraphics:batik-transcoder:1.14")
-    implementation("org.apache.xmlgraphics:batik-codec:1.14")
+    implementation("org.apache.xmlgraphics:batik-transcoder:1.16")
+    implementation("org.apache.xmlgraphics:batik-codec:1.16")
 
     // https://mvnrepository.com/artifact/net.mabboud.fontverter/FontVerter
-    implementation("org.apache.pdfbox:fontbox:2.0.26")
+    implementation("org.apache.pdfbox:fontbox:2.0.27")
 //    implementation(group = "net.mabboud.fontverter", name = "FontVerter", version = "1.2.22")
 
     testImplementation("junit:junit:4.13.2")
