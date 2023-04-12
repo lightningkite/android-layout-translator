@@ -886,6 +886,7 @@
             </switch>
             <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO">
                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
+                <nil key="highlightedColor"/>
             </label>
         </subviews>
         <edgeInsets key="layoutMargins" top="16" left="16" bottom="16" right="16"/>
@@ -1093,6 +1094,7 @@
       <subviews>
         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO">
           <fontDescription key="fontDescription" type="system" pointSize="17"/>
+          <nil key="highlightedColor"/>
         </label>
         <switch opaque="NO" contentMode="scaleToFill" verticalCompressionResistancePriority="999" horizontalCompressionResistancePriority="999" horizontalHuggingPriority="750" verticalHuggingPriority="750" contentHorizontalAlignment="center" contentVerticalAlignment="center" on="NO" translatesAutoresizingMaskIntoConstraints="NO">
         </switch>
@@ -1196,6 +1198,7 @@
           </view>
           <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="100" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO">
             <fontDescription key="fontDescription" type="system" pointSize="17"/>
+            <nil key="highlightedColor"/>
           </label>
       </subviews>
     </stackView>
@@ -1254,6 +1257,7 @@
           </view>
           <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="100" verticalHuggingPriority="251" text="" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO">
             <fontDescription key="fontDescription" type="system" pointSize="17"/>
+            <nil key="highlightedColor"/>
           </label>
       </subviews>
     </stackView>
