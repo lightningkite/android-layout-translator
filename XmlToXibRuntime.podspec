@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'XmlToXibRuntime'
-  s.version          = '1.0.2'
+  s.version          = '1.0.3'
   s.summary          = 'A runtime used in conversion of Android resources to iOS resources.'
 
   s.description      = <<-DESC
@@ -16,9 +16,9 @@ Contains equivalents to Android drawables, checkboxes, radio buttons, text styli
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
   s.swift_version    = "5.0"
 
-  s.ios.deployment_target = '11.0'
+  s.ios.deployment_target = '12.0'
 
   s.source_files = 'XmlToXibRuntime/XmlToXibRuntime/Classes/**/*'
 
-  s.dependency 'M13Checkbox'
+  s.dependency 'M13Checkbox', '3.4.0-LK'
 end
