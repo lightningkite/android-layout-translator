@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'XmlToXibRuntime'
-  s.version          = '1.0.3'
+  s.version          = '1.0.4'
   s.summary          = 'A runtime used in conversion of Android resources to iOS resources.'
 
   s.description      = <<-DESC
